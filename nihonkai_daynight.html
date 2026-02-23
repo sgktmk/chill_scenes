@@ -135,7 +135,7 @@ svg{width:100vw;height:100vh;display:block;image-rendering:pixelated}
 
 <!-- Horizon glow -->
 <rect id="hGl" x="0" y="76" width="320" height="10" fill="#ffaa33" opacity="0"/>
-<rect id="hLn" x="0" y="85" width="320" height="0.5" fill="#cc6622" opacity=".06"/>
+<rect id="hLn" x="0" y="85" width="320" height="1" fill="#cc6622" opacity="1"/>
 
 <!-- SEA -->
 <rect x="0" y="86" width="320" height="114" fill="url(#seaG)"/>
@@ -401,7 +401,8 @@ function updatePositions(p){
     hOp=nearHorizon*0.15;
   }
   hGl.setAttribute('opacity',hOp);
-  hLn.setAttribute('opacity',Math.max(0.02,hOp*0.5+0.02));
+  // Keep the horizon seam merged with the sea color at all times.
+  hLn.setAttribute('opacity',1);
 
   // Cloud opacity
   const isNight=(p>=0.78||p<0.02);
