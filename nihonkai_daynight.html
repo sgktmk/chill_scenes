@@ -6,8 +6,9 @@
 <title>日本海 一日の移ろい</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a12;display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden}
-svg{width:100vw;height:100vh;display:block;image-rendering:pixelated}
+body{background:#0a0a12;min-height:100vh;overflow:hidden}
+.scene-container{width:100vw;height:100vh;height:100svh;min-height:100vh;overflow:hidden}
+svg{width:100%;height:100%;display:block;image-rendering:pixelated}
 .ap{position:fixed;bottom:16px;right:16px;background:rgba(10,10,18,.75);border:2px solid rgba(255,150,50,.3);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;z-index:100;backdrop-filter:blur(6px)}
 .ab{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,150,50,.5);background:rgba(255,80,20,.12);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;position:relative;transition:all .3s}
 .ab:hover{background:rgba(255,80,20,.3)}
@@ -23,7 +24,8 @@ svg{width:100vw;height:100vh;display:block;image-rendering:pixelated}
 </style>
 </head>
 <body>
-<svg id="S" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<div class="scene-container">
+<svg id="S" viewBox="0 0 320 200" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
 <defs>
   <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" id="sk0"/><stop offset="12%" id="sk1"/><stop offset="28%" id="sk2"/>
@@ -209,6 +211,7 @@ svg{width:100vw;height:100vh;display:block;image-rendering:pixelated}
 <!-- Dynamic sparkles -->
 <g id="dG"></g>
 </svg>
+</div>
 
 <div class="ap">
   <button class="ab" id="aBtn"><span style="position:relative">🔇<span class="wi"><span></span><span></span><span></span></span></span></button>
@@ -218,6 +221,36 @@ svg{width:100vw;height:100vh;display:block;image-rendering:pixelated}
 
 <script>
 const CYCLE=180,H=85; // horizon y
+const BASE_W=320,BASE_H=200;
+
+function initResponsive(){
+  const svg=document.getElementById('S');
+  function adjustViewBox(){
+    const w=window.innerWidth,h=window.innerHeight;
+    const isPortrait=h>=w;
+    if(isPortrait){
+      const portraitW=280;
+      const extraSky=30;
+      const extraGround=10;
+      const vbX=(BASE_W-portraitW)/2;
+      const vbY=-extraSky;
+      const vbH=BASE_H+extraSky+extraGround;
+      svg.setAttribute('viewBox',`${vbX} ${vbY} ${portraitW} ${vbH}`);
+      svg.setAttribute('preserveAspectRatio','xMidYMax slice');
+    }else{
+      const desktopExtraSky=16;
+      const desktopGroundTrim=2;
+      const vbY=-desktopExtraSky+desktopGroundTrim;
+      const vbH=BASE_H+desktopExtraSky;
+      svg.setAttribute('viewBox',`0 ${vbY} ${BASE_W} ${vbH}`);
+      svg.setAttribute('preserveAspectRatio','xMidYMax slice');
+    }
+  }
+  adjustViewBox();
+  window.addEventListener('resize',adjustViewBox,{passive:true});
+  window.addEventListener('orientationchange',adjustViewBox,{passive:true});
+}
+initResponsive();
 const T0=performance.now();
 function phase(){return((performance.now()-T0)/1000%CYCLE)/CYCLE;}
 
