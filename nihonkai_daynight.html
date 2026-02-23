@@ -87,17 +87,12 @@ svg{width:100vw;height:100vh;display:block;image-rendering:pixelated}
 
 <!-- MOON (clipped at horizon) -->
 <g id="moonG" clip-path="url(#aboveHorizon)">
-  <g id="moonInner">
+  <g id="moonInner" shape-rendering="geometricPrecision">
     <circle cx="0" cy="0" r="16" fill="url(#mGl)" filter="url(#mF)"/>
-    <rect x="-6" y="-8" width="10" height="14" fill="#dde8f0"/>
-    <rect x="-4" y="-10" width="6" height="2" fill="#dde8f0"/>
-    <rect x="-4" y="6" width="6" height="2" fill="#ccdde8"/>
-    <rect x="-8" y="-6" width="2" height="10" fill="#dde8f0"/>
-    <rect x="4" y="-6" width="2" height="10" fill="#ccdde8"/>
-    <rect x="-6" y="-4" width="2" height="2" fill="#c8d4dd" opacity=".5"/>
-    <rect x="-4" y="0" width="1" height="1" fill="#bbc8d5" opacity=".4"/>
-    <rect x="-7" y="2" width="2" height="1" fill="#c0ccd8" opacity=".3"/>
-    <rect x="-5" y="-6" width="1" height="1" fill="#b8c4d0" opacity=".3"/>
+    <circle cx="0" cy="0" r="12" fill="#e6eef6" opacity=".92"/>
+    <circle cx="-4.2" cy="-3.8" r="1.9" fill="#c6d2de" opacity=".45"/>
+    <circle cx="3.8" cy="-1.5" r="1.5" fill="#c1ceda" opacity=".38"/>
+    <circle cx="-1.1" cy="4.4" r="1.7" fill="#bcc9d6" opacity=".35"/>
   </g>
 </g>
 
