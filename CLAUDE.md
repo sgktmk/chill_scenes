@@ -23,6 +23,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/nihonka
 
 - `index.html` — Landing page hub linking to all scenes
 - `nihonkai_daynight.html` — "Seascape" scene (day-night cycle over the sea)
+- `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
 - `vercel.json` — Vercel routing config
 
 ## Architecture
@@ -73,3 +74,25 @@ Everything lives in a single HTML file (~700 lines). The `<script>` block contai
 
 - `initResponsive()` adjusts SVG viewBox for portrait vs landscape
 - Portrait mode narrows the view and adds extra sky; landscape shows full width
+
+### Campfire Scene (`campfire.html`)
+
+Single self-contained HTML file with CSS animations and procedural audio.
+
+#### Visual Elements (SVG + CSS)
+
+- 426×240 viewBox with `crispEdges` pixel-art rendering
+- Night sky with twinkling stars (6 animation variants)
+- Shooting stars spawned via JS with Web Animation API
+- Distant tree silhouettes, stone ring, and crossed logs
+- Multi-layered flame: base, mid, top, tip — each with independent CSS animations
+- Sparks rise from the fire with individual trajectories
+- Smoke wisps that expand and fade upward
+- Radial glow on ground and surrounding stones
+
+#### Audio System
+
+- Procedural Web Audio API (no audio files)
+- Brown noise layers for low rumble and mid warmth
+- Crackle buffers with random sharp spike transients
+- Volume slider + mute toggle in fixed UI panel
