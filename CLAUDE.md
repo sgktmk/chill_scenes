@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A relaxing animated web scene of the Japanese Sea ("日本海 一日の移ろい") cycling through a full day-night transition. Pure vanilla HTML/CSS/JavaScript with no dependencies, no build system, and no package manager. All code is inlined in a single HTML file.
+A collection of relaxing animated web scenes. Pure vanilla HTML/CSS/JavaScript with no dependencies, no build system, and no package manager. `index.html` is the landing page hub; each scene lives in its own self-contained HTML file.
 
 ## Running Locally
 
@@ -17,17 +17,23 @@ Or open `index.html` directly in a browser. No build step required.
 
 ## Deployment
 
-Hosted on Vercel as a static site. `vercel.json` rewrites all routes to `nihonkai_daynight.html`. The file `index.html` is a manually synced copy — changes should be made to both files or they will drift.
+Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/nihonkai_daynight` serves the scene without the `.html` extension.
 
 ## Files
 
-- `nihonkai_daynight.html` — Primary scene file (served by Vercel)
-- `index.html` — Synced copy of the above
+- `index.html` — Landing page hub linking to all scenes
+- `nihonkai_daynight.html` — "Seascape" scene (day-night cycle over the sea)
 - `vercel.json` — Vercel routing config
 
 ## Architecture
 
-Everything lives inside the HTML files (~700 lines each). The `<script>` block contains several self-contained systems:
+### Landing Page (`index.html`)
+
+A simple static hub page with card links to each scene. No JavaScript. Dark theme with warm orange accents matching the scene UI.
+
+### Seascape Scene (`nihonkai_daynight.html`)
+
+Everything lives in a single HTML file (~700 lines). The `<script>` block contains several self-contained systems:
 
 ### Day-Night Cycle (core timing)
 
