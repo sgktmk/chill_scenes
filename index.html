@@ -60,7 +60,7 @@ svg{width:100%;height:100%;display:block;image-rendering:pixelated}
 </defs>
 
 <!-- SKY -->
-<rect x="0" y="-40" width="320" height="125" fill="url(#skyG)"/>
+<rect x="0" y="0" width="320" height="85" fill="url(#skyG)"/>
 
 <!-- STARS -->
 <g id="stG">
@@ -89,12 +89,27 @@ svg{width:100%;height:100%;display:block;image-rendering:pixelated}
 
 <!-- MOON (clipped at horizon) -->
 <g id="moonG" clip-path="url(#aboveHorizon)">
-  <g id="moonInner" shape-rendering="geometricPrecision">
-    <circle cx="0" cy="0" r="16" fill="url(#mGl)" filter="url(#mF)"/>
-    <circle cx="0" cy="0" r="12" fill="#e6eef6" opacity=".92"/>
-    <circle cx="-4.2" cy="-3.8" r="1.9" fill="#c6d2de" opacity=".45"/>
-    <circle cx="3.8" cy="-1.5" r="1.5" fill="#c1ceda" opacity=".38"/>
-    <circle cx="-1.1" cy="4.4" r="1.7" fill="#bcc9d6" opacity=".35"/>
+  <g id="moonInner" shape-rendering="crispEdges">
+    <circle id="moonHalo" cx="0" cy="0" r="16" fill="url(#mGl)" filter="url(#mF)"/>
+    <g id="moonCore" fill="#d6e0ea" opacity=".88">
+      <rect x="-4" y="-10" width="8" height="1"/>
+      <rect x="-7" y="-9" width="14" height="2"/>
+      <rect x="-9" y="-7" width="18" height="3"/>
+      <rect x="-10" y="-4" width="20" height="8"/>
+      <rect x="-9" y="4" width="18" height="3"/>
+      <rect x="-7" y="7" width="14" height="2"/>
+      <rect x="-4" y="9" width="8" height="1"/>
+    </g>
+    <g id="moonShade" fill="#b8c4d2" opacity=".45">
+      <rect x="-8" y="-7" width="2" height="13"/>
+      <rect x="-6" y="6" width="10" height="1"/>
+      <rect x="5" y="-6" width="2" height="9"/>
+    </g>
+    <g id="moonCraters" fill="#aebccc" opacity=".32">
+      <rect x="-5" y="-3" width="2" height="2"/>
+      <rect x="2" y="-1" width="2" height="2"/>
+      <rect x="-1" y="3" width="2" height="2"/>
+    </g>
   </g>
 </g>
 
@@ -340,9 +355,21 @@ function moonPos(p){
   return{x,y,mp};
 }
 
+function nightLevel(p){
+  if(p>=0.62&&p<0.78)return (p-0.62)/0.16;
+  if(p>=0.78&&p<0.95)return 1;
+  if(p>=0.95)return Math.max(0,1-(p-0.95)/0.05);
+  if(p<0.05)return Math.max(0,1-p/0.05);
+  return 0;
+}
+
 const sunG=document.getElementById('sunG');
 const moonI=document.getElementById('moonInner');
 const moonG=document.getElementById('moonG');
+const moonHalo=document.getElementById('moonHalo');
+const moonCore=document.getElementById('moonCore');
+const moonShade=document.getElementById('moonShade');
+const moonCraters=document.getElementById('moonCraters');
 const stG=document.getElementById('stG');
 const srG=document.getElementById('srG');
 const mrG=document.getElementById('mrG');
@@ -367,6 +394,7 @@ function updateColors(p){
 }
 
 function updatePositions(p){
+  const nL=nightLevel(p);
   // Sun
   const sp=sunPos(p);
   if(sp){
@@ -389,9 +417,16 @@ function updatePositions(p){
   const mp=moonPos(p);
   if(mp){
     moonI.setAttribute('transform',`translate(${mp.x},${mp.y})`);
-    moonG.setAttribute('opacity',1);
-    // Moon reflection dimmer when moon is less full
-    mrG.setAttribute('opacity',0.5);
+    const moonRise=Math.max(0,Math.min(1,mp.mp*3.6));
+    const moonVisible=0.06+0.94*nL;
+    moonG.setAttribute('opacity',moonRise*moonVisible);
+    moonI.setAttribute('filter',nL>0.72?'none':'url(#mF)');
+    moonCore.setAttribute('fill',lerp('#e3bfa8','#f6fbff',nL));
+    moonShade.setAttribute('fill',lerp('#a79698','#cdd8e5',nL));
+    moonCraters.setAttribute('fill',lerp('#9d8f9d','#bdcad8',nL));
+    moonHalo.setAttribute('opacity',0.95-(nL*0.5));
+    // Moon reflection: faint at rise, clearer in deeper night
+    mrG.setAttribute('opacity',0.08+0.5*nL);
     const mx=mp.x;
     mr[0].setAttribute('x',mx-6);mr[1].setAttribute('x',mx-3);
     mr[2].setAttribute('x',mx-1);mr[3].setAttribute('x',mx-1);
@@ -443,69 +478,98 @@ function updatePositions(p){
   const ns='http://www.w3.org/2000/svg';
   const layer=document.getElementById('shipLayer');
   const shipTypes=[
-    {name:'fishing',w:8,h:4,y:96,speed:4,draw:function(g,dark){
+    {name:'fishing',w:8,h:4,y:96,speed:4,draw:function(g){
       // Small fishing boat
-      const c=dark?'#1a1520':'#553830';const c2=dark?'#101018':'#774a38';
+      const c='#553830';const c2='#774a38';
       r(g,0,2,8,2,c);r(g,1,1,6,1,c2);r(g,3,0,1,1,c2);r(g,3,-2,1,3,'#664433');// mast
-      if(dark){r(g,2,-1,2,1,'#ffeeaa');} // lamp at night
+      return[r(g,2,-1,2,1,'#ffeeaa')];
     }},
-    {name:'fishing2',w:10,h:5,y:100,speed:3.5,draw:function(g,dark){
-      const c=dark?'#181420':'#604838';const c2=dark?'#0e0e18':'#7a5540';
+    {name:'fishing2',w:10,h:5,y:100,speed:3.5,draw:function(g){
+      const c='#604838';const c2='#7a5540';
       r(g,0,2,10,3,c);r(g,1,1,8,1,c2);r(g,2,0,3,1,c2);r(g,4,-2,1,3,'#775544');
       r(g,6,0,2,1,'#665544');
-      if(dark){r(g,3,-1,2,1,'#ffeeaa');r(g,7,0,1,1,'#ff8844');}
+      return[r(g,3,-1,2,1,'#ffeeaa'),r(g,7,0,1,1,'#ff8844')];
     }},
-    {name:'cargo',w:18,h:6,y:94,speed:5,draw:function(g,dark){
-      const c=dark?'#151520':'#444455';const c2=dark?'#101018':'#555566';
+    {name:'cargo',w:18,h:6,y:94,speed:5,draw:function(g){
+      const c='#444455';const c2='#555566';
       r(g,0,3,18,3,c);r(g,1,2,16,1,c2);r(g,2,1,14,1,c);
       r(g,3,0,4,1,'#666677');r(g,10,0,3,1,'#666677'); // containers
       r(g,8,-1,2,1,'#555566');r(g,14,1,2,1,'#777788');
       r(g,4,-2,1,3,'#555555'); // mast
-      if(dark){r(g,1,1,1,1,'#88ff88');r(g,16,1,1,1,'#ff4444');r(g,3,-1,2,1,'#ffffaa');}
+      return[r(g,1,1,1,1,'#88ff88'),r(g,16,1,1,1,'#ff4444'),r(g,3,-1,2,1,'#ffffaa')];
     }},
-    {name:'ferry',w:24,h:8,y:92,speed:6,draw:function(g,dark){
-      const c=dark?'#1a1a28':'#eeeedd';const c2=dark?'#141420':'#ddddcc';const c3=dark?'#101018':'#ccccbb';
+    {name:'ferry',w:24,h:8,y:92,speed:6,draw:function(g){
+      const c='#eeeedd';const c2='#ddddcc';const c3='#ccccbb';
       r(g,0,4,24,4,c3);r(g,1,3,22,1,c2);r(g,2,1,20,2,c);r(g,3,0,18,1,c2);
       r(g,4,-1,8,1,c); // upper deck
       r(g,5,-2,6,1,c2); // bridge
       // windows
-      for(let i=0;i<7;i++){r(g,4+i*2.5,2,1,1,dark?'#aabb88':'#88bbdd');}
+      for(let i=0;i<7;i++){r(g,4+i*2.5,2,1,1,'#88bbdd');}
       r(g,15,0,1,1,'#dd4444'); // funnel
       r(g,15,-1,1,1,'#cc3333');
-      if(dark){r(g,0,3,1,1,'#88ff88');r(g,23,3,1,1,'#ff4444');
-        for(let i=0;i<4;i++)r(g,5+i*3,1,1,1,'#ffffaa');}
+      const lights=[r(g,0,3,1,1,'#88ff88'),r(g,23,3,1,1,'#ff4444')];
+      for(let i=0;i<4;i++)lights.push(r(g,5+i*3,1,1,1,'#ffffaa'));
+      return lights;
     }},
+  ];
+
+  const lanes=[
+    {name:'far',minY:95,maxY:110,scaleMin:0.7,scaleMax:0.92,speedMin:0.85,speedMax:1.02,weight:3},
+    {name:'mid',minY:112,maxY:133,scaleMin:0.95,scaleMax:1.2,speedMin:0.95,speedMax:1.18,weight:4},
+    {name:'near',minY:134,maxY:176,scaleMin:1.22,scaleMax:1.75,speedMin:1.08,speedMax:1.45,weight:7}
   ];
 
   function r(g,x,y,w,h,fill){
     const el=document.createElementNS(ns,'rect');
     el.setAttribute('x',x);el.setAttribute('y',y);el.setAttribute('width',w);el.setAttribute('height',h);
     el.setAttribute('fill',fill);g.appendChild(el);
+    return el;
+  }
+
+  function pickLane(){
+    const total=lanes.reduce((sum,l)=>sum+l.weight,0);
+    let roll=Math.random()*total;
+    for(const lane of lanes){
+      roll-=lane.weight;
+      if(roll<=0)return lane;
+    }
+    return lanes[lanes.length-1];
   }
 
   let activeShips=[];
   function spawnShip(){
     const type=shipTypes[Math.floor(Math.random()*shipTypes.length)];
+    const lane=pickLane();
     const dir=Math.random()>0.5?1:-1; // 1=left→right, -1=right→left
     const startX=dir===1?-type.w-5:325;
-    const baseY=type.y+Math.random()*15;
-    const dark=phase()>0.68||phase()<0.05;
+    const baseY=lane.minY+Math.random()*(lane.maxY-lane.minY);
+    const scale=lane.scaleMin+Math.random()*(lane.scaleMax-lane.scaleMin);
+    const speedMul=lane.speedMin+Math.random()*(lane.speedMax-lane.speedMin);
 
     const g=document.createElementNS(ns,'g');
-    type.draw(g,dark);
+    const lights=type.draw(g);
+    lights.forEach(l=>l.setAttribute('opacity',0));
 
-    const ship={g,x:startX,y:baseY,dir,speed:type.speed+Math.random()*2,w:type.w,bobPhase:Math.random()*Math.PI*2};
+    const ship={
+      g,x:startX,y:baseY,dir,
+      speed:(type.speed+Math.random()*2)*speedMul,
+      w:type.w*scale,scale,
+      bobPhase:Math.random()*Math.PI*2,
+      lights,bobAmp:0.3+(scale-0.7)*0.6
+    };
     layer.appendChild(g);
     activeShips.push(ship);
   }
 
   function updateShips(dt){
+    const nL=nightLevel(phase());
     for(let i=activeShips.length-1;i>=0;i--){
       const s=activeShips[i];
       s.x+=s.dir*s.speed*dt;
       s.bobPhase+=dt*1.5;
-      const bob=Math.sin(s.bobPhase)*0.8;
-      s.g.setAttribute('transform',`translate(${s.x},${s.y+bob})`);
+      const bob=Math.sin(s.bobPhase)*s.bobAmp;
+      s.g.setAttribute('transform',`translate(${s.x},${s.y+bob}) scale(${s.scale})`);
+      s.lights.forEach(light=>light.setAttribute('opacity',Math.max(0,(-0.08+nL*1.2))));
       if((s.dir===1&&s.x>325)||(s.dir===-1&&s.x<-s.w-5)){
         layer.removeChild(s.g);activeShips.splice(i,1);
       }
@@ -513,7 +577,7 @@ function updatePositions(p){
   }
 
   // Spawn ships randomly
-  let nextSpawn=8+Math.random()*20;
+  let nextSpawn=4+Math.random()*8;
   let lastTime=performance.now()/1000;
   function tick(){
     const now=performance.now()/1000;
@@ -523,7 +587,7 @@ function updatePositions(p){
     nextSpawn-=dt;
     if(nextSpawn<=0){
       spawnShip();
-      nextSpawn=15+Math.random()*40; // 15-55s between ships
+      nextSpawn=8+Math.random()*18; // 8-26s between ships
     }
     requestAnimationFrame(tick);
   }
