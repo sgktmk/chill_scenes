@@ -90,16 +90,26 @@ svg{width:100%;height:100%;display:block;image-rendering:pixelated}
 <!-- MOON (clipped at horizon) -->
 <g id="moonG" clip-path="url(#aboveHorizon)">
   <g id="moonInner" shape-rendering="crispEdges">
-    <circle cx="0" cy="0" r="16" fill="url(#mGl)" filter="url(#mF)"/>
-    <rect x="-9" y="-9" width="18" height="18" fill="#d7e0ea" opacity=".9"/>
-    <rect x="-10" y="-7" width="1" height="14" fill="#c0ccd9" opacity=".7"/>
-    <rect x="9" y="-7" width="1" height="14" fill="#bcc8d4" opacity=".7"/>
-    <rect x="-7" y="-10" width="14" height="1" fill="#c5d1dd" opacity=".7"/>
-    <rect x="-7" y="9" width="14" height="1" fill="#bac6d2" opacity=".7"/>
-    <rect x="-8" y="-8" width="16" height="16" fill="#e4ebf4" opacity=".45"/>
-    <rect x="-5" y="-4" width="3" height="3" fill="#b8c5d2" opacity=".45"/>
-    <rect x="2" y="-2" width="2" height="2" fill="#b6c3d1" opacity=".35"/>
-    <rect x="-1" y="3" width="2" height="2" fill="#b2bfcc" opacity=".35"/>
+    <circle id="moonHalo" cx="0" cy="0" r="16" fill="url(#mGl)" filter="url(#mF)"/>
+    <g id="moonCore" fill="#d6e0ea" opacity=".88">
+      <rect x="-4" y="-10" width="8" height="1"/>
+      <rect x="-7" y="-9" width="14" height="2"/>
+      <rect x="-9" y="-7" width="18" height="3"/>
+      <rect x="-10" y="-4" width="20" height="8"/>
+      <rect x="-9" y="4" width="18" height="3"/>
+      <rect x="-7" y="7" width="14" height="2"/>
+      <rect x="-4" y="9" width="8" height="1"/>
+    </g>
+    <g id="moonShade" fill="#b8c4d2" opacity=".45">
+      <rect x="-8" y="-7" width="2" height="13"/>
+      <rect x="-6" y="6" width="10" height="1"/>
+      <rect x="5" y="-6" width="2" height="9"/>
+    </g>
+    <g id="moonCraters" fill="#aebccc" opacity=".32">
+      <rect x="-5" y="-3" width="2" height="2"/>
+      <rect x="2" y="-1" width="2" height="2"/>
+      <rect x="-1" y="3" width="2" height="2"/>
+    </g>
   </g>
 </g>
 
@@ -356,6 +366,10 @@ function nightLevel(p){
 const sunG=document.getElementById('sunG');
 const moonI=document.getElementById('moonInner');
 const moonG=document.getElementById('moonG');
+const moonHalo=document.getElementById('moonHalo');
+const moonCore=document.getElementById('moonCore');
+const moonShade=document.getElementById('moonShade');
+const moonCraters=document.getElementById('moonCraters');
 const stG=document.getElementById('stG');
 const srG=document.getElementById('srG');
 const mrG=document.getElementById('mrG');
@@ -403,12 +417,16 @@ function updatePositions(p){
   const mp=moonPos(p);
   if(mp){
     moonI.setAttribute('transform',`translate(${mp.x},${mp.y})`);
-    const moonRise=Math.max(0,Math.min(1,mp.mp*2.8));
-    const moonVisible=0.15+0.85*nL;
+    const moonRise=Math.max(0,Math.min(1,mp.mp*3.6));
+    const moonVisible=0.06+0.94*nL;
     moonG.setAttribute('opacity',moonRise*moonVisible);
-    moonI.setAttribute('filter',nL>0.65?'none':'url(#mF)');
-    // Moon reflection dimmer when moon is less full
-    mrG.setAttribute('opacity',0.2+0.35*nL);
+    moonI.setAttribute('filter',nL>0.72?'none':'url(#mF)');
+    moonCore.setAttribute('fill',lerp('#e3bfa8','#f6fbff',nL));
+    moonShade.setAttribute('fill',lerp('#a79698','#cdd8e5',nL));
+    moonCraters.setAttribute('fill',lerp('#9d8f9d','#bdcad8',nL));
+    moonHalo.setAttribute('opacity',0.95-(nL*0.5));
+    // Moon reflection: faint at rise, clearer in deeper night
+    mrG.setAttribute('opacity',0.08+0.5*nL);
     const mx=mp.x;
     mr[0].setAttribute('x',mx-6);mr[1].setAttribute('x',mx-3);
     mr[2].setAttribute('x',mx-1);mr[3].setAttribute('x',mx-1);
@@ -496,9 +514,9 @@ function updatePositions(p){
   ];
 
   const lanes=[
-    {minY:96,maxY:112,scaleMin:0.78,scaleMax:0.95,speedMin:0.9,speedMax:1.05,weight:3},
-    {minY:114,maxY:134,scaleMin:0.96,scaleMax:1.15,speedMin:1,speedMax:1.2,weight:4},
-    {minY:136,maxY:164,scaleMin:1.16,scaleMax:1.45,speedMin:1.12,speedMax:1.38,weight:5}
+    {name:'far',minY:95,maxY:110,scaleMin:0.7,scaleMax:0.92,speedMin:0.85,speedMax:1.02,weight:3},
+    {name:'mid',minY:112,maxY:133,scaleMin:0.95,scaleMax:1.2,speedMin:0.95,speedMax:1.18,weight:4},
+    {name:'near',minY:134,maxY:176,scaleMin:1.22,scaleMax:1.75,speedMin:1.08,speedMax:1.45,weight:7}
   ];
 
   function r(g,x,y,w,h,fill){
@@ -537,7 +555,7 @@ function updatePositions(p){
       speed:(type.speed+Math.random()*2)*speedMul,
       w:type.w*scale,scale,
       bobPhase:Math.random()*Math.PI*2,
-      lights,bobAmp:0.45+(scale-0.7)*0.55
+      lights,bobAmp:0.3+(scale-0.7)*0.6
     };
     layer.appendChild(g);
     activeShips.push(ship);
@@ -551,7 +569,7 @@ function updatePositions(p){
       s.bobPhase+=dt*1.5;
       const bob=Math.sin(s.bobPhase)*s.bobAmp;
       s.g.setAttribute('transform',`translate(${s.x},${s.y+bob}) scale(${s.scale})`);
-      s.lights.forEach(light=>light.setAttribute('opacity',0.08+nL*0.92));
+      s.lights.forEach(light=>light.setAttribute('opacity',Math.max(0,(-0.08+nL*1.2))));
       if((s.dir===1&&s.x>325)||(s.dir===-1&&s.x<-s.w-5)){
         layer.removeChild(s.g);activeShips.splice(i,1);
       }
@@ -559,7 +577,7 @@ function updatePositions(p){
   }
 
   // Spawn ships randomly
-  let nextSpawn=8+Math.random()*20;
+  let nextSpawn=4+Math.random()*8;
   let lastTime=performance.now()/1000;
   function tick(){
     const now=performance.now()/1000;
@@ -569,7 +587,7 @@ function updatePositions(p){
     nextSpawn-=dt;
     if(nextSpawn<=0){
       spawnShip();
-      nextSpawn=15+Math.random()*40; // 15-55s between ships
+      nextSpawn=8+Math.random()*18; // 8-26s between ships
     }
     requestAnimationFrame(tick);
   }
