@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Campfire</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    font-family: 'Press Start 2P', monospace;
+  }
+  .scene-container {
+    position: relative;
+    width: 100vw;
+    height: 56.25vw;
+    max-width: 100vw;
+    max-height: 100vh;
+  }
+  @media (min-aspect-ratio: 16/9) {
+    .scene-container {
+      height: 100vh;
+      width: 177.78vh;
+    }
+  }
+  svg { width: 100%; height: 100%; image-rendering: pixelated; }
+  /* ===== FLAME ANIMATIONS ===== */
+  @keyframes flameUnifiedSway {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    20%  { transform: translate(1.5px, -0.5px) rotate(0.8deg); }
+    40%  { transform: translate(-0.5px, 0) rotate(-0.3deg); }
+    60%  { transform: translate(-1.5px, -0.5px) rotate(-0.7deg); }
+    80%  { transform: translate(0.5px, 0) rotate(0.3deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+  }
+  .flame-all {
+    animation: flameUnifiedSway 4s ease-in-out infinite;
+    transform-origin: 213px 198px;
+  }
+  @keyframes flameBase {
+    0%   { transform: scaleX(1); }
+    30%  { transform: scaleX(1.01); }
+    60%  { transform: scaleX(0.99); }
+    100% { transform: scaleX(1); }
+  }
+  @keyframes flameMid {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(0.5px, -0.5px); }
+    50%  { transform: translate(-0.5px, 0); }
+    75%  { transform: translate(0.3px, -0.3px); }
+    100% { transform: translate(0, 0); }
+  }
+  @keyframes flameTop {
+    0%   { transform: translate(0, 0) scaleY(1); }
+    20%  { transform: translate(0.3px, -0.3px) scaleY(1.015); }
+    50%  { transform: translate(-0.4px, 0) scaleY(0.98); }
+    80%  { transform: translate(0.2px, -0.2px) scaleY(1.01); }
+    100% { transform: translate(0, 0) scaleY(1); }
+  }
+  @keyframes flameTip {
+    0%   { transform: translate(0, 0) scaleY(1); opacity: 0.9; }
+    15%  { transform: translate(0.3px, -0.3px) scaleY(1.02); opacity: 0.78; }
+    35%  { transform: translate(-0.4px, 0) scaleY(0.97); opacity: 0.88; }
+    55%  { transform: translate(0.3px, -0.4px) scaleY(1.03); opacity: 0.72; }
+    75%  { transform: translate(-0.2px, -0.2px) scaleY(0.98); opacity: 0.85; }
+    100% { transform: translate(0, 0) scaleY(1); opacity: 0.9; }
+  }
+  @keyframes coreFlicker {
+    0%   { opacity: 0.7; }
+    20%  { opacity: 0.85; }
+    40%  { opacity: 0.6; }
+    55%  { opacity: 0.8; }
+    70%  { opacity: 0.55; }
+    85%  { opacity: 0.75; }
+    100% { opacity: 0.7; }
+  }
+  .flame-base { animation: flameBase 3.2s ease-in-out infinite; transform-origin: center bottom; }
+  .flame-mid  { animation: flameMid 2.8s ease-in-out infinite 0.2s; transform-origin: center bottom; }
+  .flame-top  { animation: flameTop 2.4s ease-in-out infinite 0.4s; transform-origin: center bottom; }
+  .flame-tip  { animation: flameTip 2.0s ease-in-out infinite 0.1s; transform-origin: center bottom; }
+  .flame-tip2 { animation: coreFlicker 1.8s ease-in-out infinite 0.15s; transform-origin: center bottom; }
+  .flame-tip3 { animation: flameTip 2.2s ease-in-out infinite 0.5s; transform-origin: center bottom; }
+  /* ===== SPARK ANIMATIONS ===== */
+  @keyframes spark1 { 0%{transform:translate(0,0);opacity:1}50%{transform:translate(-8px,-40px);opacity:.8}100%{transform:translate(-12px,-80px);opacity:0} }
+  @keyframes spark2 { 0%{transform:translate(0,0);opacity:1}50%{transform:translate(6px,-35px);opacity:.7}100%{transform:translate(10px,-75px);opacity:0} }
+  @keyframes spark3 { 0%{transform:translate(0,0);opacity:1}50%{transform:translate(-3px,-45px);opacity:.9}100%{transform:translate(5px,-90px);opacity:0} }
+  @keyframes spark4 { 0%{transform:translate(0,0);opacity:1}50%{transform:translate(10px,-30px);opacity:.6}100%{transform:translate(8px,-70px);opacity:0} }
+  @keyframes spark5 { 0%{transform:translate(0,0);opacity:1}50%{transform:translate(-5px,-50px);opacity:.85}100%{transform:translate(-15px,-95px);opacity:0} }
+  @keyframes spark6 { 0%{transform:translate(0,0);opacity:0}10%{opacity:1}50%{transform:translate(7px,-38px);opacity:.7}100%{transform:translate(3px,-82px);opacity:0} }
+  .spark1 { animation: spark1 2.5s ease-out infinite; }
+  .spark2 { animation: spark2 3.1s ease-out infinite 0.8s; }
+  .spark3 { animation: spark3 2.8s ease-out infinite 1.5s; }
+  .spark4 { animation: spark4 3.4s ease-out infinite 0.4s; }
+  .spark5 { animation: spark5 2.2s ease-out infinite 2.0s; }
+  .spark6 { animation: spark6 2.9s ease-out infinite 1.2s; }
+  /* ===== SMOKE ANIMATIONS ===== */
+  @keyframes smoke1 { 0%{transform:translate(0,0) scaleX(1);opacity:.35}30%{transform:translate(-5px,-30px) scaleX(1.2);opacity:.25}60%{transform:translate(-10px,-60px) scaleX(1.5);opacity:.15}100%{transform:translate(-8px,-100px) scaleX(2);opacity:0} }
+  @keyframes smoke2 { 0%{transform:translate(0,0) scaleX(1);opacity:.3}30%{transform:translate(4px,-25px) scaleX(1.3);opacity:.22}60%{transform:translate(8px,-55px) scaleX(1.6);opacity:.12}100%{transform:translate(12px,-95px) scaleX(2.2);opacity:0} }
+  @keyframes smoke3 { 0%{transform:translate(0,0) scaleX(1);opacity:.25}30%{transform:translate(-3px,-35px) scaleX(1.15);opacity:.18}60%{transform:translate(5px,-65px) scaleX(1.4);opacity:.1}100%{transform:translate(3px,-105px) scaleX(1.8);opacity:0} }
+  .smoke1 { animation: smoke1 4.5s ease-out infinite; }
+  .smoke2 { animation: smoke2 5.0s ease-out infinite 1.5s; }
+  .smoke3 { animation: smoke3 4.2s ease-out infinite 3.0s; }
+  /* ===== GLOW ===== */
+  @keyframes glowPulse { 0%{opacity:.25}25%{opacity:.35}50%{opacity:.2}75%{opacity:.32}100%{opacity:.25} }
+  .glow { animation: glowPulse 3s ease-in-out infinite; }
+  @keyframes glowGround { 0%{opacity:.15}33%{opacity:.25}66%{opacity:.12}100%{opacity:.15} }
+  .glow-ground { animation: glowGround 2.5s ease-in-out infinite 0.5s; }
+  /* ===== STAR TWINKLE ===== */
+  @keyframes twinkle1 { 0%,100%{opacity:.3}50%{opacity:1} }
+  @keyframes twinkle2 { 0%,100%{opacity:.5}50%{opacity:.1} }
+  @keyframes twinkle3 { 0%,100%{opacity:.7}50%{opacity:.2} }
+  .star-t1 { animation: twinkle1 3s ease-in-out infinite; }
+  .star-t2 { animation: twinkle2 4s ease-in-out infinite 1s; }
+  .star-t3 { animation: twinkle3 5s ease-in-out infinite 2s; }
+  .star-t4 { animation: twinkle1 3.5s ease-in-out infinite 0.5s; }
+  .star-t5 { animation: twinkle2 4.5s ease-in-out infinite 1.5s; }
+  .star-t6 { animation: twinkle3 2.8s ease-in-out infinite 0.8s; }
+  /* ===== CONTROLS ===== */
+  .controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(10,10,26,0.85);
+    border: 2px solid #443322;
+    border-radius: 8px;
+    padding: 10px 20px;
+    z-index: 100;
+  }
+  .sound-btn {
+    background: none;
+    border: 2px solid #665533;
+    color: #aa8855;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    padding: 8px 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+  .sound-btn:hover { border-color: #ff9933; color: #ffbb66; }
+  .sound-btn.active {
+    border-color: #ff6622;
+    color: #ffaa44;
+    box-shadow: 0 0 12px rgba(255,102,34,0.5), inset 0 0 8px rgba(255,102,34,0.15);
+    text-shadow: 0 0 6px rgba(255,150,50,0.6);
+  }
+  .volume-wrap { display: flex; align-items: center; gap: 8px; }
+  .volume-label { color: #776644; font-size: 8px; }
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 80px; height: 6px;
+    background: #332211; border-radius: 3px; outline: none; border: 1px solid #554433;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 14px; height: 14px; background: #cc7722; border-radius: 50%; cursor: pointer; border: 2px solid #ffaa44;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px; background: #cc7722; border-radius: 50%; cursor: pointer; border: 2px solid #ffaa44;
+  }
+</style>
+</head>
+<body>
+<div class="scene-container">
+<svg id="mainSvg" viewBox="0 0 426 240" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <defs>
+    <radialGradient id="fireGlow" cx="50%" cy="58%" r="35%">
+      <stop offset="0%" stop-color="#ff6600" stop-opacity="0.5"/>
+      <stop offset="40%" stop-color="#ff3300" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#ff3300" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="groundGlow2" cx="213" cy="198" r="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff6600" stop-opacity="0.25"/>
+      <stop offset="60%" stop-color="#cc3300" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- ===== NIGHT SKY ===== -->
+  <rect width="426" height="240" fill="#070714"/>
+  <rect y="0" width="426" height="110" fill="#0d0d22" opacity="0.5"/>
+  <rect y="110" width="426" height="80" fill="#111128" opacity="0.2"/>
+  <!-- ===== STARS ===== -->
+  <g>
+    <rect class="star-t1" x="15" y="12" width="2" height="2" fill="#eeeeff"/>
+    <rect class="star-t2" x="55" y="28" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t3" x="92" y="8" width="2" height="2" fill="#ffffff"/>
+    <rect class="star-t4" x="128" y="45" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t5" x="160" y="15" width="2" height="2" fill="#eeeeff"/>
+    <rect class="star-t6" x="195" y="52" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t1" x="230" y="10" width="1" height="1" fill="#ffffff"/>
+    <rect class="star-t2" x="270" y="30" width="2" height="2" fill="#eeeeff"/>
+    <rect class="star-t3" x="310" y="18" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t4" x="345" y="40" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t5" x="378" y="12" width="2" height="2" fill="#eeeeff"/>
+    <rect class="star-t6" x="405" y="35" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t1" x="42" y="60" width="1" height="1" fill="#bbbbdd"/>
+    <rect class="star-t2" x="78" y="48" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t3" x="110" y="5" width="1" height="1" fill="#ffffff"/>
+    <rect class="star-t4" x="250" y="55" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t5" x="290" y="8" width="1" height="1" fill="#eeeeff"/>
+    <rect class="star-t6" x="358" y="58" width="1" height="1" fill="#bbbbdd"/>
+    <rect class="star-t1" x="175" y="35" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t2" x="415" y="22" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t3" x="25" y="42" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t4" x="330" y="25" width="2" height="2" fill="#eeeeff"/>
+    <rect class="star-t5" x="395" y="50" width="1" height="1" fill="#bbbbdd"/>
+    <rect class="star-t6" x="148" y="62" width="1" height="1" fill="#ccccee"/>
+    <!-- Bright cross stars -->
+    <g class="star-t2">
+      <rect x="60" y="18" width="1" height="3" fill="#ffffff"/>
+      <rect x="59" y="19" width="3" height="1" fill="#ffffff"/>
+    </g>
+    <g class="star-t5">
+      <rect x="300" y="38" width="1" height="3" fill="#ffffff"/>
+      <rect x="299" y="39" width="3" height="1" fill="#ffffff"/>
+    </g>
+    <g class="star-t3">
+      <rect x="385" y="14" width="1" height="3" fill="#ffffff"/>
+      <rect x="384" y="15" width="3" height="1" fill="#ffffff"/>
+    </g>
+  </g>
+  <!-- Shooting stars container -->
+  <g id="shootingStars"></g>
+  <!-- ===== DISTANT TREES ===== -->
+  <g fill="#080815" opacity="0.7">
+    <polygon points="15,148 24,100 33,148"/>
+    <polygon points="5,148 14,112 23,148"/>
+    <polygon points="28,148 37,105 46,148"/>
+    <polygon points="50,148 58,115 66,148"/>
+    <polygon points="75,148 82,118 89,148"/>
+    <polygon points="95,148 101,125 107,148"/>
+    <polygon points="315,148 322,120 329,148"/>
+    <polygon points="335,148 342,108 349,148"/>
+    <polygon points="360,148 368,95 376,148"/>
+    <polygon points="375,148 383,105 391,148"/>
+    <polygon points="390,148 397,98 404,148"/>
+    <polygon points="405,148 412,110 419,148"/>
+  </g>
+  <!-- ===== GROUND ===== -->
+  <rect x="0" y="198" width="426" height="42" fill="#1a1510"/>
+  <g fill="#151208">
+    <rect x="8" y="202" width="3" height="2"/>
+    <rect x="40" y="205" width="4" height="2"/>
+    <rect x="75" y="200" width="2" height="2"/>
+    <rect x="120" y="206" width="3" height="1"/>
+    <rect x="170" y="203" width="4" height="2"/>
+    <rect x="260" y="201" width="2" height="2"/>
+    <rect x="310" y="205" width="3" height="2"/>
+    <rect x="355" y="202" width="2" height="1"/>
+    <rect x="395" y="204" width="3" height="2"/>
+  </g>
+  <g fill="#1d1f0e">
+    <rect x="20" y="197" width="1" height="3"/>
+    <rect x="22" y="196" width="1" height="4"/>
+    <rect x="55" y="197" width="1" height="3"/>
+    <rect x="90" y="196" width="1" height="4"/>
+    <rect x="135" y="197" width="1" height="3"/>
+    <rect x="285" y="197" width="1" height="3"/>
+    <rect x="330" y="196" width="1" height="4"/>
+    <rect x="370" y="197" width="1" height="3"/>
+    <rect x="410" y="196" width="1" height="4"/>
+  </g>
+  <!-- ===== GROUND GLOW ===== -->
+  <ellipse class="glow-ground" cx="213" cy="200" rx="75" ry="14" fill="url(#groundGlow2)"/>
+  <!-- ===== STONES ===== -->
+  <g>
+    <rect x="178" y="194" width="8" height="6" rx="1" fill="#4a4540"/>
+    <rect x="179" y="194" width="6" height="2" fill="#5a5550"/>
+    <rect x="178" y="198" width="8" height="1" fill="#3a3530"/>
+    <rect x="188" y="196" width="6" height="4" rx="1" fill="#555045"/>
+    <rect x="189" y="196" width="4" height="1" fill="#656055"/>
+    <rect x="196" y="195" width="7" height="5" rx="1" fill="#4d4842"/>
+    <rect x="197" y="195" width="5" height="2" fill="#5d5852"/>
+    <rect x="229" y="195" width="7" height="5" rx="1" fill="#504b44"/>
+    <rect x="230" y="195" width="5" height="2" fill="#605b54"/>
+    <rect x="238" y="196" width="6" height="4" rx="1" fill="#484340"/>
+    <rect x="239" y="196" width="4" height="1" fill="#585350"/>
+    <rect x="246" y="194" width="8" height="6" rx="1" fill="#525048"/>
+    <rect x="247" y="194" width="6" height="2" fill="#626058"/>
+    <rect x="246" y="198" width="8" height="1" fill="#424038"/>
+    <rect x="200" y="198" width="5" height="3" rx="1" fill="#4a4640"/>
+    <rect x="201" y="198" width="3" height="1" fill="#5a5650"/>
+    <rect x="223" y="198" width="6" height="3" rx="1" fill="#4e4a44"/>
+    <rect x="224" y="198" width="4" height="1" fill="#5e5a54"/>
+  </g>
+  <!-- ===== FIRE GLOW ===== -->
+  <ellipse class="glow" cx="213" cy="175" rx="55" ry="42" fill="url(#fireGlow)"/>
+  <!-- ===== LOGS ===== -->
+  <g>
+    <rect x="193" y="188" width="22" height="5" fill="#4a2810" transform="rotate(-12, 204, 190)"/>
+    <rect x="194" y="188" width="20" height="2" fill="#5a3515" transform="rotate(-12, 204, 190)"/>
+    <rect x="193" y="192" width="22" height="1" fill="#3a1a08" transform="rotate(-12, 204, 190)"/>
+    <rect x="198" y="189" width="2" height="3" fill="#3e200c" transform="rotate(-12, 204, 190)"/>
+    <rect x="206" y="189" width="2" height="3" fill="#3e200c" transform="rotate(-12, 204, 190)"/>
+    <rect x="211" y="188" width="22" height="5" fill="#4d2b12" transform="rotate(10, 222, 190)"/>
+    <rect x="212" y="188" width="20" height="2" fill="#5d3818" transform="rotate(10, 222, 190)"/>
+    <rect x="211" y="192" width="22" height="1" fill="#3d1d0a" transform="rotate(10, 222, 190)"/>
+    <rect x="217" y="189" width="2" height="3" fill="#41220e" transform="rotate(10, 222, 190)"/>
+    <rect x="225" y="189" width="2" height="3" fill="#41220e" transform="rotate(10, 222, 190)"/>
+    <rect x="206" y="193" width="14" height="4" fill="#3f2210"/>
+    <rect x="207" y="193" width="12" height="1" fill="#4f3218"/>
+    <rect x="206" y="196" width="14" height="1" fill="#2f1508"/>
+    <rect x="208" y="190" width="2" height="2" fill="#cc3300" opacity="0.8"/>
+    <rect x="214" y="189" width="3" height="2" fill="#ff4400" opacity="0.7"/>
+    <rect x="219" y="190" width="2" height="2" fill="#dd4411" opacity="0.75"/>
+    <rect x="211" y="192" width="2" height="1" fill="#aa2200" opacity="0.6"/>
+    <rect x="216" y="192" width="2" height="1" fill="#bb3311" opacity="0.65"/>
+  </g>
+  <!-- ===== FLAME LAYERS ===== -->
+  <g class="flame-all">
+    <g class="flame-base">
+      <rect x="201" y="172" width="24" height="4" fill="#aa2200"/>
+      <rect x="199" y="176" width="28" height="4" fill="#991100"/>
+      <rect x="201" y="180" width="24" height="4" fill="#bb2800"/>
+      <rect x="203" y="184" width="20" height="4" fill="#cc3300"/>
+      <rect x="205" y="188" width="16" height="2" fill="#aa2200"/>
+      <rect x="197" y="178" width="2" height="4" fill="#882200" opacity="0.7"/>
+      <rect x="227" y="176" width="2" height="4" fill="#882200" opacity="0.7"/>
+    </g>
+    <g class="flame-mid">
+      <rect x="205" y="168" width="16" height="4" fill="#dd5500"/>
+      <rect x="203" y="172" width="20" height="4" fill="#ee5500"/>
+      <rect x="205" y="176" width="16" height="4" fill="#ff6600"/>
+      <rect x="207" y="180" width="12" height="4" fill="#ee5500"/>
+      <rect x="209" y="184" width="8" height="3" fill="#dd4400"/>
+      <rect x="201" y="174" width="2" height="3" fill="#cc4400" opacity="0.6"/>
+      <rect x="223" y="172" width="2" height="3" fill="#cc4400" opacity="0.6"/>
+    </g>
+    <g class="flame-top">
+      <rect x="209" y="162" width="8" height="4" fill="#ff8800"/>
+      <rect x="207" y="166" width="12" height="4" fill="#ffaa22"/>
+      <rect x="209" y="170" width="8" height="4" fill="#ff9911"/>
+      <rect x="206" y="168" width="2" height="3" fill="#ff7700" opacity="0.5"/>
+      <rect x="218" y="167" width="2" height="3" fill="#ff7700" opacity="0.5"/>
+    </g>
+    <g class="flame-tip">
+      <rect x="211" y="156" width="4" height="4" fill="#ffcc33"/>
+      <rect x="210" y="160" width="6" height="3" fill="#ffbb22"/>
+      <rect x="212" y="154" width="2" height="2" fill="#ffdd66"/>
+    </g>
+    <g class="flame-tip2">
+      <rect x="210" y="170" width="6" height="6" fill="#ffeeaa" opacity="0.8"/>
+      <rect x="211" y="168" width="4" height="2" fill="#ffffff" opacity="0.6"/>
+      <rect x="212" y="174" width="2" height="4" fill="#ffddaa" opacity="0.5"/>
+    </g>
+    <g class="flame-tip3">
+      <rect x="212" y="152" width="2" height="3" fill="#ffee88" opacity="0.7"/>
+      <rect x="211" y="155" width="4" height="2" fill="#ffcc44" opacity="0.5"/>
+    </g>
+  </g>
+  <!-- ===== SPARKS ===== -->
+  <g>
+    <rect class="spark1" x="211" y="160" width="2" height="2" fill="#ffcc00"/>
+    <rect class="spark2" x="215" y="162" width="1" height="1" fill="#ffaa00"/>
+    <rect class="spark3" x="213" y="158" width="1" height="1" fill="#ffdd33"/>
+    <rect class="spark4" x="209" y="164" width="2" height="2" fill="#ff8800"/>
+    <rect class="spark5" x="214" y="156" width="1" height="1" fill="#ffee44"/>
+    <rect class="spark6" x="210" y="161" width="1" height="1" fill="#ffbb22"/>
+  </g>
+  <!-- ===== SMOKE ===== -->
+  <g>
+    <g class="smoke1">
+      <rect x="210" y="140" width="6" height="4" fill="#444455" opacity="0.3"/>
+      <rect x="209" y="144" width="8" height="3" fill="#3a3a4a" opacity="0.2"/>
+    </g>
+    <g class="smoke2">
+      <rect x="212" y="135" width="5" height="3" fill="#3d3d4d" opacity="0.25"/>
+      <rect x="211" y="138" width="7" height="3" fill="#444455" opacity="0.2"/>
+    </g>
+    <g class="smoke3">
+      <rect x="211" y="130" width="4" height="3" fill="#404050" opacity="0.2"/>
+      <rect x="210" y="133" width="6" height="3" fill="#3a3a48" opacity="0.15"/>
+    </g>
+  </g>
+  <!-- ===== LIGHT REFLECTION ON STONES ===== -->
+  <g opacity="0.4" class="glow">
+    <rect x="179" y="194" width="4" height="1" fill="#ff6633"/>
+    <rect x="189" y="196" width="3" height="1" fill="#ff7744"/>
+    <rect x="197" y="195" width="4" height="1" fill="#ff8844"/>
+    <rect x="230" y="195" width="4" height="1" fill="#ff8844"/>
+    <rect x="239" y="196" width="3" height="1" fill="#ff7744"/>
+    <rect x="247" y="194" width="4" height="1" fill="#ff6633"/>
+  </g>
+</svg>
+</div>
+<!-- ===== SOUND CONTROLS ===== -->
+<div class="controls">
+  <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔇 SOUND</button>
+  <div class="volume-wrap">
+    <span class="volume-label">VOL</span>
+    <input type="range" id="volumeSlider" min="0" max="100" value="40" oninput="changeVolume(this.value)">
+  </div>
+</div>
+<script>
+  // ========================================
+  // SHOOTING STARS
+  // ========================================
+  (function initShootingStars() {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const container = document.getElementById('shootingStars');
+    function spawnShootingStar() {
+      const x = 20 + Math.random() * 380;
+      const y = 3 + Math.random() * 60;
+      const len = 14 + Math.random() * 22;
+      const angle = 18 + Math.random() * 28;
+      const rad = angle * Math.PI / 180;
+      const dx = Math.cos(rad) * len;
+      const dy = Math.sin(rad) * len;
+      const duration = 500 + Math.random() * 500;
+      const g = document.createElementNS(svgNS, "g");
+      const tail = document.createElementNS(svgNS, "line");
+      tail.setAttribute("x1", x);
+      tail.setAttribute("y1", y);
+      tail.setAttribute("x2", x + dx);
+      tail.setAttribute("y2", y + dy);
+      tail.setAttribute("stroke", "#ffffff");
+      tail.setAttribute("stroke-width", "1");
+      tail.setAttribute("stroke-opacity", "0.5");
+      const head = document.createElementNS(svgNS, "rect");
+      head.setAttribute("x", x + dx - 1);
+      head.setAttribute("y", y + dy - 1);
+      head.setAttribute("width", "2");
+      head.setAttribute("height", "2");
+      head.setAttribute("fill", "#ffffff");
+      g.appendChild(tail);
+      g.appendChild(head);
+      container.appendChild(g);
+      const anim = g.animate([
+        { opacity: 0, transform: 'translate(0,0)' },
+        { opacity: 1, transform: `translate(${dx*0.15}px,${dy*0.15}px)`, offset: 0.08 },
+        { opacity: 0.85, transform: `translate(${dx*0.6}px,${dy*0.6}px)`, offset: 0.5 },
+        { opacity: 0, transform: `translate(${dx*1.8}px,${dy*1.8}px)` }
+      ], { duration, easing: 'linear', fill: 'forwards' });
+      anim.onfinish = () => g.remove();
+      setTimeout(spawnShootingStar, 5000 + Math.random() * 10000);
+    }
+    setTimeout(spawnShootingStar, 3000 + Math.random() * 5000);
+  })();
+  // ========================================
+  // WEB AUDIO — CAMPFIRE SOUND (v3)
+  // ========================================
+  let audioCtx = null;
+  let isPlaying = false;
+  let masterGain = null;
+  let allSources = [];
+  function createCampfireSound() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = parseFloat(document.getElementById('volumeSlider').value) / 100;
+    masterGain.connect(audioCtx.destination);
+    // ============================
+    // LAYER 1: Low rumble (the "roar")
+    // ============================
+    playLoop(createBrownNoise(6), 'lowpass', 120, 0.3, 0.3);
+    // ============================
+    // LAYER 2: Mid warmth
+    // ============================
+    playLoop(createBrownNoise(6), 'lowpass', 200, 0.4, 0.15);
+    // ============================
+    // LAYER 3: Crackle track — no filter, raw transients
+    // ============================
+    playLoopDirect(createCrackleBuffer(8), 0.9);
+    // ============================
+    // LAYER 4: Second crackle track (offset timing)
+    // ============================
+    playLoopDirect(createCrackleBuffer(10), 0.7);
+  }
+  // Generate brown noise buffer (for ambient rumble)
+  function createBrownNoise(seconds) {
+    const len = audioCtx.sampleRate * seconds;
+    const buffer = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    let v = 0;
+    for (let i = 0; i < len; i++) {
+      v = (v + (Math.random() * 2 - 1) * 0.02) / 1.02;
+      data[i] = v * 3.5;
+    }
+    return buffer;
+  }
+  // Generate crackle buffer — mostly silence with random sharp spikes
+  function createCrackleBuffer(seconds) {
+    const sr = audioCtx.sampleRate;
+    const len = sr * seconds;
+    const buffer = audioCtx.createBuffer(1, len, sr);
+    const data = buffer.getChannelData(0);
+    // Fill with silence first
+    for (let i = 0; i < len; i++) data[i] = 0;
+    // Place random crackle events throughout the buffer
+    // Each "crackle" = a burst of 3-8 sharp spikes over 10-80ms
+    const numEvents = Math.floor(seconds * 6);  // ~6 crackles per second
+    for (let e = 0; e < numEvents; e++) {
+      const startSample = Math.floor(Math.random() * (len - sr * 0.1));
+      const spikeCount = 3 + Math.floor(Math.random() * 6);
+      for (let s = 0; s < spikeCount; s++) {
+        // Each spike is 1-4 samples apart, spread over 5-40ms
+        const offset = startSample + Math.floor(Math.random() * sr * 0.04);
+        if (offset >= len) continue;
+        const amplitude = 0.3 + Math.random() * 0.7;  // strong!
+        const sign = Math.random() > 0.5 ? 1 : -1;
+        // The spike itself: 1-3 samples
+        data[offset] = sign * amplitude;
+        if (offset + 1 < len) data[offset + 1] = sign * amplitude * (0.3 + Math.random() * 0.4);
+        if (offset + 2 < len) data[offset + 2] = sign * amplitude * Math.random() * 0.2;
+        // Tiny decay tail (5-15 samples of noise)
+        const tailLen = 5 + Math.floor(Math.random() * 10);
+        for (let t = 3; t < 3 + tailLen && offset + t < len; t++) {
+          data[offset + t] += (Math.random() * 2 - 1) * amplitude * 0.15 * (1 - t / (tailLen + 3));
+        }
+      }
+    }
+    return buffer;
+  }
+  // Play a buffer as a looping source through a filter
+  function playLoop(buffer, filterType, filterFreq, filterQ, volume) {
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = filterType;
+    filter.frequency.value = filterFreq;
+    filter.Q.value = filterQ;
+    const gain = audioCtx.createGain();
+    gain.gain.value = volume;
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(masterGain);
+    source.start();
+    allSources.push({ source, gain });
+  }
+  // Play a buffer direct — no filter at all
+  function playLoopDirect(buffer, volume) {
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    const gain = audioCtx.createGain();
+    gain.gain.value = volume;
+    source.connect(gain);
+    gain.connect(masterGain);
+    source.start();
+    allSources.push({ source, gain });
+  }
+  function toggleSound() {
+    const btn = document.getElementById('soundBtn');
+    if (!isPlaying) {
+      if (!audioCtx) {
+        createCampfireSound();
+      } else {
+        audioCtx.resume();
+      }
+      isPlaying = true;
+      btn.textContent = '🔊 SOUND';
+      btn.classList.add('active');
+    } else {
+      isPlaying = false;
+      if (audioCtx) audioCtx.suspend();
+      btn.textContent = '🔇 SOUND';
+      btn.classList.remove('active');
+    }
+  }
+  function changeVolume(val) {
+    const volume = val / 100;
+    if (masterGain) {
+      masterGain.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.1);
+    }
+  }
+</script>
+</body>
+</html>
