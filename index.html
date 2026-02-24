@@ -583,8 +583,15 @@ function updatePositions(p){
       .forEach(s=>layer.appendChild(s.g));
   }
 
+  function nextSpawnDelay(){
+    const nL=nightLevel(phase());
+    const baseDelay=16+Math.random()*36; // daytime baseline: 16-52s
+    const nightMul=1+nL*0.85; // reduce spawn probability at night
+    return baseDelay*nightMul;
+  }
+
   // Spawn ships randomly
-  let nextSpawn=8+Math.random()*16;
+  let nextSpawn=nextSpawnDelay();
   let lastTime=performance.now()/1000;
   function tick(){
     const now=performance.now()/1000;
@@ -594,7 +601,7 @@ function updatePositions(p){
     nextSpawn-=dt;
     if(nextSpawn<=0){
       spawnShip();
-      nextSpawn=16+Math.random()*36; // 16-52s between ships
+      nextSpawn=nextSpawnDelay();
     }
     requestAnimationFrame(tick);
   }
