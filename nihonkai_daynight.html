@@ -132,6 +132,21 @@ svg{width:100%;height:100%;display:block;image-rendering:pixelated}
     <rect x="210" y="55" width="70" height="3" class="cL" opacity=".14"/></g>
 </g>
 
+<!-- WEATHER OVERLAYS -->
+<rect id="wxFog" x="-10" y="-10" width="340" height="100" fill="#667788" opacity="0"/>
+<g id="wxClouds" opacity="0">
+  <rect x="-10" y="5"  width="180" height="6" fill="#445566"/>
+  <rect x="100" y="2"  width="230" height="5" fill="#4a5a6a"/>
+  <rect x="20"  y="10" width="160" height="4" fill="#506070"/>
+  <rect x="190" y="8"  width="140" height="5" fill="#445566"/>
+  <rect x="50"  y="18" width="120" height="5" fill="#506070"/>
+  <rect x="210" y="20" width="110" height="4" fill="#4a5a6a"/>
+  <rect x="0"   y="30" width="200" height="4" fill="#556677" opacity=".6"/>
+  <rect x="160" y="32" width="160" height="4" fill="#4a5a6a" opacity=".6"/>
+</g>
+<rect id="wxFlash" x="-10" y="-10" width="340" height="220" fill="#ddeeff" opacity="0"/>
+<g id="rainLyr"></g>
+
 <!-- SUN (clipped at horizon) -->
 <g id="sunClip" clip-path="url(#aboveHorizon)">
   <g id="sunG">
@@ -240,6 +255,8 @@ svg{width:100%;height:100%;display:block;image-rendering:pixelated}
 <script>
 const CYCLE=180,H=85; // horizon y
 const BASE_W=320,BASE_H=200;
+let g_wxLevel=0; // 0=晴れ…1=大雨（オーディオIIFEから参照）
+let g_thunder=0; // 雷トリガーカウンター（増加でオーディオIIFEが雷音再生）
 
 function initResponsive(){
   const svg=document.getElementById('S');
@@ -385,8 +402,11 @@ const mr=[0,1,2,3].map(i=>document.getElementById('mr'+i));
 let lastCF=0;
 function updateColors(p){
   const now=performance.now();if(now-lastCF<66)return;lastCF=now;
-  for(let i=0;i<8;i++)skE[i].setAttribute('stop-color',interpKF(SKY[i],p));
-  for(let i=0;i<6;i++)seE[i].setAttribute('stop-color',interpKF(SEA[i],p));
+  const overcastSky=['#8899aa','#7a8fa0','#6e8596','#6a8090','#738a98','#7a90a0','#8899aa','#99aabb'];
+  const overcastSea=['#4a6070','#3d5565','#334e60','#2e495a','#2a4355','#263e50'];
+  const wxBlend=g_wxLevel*0.55;
+  for(let i=0;i<8;i++)skE[i].setAttribute('stop-color',wxBlend>0?lerp(interpKF(SKY[i],p),overcastSky[i],wxBlend):interpKF(SKY[i],p));
+  for(let i=0;i<6;i++)seE[i].setAttribute('stop-color',wxBlend>0?lerp(interpKF(SEA[i],p),overcastSea[i],wxBlend*0.5):interpKF(SEA[i],p));
   const wc=interpKF(WV_C,p);wvE.forEach(e=>e.setAttribute('fill',wc));
   const fc=interpKF(FM_C,p);fmE.forEach(e=>e.setAttribute('fill',fc));
   cHE.forEach(e=>e.setAttribute('fill',interpKF(CH_C,p)));
@@ -406,7 +426,7 @@ function updatePositions(p){
     // Sun road: intensity based on how low sun is (stronger near horizon)
     const lowness=Math.max(0,(sp.y-30)/(H-30)); // 0 at top, 1 at horizon
     const roadOp=0.3+lowness*0.7;
-    srG.setAttribute('opacity',roadOp);
+    srG.setAttribute('opacity',roadOp*Math.max(0,1-g_wxLevel*0.9));
     const rx=sp.x;
     sr[0].setAttribute('x',rx-20);sr[1].setAttribute('x',rx-12);
     sr[2].setAttribute('x',rx-8);sr[3].setAttribute('x',rx-5);
@@ -458,7 +478,7 @@ function updatePositions(p){
   if(p>=0.08&&p<0.12)bo=(p-0.08)/0.04*0.35;
   else if(p>=0.12&&p<0.55)bo=0.35;
   else if(p>=0.55&&p<0.62)bo=0.35*(1-(p-0.55)/0.07);
-  bG.setAttribute('opacity',Math.max(0,bo));
+  bG.setAttribute('opacity',Math.max(0,bo*(1-g_wxLevel)));
 
   // Horizon glow: strong near sunrise/sunset
   let hOp=0;
@@ -470,9 +490,10 @@ function updatePositions(p){
   // Keep the horizon seam merged with the sea color at all times.
   hLn.setAttribute('opacity',1);
 
-  // Cloud opacity
+  // Cloud opacity（天候時は雲を濃く）
   const isNight=(p>=0.78||p<0.02);
-  document.getElementById('clG').setAttribute('opacity',isNight?0.3:1);
+  const baseCloudOp=isNight?0.3:1.0;
+  document.getElementById('clG').setAttribute('opacity',Math.min(1.6,baseCloudOp+g_wxLevel*0.6));
 }
 
 // ===== SHIP SYSTEM =====
@@ -611,9 +632,138 @@ function updatePositions(p){
   tick();
 })();
 
+// ===== WEATHER SYSTEM =====
+const WX=(function(){
+  const ns='http://www.w3.org/2000/svg';
+  const fogEl=document.getElementById('wxFog');
+  const wxClouds=document.getElementById('wxClouds');
+  const flashEl=document.getElementById('wxFlash');
+  const rainLyr=document.getElementById('rainLyr');
+
+  let state='clear';
+  let targetIntensity=0;
+  let intensity=0;
+  let cycleCount=0;
+  let rollEvery=3+Math.floor(Math.random()*5);
+  let lastPhase=phase();
+  let drops=[];
+  let lastDropSpawn=0;
+
+  // 雷フラッシュ用
+  let nextLightning=performance.now()+(15+Math.random()*30)*1000;
+  let lightningActive=false;
+
+  function rollWeather(){
+    const r=Math.random();
+    if(r<0.80){state='clear';targetIntensity=0;}
+    else if(r<0.90){state='overcast';targetIntensity=0.55;}
+    else if(r<0.999){state='rain';targetIntensity=1.0;}
+    else{state='thunderstorm';targetIntensity=1.0;}
+    rollEvery=3+Math.floor(Math.random()*5);
+    cycleCount=0;
+  }
+
+  // 朝（phase 0.05 を下から超えた瞬間）に天候チェック
+  function trackCycle(p){
+    if(lastPhase<0.05&&p>=0.05){
+      cycleCount++;
+      if(cycleCount>=rollEvery)rollWeather();
+    }
+    lastPhase=p;
+  }
+
+  function spawnDrop(){
+    const el=document.createElementNS(ns,'line');
+    const x=Math.random()*340-10;
+    const y=Math.random()*80-10;
+    const len=5+Math.random()*4;
+    const spd=90+Math.random()*50;
+    el.setAttribute('x1',x);el.setAttribute('y1',y);
+    el.setAttribute('x2',x+1);el.setAttribute('y2',y+len);
+    el.setAttribute('stroke','#99aabb');el.setAttribute('stroke-width','0.7');
+    el.setAttribute('opacity','0.65');
+    rainLyr.appendChild(el);
+    drops.push({el,y,spd,len});
+  }
+
+  function doLightningFlash(){
+    if(lightningActive)return;
+    lightningActive=true;
+    const flashes=1+Math.floor(Math.random()*3);
+    let delay=0;
+    function flash(i){
+      if(i>=flashes){
+        // 雷音を遅延発火（光より1〜3秒後）
+        setTimeout(()=>{g_thunder++;},1000+Math.random()*2000);
+        lightningActive=false;
+        nextLightning=performance.now()+(15+Math.random()*30)*1000;
+        return;
+      }
+      // フェードイン30ms→ホールド20ms→フェードアウト100ms
+      const startOp=0.3+Math.random()*0.25;
+      const t0=performance.now();
+      function anim(now){
+        const dt=now-t0;
+        let op;
+        if(dt<30)op=(dt/30)*startOp;
+        else if(dt<50)op=startOp;
+        else if(dt<150)op=startOp*(1-(dt-50)/100);
+        else{flashEl.setAttribute('opacity','0');setTimeout(()=>flash(i+1),60+Math.random()*90);return;}
+        flashEl.setAttribute('opacity',op);
+        requestAnimationFrame(anim);
+      }
+      requestAnimationFrame(anim);
+    }
+    setTimeout(()=>flash(0),delay);
+  }
+
+  function tick(now,dt,p){
+    trackCycle(p);
+
+    // 強度を目標値に向けてスムーズに追従
+    intensity+=(targetIntensity-intensity)*(dt*0.8);
+    if(intensity<0.001)intensity=0;
+    g_wxLevel=intensity;
+
+    // 霧オーバーレイ
+    fogEl.setAttribute('opacity',intensity*0.28);
+    wxClouds.setAttribute('opacity',intensity*0.9);
+
+    // 雨粒
+    const rainActive=intensity>0.45;
+    rainLyr.setAttribute('opacity',rainActive?Math.min(1,(intensity-0.45)/0.55):0);
+    if(rainActive){
+      if(now-lastDropSpawn>55){
+        const count=2+Math.floor(intensity*4);
+        for(let i=0;i<count;i++)spawnDrop();
+        lastDropSpawn=now;
+      }
+    }
+    for(let i=drops.length-1;i>=0;i--){
+      const d=drops[i];
+      d.y+=d.spd*dt;
+      d.el.setAttribute('y1',d.y);
+      d.el.setAttribute('y2',d.y+d.len);
+      if(d.y>215){rainLyr.removeChild(d.el);drops.splice(i,1);}
+    }
+
+    // 雷フラッシュ（thunderstorm時のみ）
+    if(state==='thunderstorm'&&intensity>0.8){
+      if(now>=nextLightning)doLightningFlash();
+    }
+  }
+
+  return{tick};
+})();
+
 // ===== MAIN LOOP =====
+let lastLoopNow=performance.now();
 function loop(){
+  const now=performance.now();
+  const dt=Math.min((now-lastLoopNow)/1000,0.1);
+  lastLoopNow=now;
   const p=phase();
+  WX.tick(now,dt,p);
   updateColors(p);
   updatePositions(p);
   requestAnimationFrame(loop);
@@ -681,7 +831,7 @@ loop();
   function init(){
     ctx=new(window.AudioContext||window.webkitAudioContext)();
     master=ctx.createGain();master.gain.value=slider.value/100*.7;master.connect(ctx.destination);
-    brownNoise();waveSurge(0);waveSurge(2.5);waveSurge(5.5);waveSurge(8.8);foamHiss();deepRumble();wind();seabirds();crickets();
+    brownNoise();waveSurge(0);waveSurge(2.5);waveSurge(5.5);waveSurge(8.8);foamHiss();deepRumble();wind();seabirds();crickets();rainChannel();thunderSound();
   }
   function mkBuf(len,fn){const b=ctx.createBuffer(1,len,ctx.sampleRate);fn(b.getChannelData(0));return b;}
   function mkBuf2(len,fn){const b=ctx.createBuffer(2,len,ctx.sampleRate);fn(b.getChannelData(0));fn(b.getChannelData(1));return b;}
@@ -692,6 +842,10 @@ loop();
   function wind(){const buf=mkBuf2(ctx.sampleRate*4,d=>{let v=0;for(let i=0;i<d.length;i++){v=(v+.004*(Math.random()*2-1))/1.004;d[i]=v*5;}});const s=ctx.createBufferSource();s.buffer=buf;s.loop=true;const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=400;bp.Q.value=1.2;const g=ctx.createGain();g.gain.value=.04;function mod(){if(!playing)return;const n=ctx.currentTime,t=5+Math.random()*10;bp.frequency.setValueAtTime(bp.frequency.value,n);bp.frequency.linearRampToValueAtTime(150+Math.random()*700,n+t);g.gain.setValueAtTime(g.gain.value,n);g.gain.linearRampToValueAtTime(.015+Math.random()*.06,n+t);setTimeout(mod,t*1e3);}s.connect(bp);bp.connect(g);g.connect(master);s.start();mod();}
   function seabirds(){function call(){if(!playing)return;const p=phase();if(p>.70||p<.05){setTimeout(call,5e3+Math.random()*15e3);return;}const n=ctx.currentTime,f=1800+Math.random()*1800;const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(f,n);o.frequency.linearRampToValueAtTime(f*1.3,n+.1);o.frequency.linearRampToValueAtTime(f*.7,n+.35);o.frequency.linearRampToValueAtTime(f*1.1,n+.45);o.frequency.linearRampToValueAtTime(f*.5,n+.65);g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(.015,n+.05);g.gain.exponentialRampToValueAtTime(.001,n+.65);o.connect(g);g.connect(master);o.start(n);o.stop(n+.7);if(Math.random()>.5){setTimeout(()=>{if(!playing)return;const o2=ctx.createOscillator(),g2=ctx.createGain(),n2=ctx.currentTime;o2.type='sine';o2.frequency.setValueAtTime(f*.85,n2);o2.frequency.linearRampToValueAtTime(f*1.15,n2+.15);o2.frequency.linearRampToValueAtTime(f*.6,n2+.4);g2.gain.setValueAtTime(0,n2);g2.gain.linearRampToValueAtTime(.01,n2+.05);g2.gain.exponentialRampToValueAtTime(.001,n2+.45);o2.connect(g2);g2.connect(master);o2.start(n2);o2.stop(n2+.5);},300+Math.random()*400);}setTimeout(call,8e3+Math.random()*2e4);}setTimeout(call,2e3+Math.random()*5e3);}
   function crickets(){function chirp(){if(!playing)return;const p=phase();if(p<.72||p>.97){setTimeout(chirp,3e3+Math.random()*5e3);return;}const n=ctx.currentTime;for(let i=0;i<3+Math.floor(Math.random()*4);i++){const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=4200+Math.random()*1200;const t=n+i*.08;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.008+Math.random()*.006,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+.05);o.connect(g);g.connect(master);o.start(t);o.stop(t+.06);}setTimeout(chirp,1500+Math.random()*6e3);}setTimeout(chirp,4e3+Math.random()*6e3);}
+  function rainChannel(){const buf=mkBuf2(ctx.sampleRate*4,d=>{for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;});const s=ctx.createBufferSource();s.buffer=buf;s.loop=true;const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=1800;hp.Q.value=0.4;const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=6000;lp.Q.value=0.5;const g=ctx.createGain();g.gain.value=0;s.connect(hp);hp.connect(lp);lp.connect(g);g.connect(master);s.start();function mod(){if(!playing)return;const n=ctx.currentTime,target=g_wxLevel*0.12;g.gain.setValueAtTime(g.gain.value,n);g.gain.linearRampToValueAtTime(target,n+0.6);setTimeout(mod,600);}mod();}
+  function thunderSound(){let lastThunder=g_thunder;function poll(){if(!playing){setTimeout(poll,500);return;}if(g_thunder!==lastThunder){lastThunder=g_thunder;const n=ctx.currentTime;// 低周波オシレーター複数で轟音
+    const freqs=[45,58,72,90];freqs.forEach((f,i)=>{const o=ctx.createOscillator(),g2=ctx.createGain();o.type='sine';o.frequency.value=f+Math.random()*10;const t=n+i*0.05;g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(0.04+Math.random()*0.04,t+0.1);g2.gain.exponentialRampToValueAtTime(0.001,t+3+Math.random()*2);o.connect(g2);g2.connect(master);o.start(t);o.stop(t+5);});// ブラウンノイズバースト
+    const bBuf=mkBuf(ctx.sampleRate*5,d=>{let v=0;for(let i=0;i<d.length;i++){v=(v+.01*(Math.random()*2-1))/1.01;d[i]=v*6;}});const bs=ctx.createBufferSource();bs.buffer=bBuf;const blp=ctx.createBiquadFilter();blp.type='lowpass';blp.frequency.value=120;const bg=ctx.createGain();bg.gain.setValueAtTime(0,n);bg.gain.linearRampToValueAtTime(0.18+Math.random()*0.1,n+0.08);bg.gain.exponentialRampToValueAtTime(0.001,n+4+Math.random()*2);bs.connect(blp);blp.connect(bg);bg.connect(master);bs.start(n);bs.stop(n+6);}setTimeout(poll,500);}setTimeout(poll,1000);}
   function start(){if(!ctx)init();else if(ctx.state==='suspended')ctx.resume();playing=true;btn.classList.add('on');btn.querySelector('span').firstChild.textContent='🔊';}
   function stop(){playing=false;if(ctx&&ctx.state==='running'){master.gain.setValueAtTime(master.gain.value,ctx.currentTime);master.gain.linearRampToValueAtTime(0,ctx.currentTime+.5);setTimeout(()=>{if(!playing)ctx.suspend();},600);}btn.classList.remove('on');btn.querySelector('span').firstChild.textContent='🔇';}
   btn.addEventListener('click',()=>{if(playing)stop();else{start();master.gain.setValueAtTime(0,ctx.currentTime);master.gain.linearRampToValueAtTime(slider.value/100*.7,ctx.currentTime+.5);}});
