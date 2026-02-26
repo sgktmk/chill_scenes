@@ -24,6 +24,8 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `index.html` — Landing page hub linking to all scenes
 - `seascape.html` — "Seascape" scene (day-night cycle over the sea)
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
+- `shared/scene-ui.css` — Shared audio panel & back button styles
+- `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `vercel.json` — Vercel routing config
 
 ## Architecture
@@ -99,22 +101,20 @@ Single self-contained HTML file with CSS animations and procedural audio.
 
 ## Maintenance Notes
 
-### Shared UI Code (duplicated across scenes)
+### Shared UI Code (`shared/`)
 
-The following UI components are copy-pasted into each scene HTML. When modifying these, update all scene files:
+Common UI components are extracted into shared files loaded by each scene:
 
-- **Audio panel CSS** (`.ap`, `.ab`, `.vs`, `.vl`, `.wi` classes): ~60 lines
-- **Back button CSS** (`.back`): ~8 lines
-- **Audio control JS** (mute toggle, volume slider): ~28 lines
-- **Audio panel HTML** template: ~4 lines
+- **`shared/scene-ui.css`** — Audio panel (`.ap`, `.ab`, `.vs`, `.vl`, `.wi`) and back button (`.back`) styles
+- **`shared/scene-ui.js`** — `initSceneAudio({ onStart, onStop, onVolumeChange })` callback-based API for audio toggle and volume control
 
-When the project grows beyond 5 scenes, consider extracting these into shared files (`shared/scene-ui.css`, `shared/scene-ui.js`).
+Each scene provides its own audio init/control logic via callbacks. The shared JS handles DOM element queries, button class toggles, emoji updates, and volume label updates.
 
 ### Future Roadmap
 
 Planned features in recommended implementation order:
 
-1. **Shared code extraction** — Move duplicated UI code into `shared/scene-ui.css` and `shared/scene-ui.js`, loaded via `<link>` and `<script src>` in each scene
+1. ~~**Shared code extraction**~~ — Done. Shared UI code extracted into `shared/scene-ui.css` and `shared/scene-ui.js`
 2. **OGP meta tags** — Add Open Graph / Twitter Card meta tags to each scene for link previews on social media
 3. **Screenshot capture** — SVG → Canvas → PNG conversion using native browser APIs (no library needed); add camera button to UI panel
 4. **SNS sharing** — Web Share API (mobile) with X/Twitter intent URL fallback (desktop); share button in UI panel
@@ -125,7 +125,7 @@ Planned features in recommended implementation order:
 When adding a new scene:
 
 - [ ] Set `lang="en"` and title format `<Name> — Chill Scenes`
-- [ ] Include back button and audio panel HTML/CSS/JS (or shared files once extracted)
+- [ ] Include back button and audio panel HTML, load `shared/scene-ui.css` and `shared/scene-ui.js`, call `initSceneAudio()`
 - [ ] Add card with preview SVG to `index.html` grid
 - [ ] Add OGP meta tags in `<head>` (once implemented)
 - [ ] Update this file's Files list and Architecture section
@@ -133,8 +133,7 @@ When adding a new scene:
 
 ### Architecture Decision: Build Tool
 
-Current approach: **vanilla HTML/CSS/JS with no build step**. Each scene is a self-contained HTML file.
+Current approach: **vanilla HTML/CSS/JS with no build step**. Each scene is an HTML file that loads shared UI from `shared/` via standard `<link>` and `<script src>` tags.
 
-If maintainability becomes an issue (5+ scenes with shared code), consider:
-- **Option A (recommended)**: Extract shared code into separate `.css`/`.js` files loaded via standard HTML tags — no build tool needed
-- **Option B**: Introduce Vite as a lightweight build tool for module imports, HMR, and bundling — adds `node_modules`/`package.json` but output remains static HTML
+If maintainability becomes an issue in the future, consider:
+- **Option**: Introduce Vite as a lightweight build tool for module imports, HMR, and bundling — adds `node_modules`/`package.json` but output remains static HTML

@@ -5,25 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Seascape — Chill Scenes</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="/shared/scene-ui.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a0a12;min-height:100vh;overflow:hidden}
 .scene-container{width:100vw;height:100vh;height:100svh;min-height:100vh;overflow:hidden}
 svg{width:100%;height:100%;display:block;image-rendering:pixelated}
-.ap{position:fixed;bottom:16px;right:16px;background:rgba(10,10,18,.75);border:2px solid rgba(255,150,50,.3);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;z-index:100;backdrop-filter:blur(6px)}
-.ab{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,150,50,.5);background:rgba(255,80,20,.12);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;position:relative;transition:all .3s}
-.ab:hover{background:rgba(255,80,20,.3)}
-.ab.on{background:rgba(255,80,20,.35);border-color:#fa4;box-shadow:0 0 10px rgba(255,120,30,.4)}
-.ab.on .wi{display:flex}
-.wi{display:none;position:absolute;top:-7px;right:-3px;gap:1px}
-.wi span{width:2px;background:#fa4;border-radius:1px;animation:wb .8s ease-in-out infinite}
-.wi span:nth-child(1){height:5px}.wi span:nth-child(2){height:8px;animation-delay:.15s}.wi span:nth-child(3){height:4px;animation-delay:.3s}
-@keyframes wb{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
-.vs{-webkit-appearance:none;width:65px;height:3px;border-radius:2px;background:rgba(255,150,50,.25);outline:none}
-.vs::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#f93;cursor:pointer;border:2px solid rgba(255,200,100,.5)}
-.vl{color:rgba(255,180,80,.6);font-size:10px;min-width:24px;text-align:center}
-.back{position:fixed;top:16px;left:16px;background:rgba(10,10,18,.65);border:2px solid rgba(255,150,50,.25);border-radius:8px;padding:6px 12px;z-index:100;backdrop-filter:blur(6px);text-decoration:none;color:rgba(255,180,80,.7);font-size:13px;font-family:'Segoe UI',system-ui,sans-serif;transition:border-color .3s,color .3s}
-.back:hover{border-color:rgba(255,150,50,.5);color:rgba(255,200,100,.9)}
 </style>
 </head>
 <body>
@@ -253,6 +240,7 @@ svg{width:100%;height:100%;display:block;image-rendering:pixelated}
   <span class="vl" id="vLb">50%</span>
 </div>
 
+<script src="/shared/scene-ui.js"></script>
 <script>
 const CYCLE=180,H=85; // horizon y
 const BASE_W=320,BASE_H=200;
@@ -828,10 +816,9 @@ loop();
 // ===== AUDIO =====
 (function(){
   let ctx=null,master=null,playing=false;
-  const btn=document.getElementById('aBtn'),slider=document.getElementById('vSl'),label=document.getElementById('vLb');
-  function init(){
+  function init(vol){
     ctx=new(window.AudioContext||window.webkitAudioContext)();
-    master=ctx.createGain();master.gain.value=slider.value/100*.7;master.connect(ctx.destination);
+    master=ctx.createGain();master.gain.value=vol/100*.7;master.connect(ctx.destination);
     brownNoise();waveSurge(0);waveSurge(2.5);waveSurge(5.5);waveSurge(8.8);foamHiss();deepRumble();wind();seabirds();crickets();rainChannel();thunderSound();
   }
   function mkBuf(len,fn){const b=ctx.createBuffer(1,len,ctx.sampleRate);fn(b.getChannelData(0));return b;}
@@ -847,10 +834,11 @@ loop();
   function thunderSound(){let lastThunder=g_thunder;function poll(){if(!playing){setTimeout(poll,500);return;}if(g_thunder!==lastThunder){lastThunder=g_thunder;const n=ctx.currentTime;// 低周波オシレーター複数で轟音
     const freqs=[45,58,72,90];freqs.forEach((f,i)=>{const o=ctx.createOscillator(),g2=ctx.createGain();o.type='sine';o.frequency.value=f+Math.random()*10;const t=n+i*0.05;g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(0.04+Math.random()*0.04,t+0.1);g2.gain.exponentialRampToValueAtTime(0.001,t+3+Math.random()*2);o.connect(g2);g2.connect(master);o.start(t);o.stop(t+5);});// ブラウンノイズバースト
     const bBuf=mkBuf(ctx.sampleRate*5,d=>{let v=0;for(let i=0;i<d.length;i++){v=(v+.01*(Math.random()*2-1))/1.01;d[i]=v*6;}});const bs=ctx.createBufferSource();bs.buffer=bBuf;const blp=ctx.createBiquadFilter();blp.type='lowpass';blp.frequency.value=120;const bg=ctx.createGain();bg.gain.setValueAtTime(0,n);bg.gain.linearRampToValueAtTime(0.18+Math.random()*0.1,n+0.08);bg.gain.exponentialRampToValueAtTime(0.001,n+4+Math.random()*2);bs.connect(blp);blp.connect(bg);bg.connect(master);bs.start(n);bs.stop(n+6);}setTimeout(poll,500);}setTimeout(poll,1000);}
-  function start(){if(!ctx)init();else if(ctx.state==='suspended')ctx.resume();playing=true;btn.classList.add('on');btn.querySelector('span').firstChild.textContent='🔊';}
-  function stop(){playing=false;if(ctx&&ctx.state==='running'){master.gain.setValueAtTime(master.gain.value,ctx.currentTime);master.gain.linearRampToValueAtTime(0,ctx.currentTime+.5);setTimeout(()=>{if(!playing)ctx.suspend();},600);}btn.classList.remove('on');btn.querySelector('span').firstChild.textContent='🔇';}
-  btn.addEventListener('click',()=>{if(playing)stop();else{start();master.gain.setValueAtTime(0,ctx.currentTime);master.gain.linearRampToValueAtTime(slider.value/100*.7,ctx.currentTime+.5);}});
-  slider.addEventListener('input',()=>{const v=slider.value;label.textContent=v+'%';if(ctx&&master&&playing){master.gain.setValueAtTime(master.gain.value,ctx.currentTime);master.gain.linearRampToValueAtTime(v/100*.7,ctx.currentTime+.1);}});
+  initSceneAudio({
+    onStart(v){if(!ctx)init(v);else if(ctx.state==='suspended')ctx.resume();playing=true;master.gain.setValueAtTime(0,ctx.currentTime);master.gain.linearRampToValueAtTime(v/100*.7,ctx.currentTime+.5);},
+    onStop(){playing=false;if(ctx&&ctx.state==='running'){master.gain.setValueAtTime(master.gain.value,ctx.currentTime);master.gain.linearRampToValueAtTime(0,ctx.currentTime+.5);setTimeout(()=>{if(!playing)ctx.suspend();},600);}},
+    onVolumeChange(v){if(ctx&&master&&playing){master.gain.setValueAtTime(master.gain.value,ctx.currentTime);master.gain.linearRampToValueAtTime(v/100*.7,ctx.currentTime+.1);}}
+  });
 })();
 </script>
 </body>
