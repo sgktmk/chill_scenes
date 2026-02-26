@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astronaut Drift — Chill Scenes</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="/shared/scene-ui.css">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#04040b;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:'Press Start 2P',monospace}
+  .scene-container{position:relative;width:100vw;height:56.25vw;max-width:100vw;max-height:100vh}
+  @media (min-aspect-ratio:16/9){.scene-container{height:100vh;width:177.78vh}}
+  svg{width:100%;height:100%;display:block;image-rendering:pixelated}
+</style>
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to home">← Back</a>
+<div class="ap" role="group" aria-label="Audio controls">
+  <button class="ab" type="button" aria-pressed="false" aria-label="Start ambient audio">🔇</button>
+  <div class="vs"><input class="vi" type="range" min="0" max="100" value="35" aria-label="Volume"></div>
+  <div class="vl">35%</div>
+</div>
+
+<div class="scene-container">
+  <svg viewBox="0 0 426 240" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+    <defs>
+      <linearGradient id="spaceG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#09091a"/>
+        <stop offset="60%" stop-color="#050512"/>
+        <stop offset="100%" stop-color="#03030b"/>
+      </linearGradient>
+      <radialGradient id="nebula" cx="50%" cy="50%" r="60%">
+        <stop offset="0%" stop-color="#8f4dff" stop-opacity="0.45"/>
+        <stop offset="55%" stop-color="#2f3fa8" stop-opacity="0.2"/>
+        <stop offset="100%" stop-color="#09091a" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <rect width="426" height="240" fill="url(#spaceG)"/>
+
+    <g id="nebulaLayer" opacity="0.7"></g>
+    <g id="starFar"></g>
+    <g id="starNear"></g>
+    <g id="dustLayer" opacity="0.8"></g>
+
+    <g id="astronaut" transform="translate(18 120)">
+      <rect x="0" y="-2" width="2" height="2" fill="#61d6ff" opacity="0.7"/>
+      <rect x="2" y="-2" width="2" height="2" fill="#61d6ff" opacity="0.45"/>
+      <rect x="2" y="0" width="14" height="16" fill="#ececf7"/>
+      <rect x="3" y="1" width="12" height="2" fill="#ffffff"/>
+      <rect x="5" y="4" width="8" height="6" fill="#1a2a48"/>
+      <rect x="6" y="5" width="6" height="4" fill="#4dd0ff"/>
+      <rect x="0" y="3" width="2" height="7" fill="#d8d8e8"/>
+      <rect x="16" y="3" width="2" height="7" fill="#d8d8e8"/>
+      <rect x="-2" y="9" width="2" height="4" fill="#9aa2c0"/>
+      <rect x="18" y="9" width="2" height="4" fill="#9aa2c0"/>
+      <rect x="4" y="16" width="4" height="7" fill="#dcdcec"/>
+      <rect x="10" y="16" width="4" height="7" fill="#dcdcec"/>
+      <rect x="4" y="23" width="4" height="2" fill="#9aa2c0"/>
+      <rect x="10" y="23" width="4" height="2" fill="#9aa2c0"/>
+      <rect x="6" y="11" width="6" height="3" fill="#ff8766"/>
+      <rect x="-8" y="6" width="6" height="4" fill="#7078a2"/>
+      <rect x="-8" y="10" width="2" height="4" fill="#5a628f"/>
+    </g>
+  </svg>
+</div>
+
+<script src="/shared/scene-ui.js"></script>
+<script>
+(() => {
+  const W = 426;
+  const H = 240;
+  const layers = {
+    nebula: document.getElementById('nebulaLayer'),
+    starFar: document.getElementById('starFar'),
+    starNear: document.getElementById('starNear'),
+    dust: document.getElementById('dustLayer')
+  };
+
+  function rect(x, y, w, h, fill, opacity = 1) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    el.setAttribute('x', x);
+    el.setAttribute('y', y);
+    el.setAttribute('width', w);
+    el.setAttribute('height', h);
+    el.setAttribute('fill', fill);
+    if (opacity !== 1) el.setAttribute('opacity', opacity);
+    return el;
+  }
+
+  function makeStrip(layer, width, buildFn) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.dataset.scrollW = width;
+    const a = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const b = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    b.setAttribute('transform', `translate(${width} 0)`);
+    buildFn(a, 0);
+    buildFn(b, width);
+    g.append(a, b);
+    layer.appendChild(g);
+    return g;
+  }
+
+  const nebulaStrip = makeStrip(layers.nebula, W, (g, ox) => {
+    for (let i = 0; i < 5; i++) {
+      const cx = ox + (i * 96 + 30);
+      const cy = 40 + (i % 3) * 55;
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', cx);
+      c.setAttribute('cy', cy);
+      c.setAttribute('r', 54 - (i % 2) * 12);
+      c.setAttribute('fill', 'url(#nebula)');
+      c.setAttribute('opacity', i % 2 ? 0.35 : 0.25);
+      g.appendChild(c);
+    }
+  });
+
+  const farStrip = makeStrip(layers.starFar, W, (g, ox) => {
+    for (let i = 0; i < 85; i++) {
+      const x = ox + (i * 31) % W;
+      const y = 8 + (i * 47) % (H - 16);
+      g.appendChild(rect(x, y, 1, 1, '#b8c0ff', (i % 5 === 0) ? 0.9 : 0.5));
+    }
+  });
+
+  const nearStrip = makeStrip(layers.starNear, W, (g, ox) => {
+    for (let i = 0; i < 48; i++) {
+      const x = ox + (i * 53) % W;
+      const y = 15 + (i * 37) % (H - 30);
+      const s = (i % 7 === 0) ? 2 : 1;
+      g.appendChild(rect(x, y, s, s, '#f7fbff', s === 2 ? 0.95 : 0.75));
+    }
+  });
+
+  const dustStrip = makeStrip(layers.dust, W, (g, ox) => {
+    for (let i = 0; i < 16; i++) {
+      const x = ox + (i * 67) % W;
+      const y = 35 + (i * 73) % (H - 70);
+      g.appendChild(rect(x, y, 5, 2, '#8e7ed6', 0.45));
+      g.appendChild(rect(x + 1, y + 1, 3, 1, '#bda8ff', 0.35));
+    }
+  });
+
+  const scrollItems = [
+    { el: nebulaStrip, speed: 5 },
+    { el: farStrip, speed: 12 },
+    { el: dustStrip, speed: 20 },
+    { el: nearStrip, speed: 36 }
+  ];
+
+  let last = performance.now();
+  const offsets = new Map(scrollItems.map((x) => [x.el, 0]));
+
+  function frame(now) {
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+    for (const item of scrollItems) {
+      const width = Number(item.el.dataset.scrollW);
+      let offset = offsets.get(item.el) - item.speed * dt;
+      if (offset <= -width) offset += width;
+      offsets.set(item.el, offset);
+      item.el.setAttribute('transform', `translate(${offset.toFixed(2)} 0)`);
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+(() => {
+  let ctx = null;
+  let nodes = null;
+
+  function buildNoiseBuffer(audioCtx, duration = 2.5) {
+    const sampleRate = audioCtx.sampleRate;
+    const buffer = audioCtx.createBuffer(1, sampleRate * duration, sampleRate);
+    const data = buffer.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < data.length; i++) {
+      const white = Math.random() * 2 - 1;
+      last = (last + (0.02 * white)) / 1.02;
+      data[i] = last * 2.8;
+    }
+    return buffer;
+  }
+
+  function start(volume01) {
+    if (ctx) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const master = ctx.createGain();
+    master.gain.value = volume01;
+    master.connect(ctx.destination);
+
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 62;
+    const oscGain = ctx.createGain();
+    oscGain.gain.value = 0.04;
+
+    const lfo = ctx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 0.07;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 8;
+    lfo.connect(lfoGain).connect(osc.frequency);
+
+    const noiseSrc = ctx.createBufferSource();
+    noiseSrc.buffer = buildNoiseBuffer(ctx);
+    noiseSrc.loop = true;
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'lowpass';
+    noiseFilter.frequency.value = 650;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = 0.035;
+
+    osc.connect(oscGain).connect(master);
+    noiseSrc.connect(noiseFilter).connect(noiseGain).connect(master);
+
+    osc.start();
+    lfo.start();
+    noiseSrc.start();
+
+    nodes = { master, osc, lfo, noiseSrc };
+  }
+
+  function stop() {
+    if (!ctx || !nodes) return;
+    nodes.osc.stop();
+    nodes.lfo.stop();
+    nodes.noiseSrc.stop();
+    ctx.close();
+    ctx = null;
+    nodes = null;
+  }
+
+  initSceneAudio({
+    onStart(volume01) { start(volume01); },
+    onStop() { stop(); },
+    onVolumeChange(volume01) { if (nodes) nodes.master.gain.value = volume01; }
+  });
+})();
+</script>
+</body>
+</html>
