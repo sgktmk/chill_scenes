@@ -24,6 +24,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `index.html` — Landing page hub linking to all scenes
 - `seascape.html` — "Seascape" scene (day-night cycle over the sea)
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
+- `astronaut_drift.html` — "Astronaut Drift" scene (fixed astronaut with side-scrolling space parallax)
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `vercel.json` — Vercel routing config
@@ -80,6 +81,23 @@ Everything lives in a single HTML file (~850 lines). The `<script>` block contai
 ### Campfire Scene (`campfire.html`)
 
 Single self-contained HTML file with CSS animations and procedural audio.
+
+### Astronaut Drift Scene (`astronaut_drift.html`)
+
+Single self-contained HTML file with SVG parallax layers and procedural ambient audio.
+
+#### Visual Elements
+
+- 426×240 viewBox with `crispEdges` pixel-art rendering
+- Astronaut sprite is fixed near the left-middle edge of the frame
+- Multiple duplicated horizontal strips scroll to simulate infinite movement
+- Layered parallax: nebula haze, far stars, near stars, and dust streaks
+
+#### Audio System
+
+- Procedural Web Audio API hum (no audio files)
+- Low oscillator drone with gentle LFO pitch movement
+- Soft filtered noise layer for subtle space ambience
 
 #### Visual Elements (SVG + CSS)
 

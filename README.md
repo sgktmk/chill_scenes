@@ -14,6 +14,10 @@ A full day-night cycle over the sea. Watch ships drift across three depth lanes 
 
 A pixel-art campfire under a starry sky. Multi-layered flames flicker with independent CSS animations while sparks and smoke wisps rise from the fire. Shooting stars streak across the sky. Procedural audio provides a warm crackle over layered brown noise.
 
+### Astronaut Drift
+
+A chill pixel-art astronaut stays fixed near the left-middle edge while the surrounding space scrolls sideways. Multiple depth layers (nebula haze, far stars, near stars, and cosmic dust) move at different speeds to create a calm parallax drift. Ambient procedural audio adds a soft sci-fi hum.
+
 ## Getting Started
 
 No build step required. Just open `index.html` in a browser, or serve locally:
@@ -29,6 +33,7 @@ python3 -m http.server 8000
 index.html          — Landing page hub
 seascape.html       — Seascape scene
 campfire.html       — Campfire scene
+astronaut_drift.html — Astronaut Drift scene
 shared/
   scene-ui.css      — Shared audio panel & back button styles
   scene-ui.js       — Shared audio control logic
@@ -62,6 +67,10 @@ vercel.json         — Vercel clean URL routing
 
 星空の下に揺れるピクセルアートの焚き火。複数レイヤーの炎がそれぞれ独立したCSSアニメーションで揺らめき、火の粉や煙が立ち上ります。流れ星が夜空を横切ることもあります。ブラウンノイズの上にパチパチという焚き火の音が重なるプロシージャルオーディオです。
 
+### Astronaut Drift（宇宙飛行士）
+
+左側中央付近に固定されたピクセルアートの宇宙飛行士を中心に、星や宇宙塵、星雲が横方向へ流れるシーンです。奥行きごとに速度を変えたパララックスで、ゆったり漂うような雰囲気を表現しています。音は穏やかなプロシージャル生成のSFアンビエンスです。
+
 ## はじめかた
 
 ビルドは不要です。ブラウザで `index.html` を開くか、ローカルサーバーを起動してください：
@@ -77,6 +86,7 @@ python3 -m http.server 8000
 index.html          — ランディングページ（ハブ）
 seascape.html       — Seascape シーン
 campfire.html       — Campfire シーン
+astronaut_drift.html — Astronaut Drift シーン
 shared/
   scene-ui.css      — 共有オーディオパネル・戻るボタンのスタイル
   scene-ui.js       — 共有オーディオ制御ロジック
