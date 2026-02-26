@@ -24,6 +24,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `index.html` — Landing page hub linking to all scenes
 - `seascape.html` — "Seascape" scene (day-night cycle over the sea)
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
+- `spacewalk.html` — "Spacewalk" scene (astronaut with side-scrolling pixel-art space)
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `vercel.json` — Vercel routing config
@@ -97,6 +98,24 @@ Single self-contained HTML file with CSS animations and procedural audio.
 - Procedural Web Audio API (no audio files)
 - Brown noise layers for low rumble and mid warmth
 - Crackle buffers with random sharp spike transients
+- Volume slider + mute toggle in fixed UI panel
+
+
+### Spacewalk Scene (`spacewalk.html`)
+
+Single self-contained HTML file featuring a fixed-position astronaut and horizontally scrolling space background.
+
+#### Visual Elements (SVG + JS)
+
+- 426×240 viewBox with `crispEdges` pixel-art rendering
+- Astronaut is anchored near the left-middle edge to mimic drifting tethered spacewalk
+- Two starfield layers and planet layer scroll left at different speeds (parallax)
+- Nebula gradients and twinkling stars add depth while maintaining a calm vibe
+
+#### Audio System
+
+- Procedural Web Audio API (no audio files)
+- Low sine drone + slow modulated shimmer + filtered noise bed
 - Volume slider + mute toggle in fixed UI panel
 
 ## Maintenance Notes
