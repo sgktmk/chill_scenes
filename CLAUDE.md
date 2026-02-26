@@ -17,12 +17,12 @@ Or open `index.html` directly in a browser. No build step required.
 
 ## Deployment
 
-Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/nihonkai_daynight` serves the scene without the `.html` extension.
+Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascape` serves the scene without the `.html` extension.
 
 ## Files
 
 - `index.html` — Landing page hub linking to all scenes
-- `nihonkai_daynight.html` — "Seascape" scene (day-night cycle over the sea)
+- `seascape.html` — "Seascape" scene (day-night cycle over the sea)
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
 - `vercel.json` — Vercel routing config
 
@@ -32,9 +32,9 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/nihonka
 
 A simple static hub page with card links to each scene. No JavaScript. Dark theme with warm orange accents matching the scene UI.
 
-### Seascape Scene (`nihonkai_daynight.html`)
+### Seascape Scene (`seascape.html`)
 
-Everything lives in a single HTML file (~700 lines). The `<script>` block contains several self-contained systems:
+Everything lives in a single HTML file (~850 lines). The `<script>` block contains several self-contained systems:
 
 ### Day-Night Cycle (core timing)
 
@@ -96,3 +96,45 @@ Single self-contained HTML file with CSS animations and procedural audio.
 - Brown noise layers for low rumble and mid warmth
 - Crackle buffers with random sharp spike transients
 - Volume slider + mute toggle in fixed UI panel
+
+## Maintenance Notes
+
+### Shared UI Code (duplicated across scenes)
+
+The following UI components are copy-pasted into each scene HTML. When modifying these, update all scene files:
+
+- **Audio panel CSS** (`.ap`, `.ab`, `.vs`, `.vl`, `.wi` classes): ~60 lines
+- **Back button CSS** (`.back`): ~8 lines
+- **Audio control JS** (mute toggle, volume slider): ~28 lines
+- **Audio panel HTML** template: ~4 lines
+
+When the project grows beyond 5 scenes, consider extracting these into shared files (`shared/scene-ui.css`, `shared/scene-ui.js`).
+
+### Future Roadmap
+
+Planned features in recommended implementation order:
+
+1. **Shared code extraction** — Move duplicated UI code into `shared/scene-ui.css` and `shared/scene-ui.js`, loaded via `<link>` and `<script src>` in each scene
+2. **OGP meta tags** — Add Open Graph / Twitter Card meta tags to each scene for link previews on social media
+3. **Screenshot capture** — SVG → Canvas → PNG conversion using native browser APIs (no library needed); add camera button to UI panel
+4. **SNS sharing** — Web Share API (mobile) with X/Twitter intent URL fallback (desktop); share button in UI panel
+5. **Scene template** — Standardize boilerplate for new scenes
+
+### New Scene Checklist
+
+When adding a new scene:
+
+- [ ] Set `lang="en"` and title format `<Name> — Chill Scenes`
+- [ ] Include back button and audio panel HTML/CSS/JS (or shared files once extracted)
+- [ ] Add card with preview SVG to `index.html` grid
+- [ ] Add OGP meta tags in `<head>` (once implemented)
+- [ ] Update this file's Files list and Architecture section
+- [ ] Add clean URL route in `vercel.json`
+
+### Architecture Decision: Build Tool
+
+Current approach: **vanilla HTML/CSS/JS with no build step**. Each scene is a self-contained HTML file.
+
+If maintainability becomes an issue (5+ scenes with shared code), consider:
+- **Option A (recommended)**: Extract shared code into separate `.css`/`.js` files loaded via standard HTML tags — no build tool needed
+- **Option B**: Introduce Vite as a lightweight build tool for module imports, HMR, and bundling — adds `node_modules`/`package.json` but output remains static HTML
