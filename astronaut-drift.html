@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astronaut Drift — Chill Scenes</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="/shared/scene-ui.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#050510;
+  min-height:100vh;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'Press Start 2P', monospace;
+}
+.scene-wrap{position:relative;width:100vw;height:100vh}
+svg{width:100%;height:100%;display:block;image-rendering:pixelated;shape-rendering:crispEdges}
+#nebulaA,#nebulaB{transition:opacity 1.5s linear}
+.astronaut{filter:drop-shadow(0 0 8px rgba(180,220,255,.35))}
+.tether{opacity:.55}
+@keyframes bob{0%{transform:translateY(0)}50%{transform:translateY(-1.8px)}100%{transform:translateY(0)}}
+@keyframes visorGlow{0%,100%{opacity:.35}50%{opacity:.7}}
+.float{animation:bob 4.8s ease-in-out infinite}
+.visor{animation:visorGlow 3.5s ease-in-out infinite}
+</style>
+</head>
+<body>
+<a class="back" href="/">← Back</a>
+<div class="ap" aria-live="polite">
+  <button id="audioToggle" class="ab" type="button" aria-pressed="false">🔇 Sound Off</button>
+  <div class="vs">
+    <span class="wi">🔉</span>
+    <label class="vl" for="volumeSlider">Volume: <span id="volumeValue">65</span>%</label>
+    <input id="volumeSlider" type="range" min="0" max="100" value="65" step="1">
+  </div>
+</div>
+<div class="scene-wrap">
+<svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-label="Pixel-art astronaut drifting in space">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#090918"/>
+      <stop offset="50%" stop-color="#060612"/>
+      <stop offset="100%" stop-color="#030308"/>
+    </linearGradient>
+    <radialGradient id="nebulaGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8a4dff" stop-opacity=".45"/>
+      <stop offset="55%" stop-color="#3f72ff" stop-opacity=".2"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="320" height="180" fill="url(#bg)"/>
+
+  <g id="scrollFar"></g>
+  <g id="scrollMid"></g>
+  <g id="scrollNear"></g>
+
+  <ellipse id="nebulaA" cx="235" cy="68" rx="95" ry="48" fill="url(#nebulaGrad)"/>
+  <ellipse id="nebulaB" cx="260" cy="122" rx="75" ry="34" fill="#44b3ff" opacity=".08"/>
+
+  <g class="tether" stroke="#8b93ad" stroke-width="1" fill="none">
+    <path d="M30 96 C 85 90, 130 115, 190 108" stroke-dasharray="2 3"/>
+  </g>
+
+  <g class="astronaut float" transform="translate(34 96)">
+    <rect x="-10" y="-8" width="22" height="18" rx="3" fill="#e9edf7"/>
+    <rect x="-8" y="-6" width="18" height="12" fill="#f9fbff"/>
+    <rect x="-4" y="-18" width="10" height="10" rx="2" fill="#dfe5f2"/>
+    <rect x="-3" y="-17" width="8" height="8" rx="2" fill="#1f2c45"/>
+    <rect class="visor" x="-2" y="-16" width="6" height="5" fill="#79d7ff"/>
+    <rect x="-15" y="-5" width="5" height="6" rx="1" fill="#dbe0ed"/>
+    <rect x="12" y="-5" width="5" height="6" rx="1" fill="#dbe0ed"/>
+    <rect x="-6" y="10" width="5" height="8" rx="1" fill="#d7dcea"/>
+    <rect x="3" y="10" width="5" height="8" rx="1" fill="#d7dcea"/>
+    <rect x="-1" y="-1" width="4" height="4" fill="#9ca6be"/>
+    <rect x="-2" y="2" width="6" height="2" fill="#8f9ab5"/>
+  </g>
+</svg>
+</div>
+
+<script src="/shared/scene-ui.js"></script>
+<script>
+(() => {
+  const W = 320;
+  const far = document.getElementById('scrollFar');
+  const mid = document.getElementById('scrollMid');
+  const near = document.getElementById('scrollNear');
+
+  const rng = (seed => () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296)(20250107);
+
+  function buildLayer(target, count, color, minSize, maxSize, yStart, yEnd, brightChance = 0.08) {
+    let html = '';
+    for (let set = 0; set < 2; set++) {
+      const offset = set * W;
+      for (let i = 0; i < count; i++) {
+        const x = Math.floor(rng() * W) + offset;
+        const y = Math.floor(rng() * (yEnd - yStart)) + yStart;
+        const s = Math.floor(rng() * (maxSize - minSize + 1)) + minSize;
+        const twinkle = (0.18 + rng() * 0.72).toFixed(2);
+        html += `<rect x="${x}" y="${y}" width="${s}" height="${s}" fill="${color}" opacity="${twinkle}"/>`;
+        if (rng() < brightChance) {
+          html += `<rect x="${x - 1}" y="${y}" width="${s + 2}" height="1" fill="#ffffff" opacity="0.35"/>`;
+          html += `<rect x="${x}" y="${y - 1}" width="1" height="${s + 2}" fill="#ffffff" opacity="0.35"/>`;
+        }
+      }
+    }
+    target.innerHTML = html;
+  }
+
+  buildLayer(far, 120, '#c6cbff', 1, 1, 4, 176, 0.03);
+  buildLayer(mid, 70, '#d4f0ff', 1, 2, 6, 172, 0.09);
+  buildLayer(near, 38, '#ffeac5', 2, 3, 10, 168, 0.12);
+
+  // pixel planets in scrolling background
+  [
+    { x: 208, y: 42, r: 7, c: '#b185ff', o: .55 },
+    { x: 286, y: 118, r: 10, c: '#65b8ff', o: .4 },
+    { x: 366, y: 80, r: 6, c: '#ffd27a', o: .45 },
+    { x: 468, y: 138, r: 8, c: '#95ffcf', o: .35 }
+  ].forEach(p => {
+    near.innerHTML += `<rect x="${p.x}" y="${p.y}" width="${p.r*2}" height="${p.r*2}" fill="${p.c}" opacity="${p.o}"/>`;
+    near.innerHTML += `<rect x="${p.x+2}" y="${p.y+2}" width="${Math.max(2,p.r-3)}" height="${Math.max(2,p.r-3)}" fill="#ffffff" opacity="0.2"/>`;
+  });
+
+  let t0 = performance.now();
+  function animate(now) {
+    const t = (now - t0) / 1000;
+    const xFar = -((t * 4) % W);
+    const xMid = -((t * 8) % W);
+    const xNear = -((t * 14) % W);
+    far.setAttribute('transform', `translate(${xFar.toFixed(2)} 0)`);
+    mid.setAttribute('transform', `translate(${xMid.toFixed(2)} 0)`);
+    near.setAttribute('transform', `translate(${xNear.toFixed(2)} 0)`);
+
+    const pulse = (Math.sin(t * 0.35) + 1) * 0.5;
+    document.getElementById('nebulaA').setAttribute('opacity', (0.18 + pulse * 0.18).toFixed(3));
+    document.getElementById('nebulaB').setAttribute('opacity', (0.05 + pulse * 0.08).toFixed(3));
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+})();
+
+(() => {
+  let audioCtx = null;
+  let master = null;
+  let osc1 = null;
+  let osc2 = null;
+  let lfo = null;
+  let lfoGain = null;
+
+  function setVolume(v) {
+    if (master && audioCtx) {
+      const target = Math.pow(v, 1.35) * 0.05;
+      master.gain.setTargetAtTime(target, audioCtx.currentTime, 0.08);
+    }
+  }
+
+  function start() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    master = audioCtx.createGain();
+    master.gain.value = 0;
+
+    osc1 = audioCtx.createOscillator();
+    osc1.type = 'triangle';
+    osc1.frequency.value = 68;
+
+    osc2 = audioCtx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.value = 102;
+
+    lfo = audioCtx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 0.09;
+    lfoGain = audioCtx.createGain();
+    lfoGain.gain.value = 5;
+
+    const humTone = audioCtx.createBiquadFilter();
+    humTone.type = 'lowpass';
+    humTone.frequency.value = 460;
+    humTone.Q.value = 0.8;
+
+    lfo.connect(lfoGain).connect(osc1.frequency);
+    osc1.connect(humTone);
+    osc2.connect(humTone);
+    humTone.connect(master).connect(audioCtx.destination);
+
+    osc1.start();
+    osc2.start();
+    lfo.start();
+  }
+
+  function stop() {
+    if (!audioCtx) return;
+    [osc1, osc2, lfo].forEach(n => n && n.stop());
+    audioCtx.close();
+    audioCtx = null;
+    master = osc1 = osc2 = lfo = lfoGain = null;
+  }
+
+  initSceneAudio({ onStart: start, onStop: stop, onVolumeChange: setVolume });
+})();
+</script>
+</body>
+</html>

@@ -24,6 +24,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `index.html` — Landing page hub linking to all scenes
 - `seascape.html` — "Seascape" scene (day-night cycle over the sea)
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
+- `astronaut-drift.html` — "Astronaut Drift" scene (fixed astronaut with horizontally scrolling pixel-space)
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `vercel.json` — Vercel routing config
@@ -98,6 +99,25 @@ Single self-contained HTML file with CSS animations and procedural audio.
 - Brown noise layers for low rumble and mid warmth
 - Crackle buffers with random sharp spike transients
 - Volume slider + mute toggle in fixed UI panel
+
+### Astronaut Drift Scene (`astronaut-drift.html`)
+
+Single self-contained HTML file focused on side-scrolling space ambience.
+
+#### Visual Elements (SVG + JS)
+
+- 320×180 pixel-art viewBox with crisp-edge rendering
+- Astronaut sprite anchored near left-middle for a fixed focal point
+- Three star layers (far/mid/near) rendered in duplicated bands and translated for seamless horizontal looping
+- Slow parallax speeds per layer to create side-scrolling depth
+- Pixel planets and nebula overlays with subtle pulse animation
+- Tether line suggests the astronaut is drifting while still attached
+
+#### Audio System
+
+- Procedural Web Audio API ambient drone (no audio files)
+- Layered oscillators with gentle low-frequency modulation
+- Shared volume slider + mute toggle via `initSceneAudio()`
 
 ## Maintenance Notes
 
