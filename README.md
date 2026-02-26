@@ -14,6 +14,10 @@ A full day-night cycle over the sea. Watch ships drift across three depth lanes 
 
 A pixel-art campfire under a starry sky. Multi-layered flames flicker with independent CSS animations while sparks and smoke wisps rise from the fire. Shooting stars streak across the sky. Procedural audio provides a warm crackle over layered brown noise.
 
+### Spacewalk
+
+A chill pixel-art astronaut floats near the left side of the frame while deep space scrolls horizontally. Layered starfields, drifting planets, and soft nebula glow create a calm parallax effect. Procedural audio blends a low drone, slow shimmer, and filtered noise.
+
 ## Getting Started
 
 No build step required. Just open `index.html` in a browser, or serve locally:
@@ -29,6 +33,7 @@ python3 -m http.server 8000
 index.html          — Landing page hub
 seascape.html       — Seascape scene
 campfire.html       — Campfire scene
+spacewalk.html      — Spacewalk scene
 shared/
   scene-ui.css      — Shared audio panel & back button styles
   scene-ui.js       — Shared audio control logic
@@ -62,6 +67,10 @@ vercel.json         — Vercel clean URL routing
 
 星空の下に揺れるピクセルアートの焚き火。複数レイヤーの炎がそれぞれ独立したCSSアニメーションで揺らめき、火の粉や煙が立ち上ります。流れ星が夜空を横切ることもあります。ブラウンノイズの上にパチパチという焚き火の音が重なるプロシージャルオーディオです。
 
+### Spacewalk（宇宙遊泳）
+
+左側に固定されたピクセルアートの宇宙飛行士の背後で、星空と惑星が横方向にゆっくり流れるチルいシーンです。奥行きのある星レイヤー、淡い星雲、穏やかな宇宙ドローン音で落ち着いた雰囲気を作っています。
+
 ## はじめかた
 
 ビルドは不要です。ブラウザで `index.html` を開くか、ローカルサーバーを起動してください：
@@ -77,6 +86,7 @@ python3 -m http.server 8000
 index.html          — ランディングページ（ハブ）
 seascape.html       — Seascape シーン
 campfire.html       — Campfire シーン
+spacewalk.html      — Spacewalk シーン
 shared/
   scene-ui.css      — 共有オーディオパネル・戻るボタンのスタイル
   scene-ui.js       — 共有オーディオ制御ロジック
