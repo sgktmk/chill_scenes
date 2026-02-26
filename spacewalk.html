@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spacewalk — Chill Scenes</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="/shared/scene-ui.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #02030a;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: 'Press Start 2P', monospace;
+}
+.scene {
+  position: relative;
+  width: 100vw;
+  height: min(100vh, 62.5vw);
+  max-width: 100vw;
+  max-height: 100vh;
+}
+@media (min-aspect-ratio: 16/10) {
+  .scene {
+    height: 100vh;
+    width: min(160vh, 100vw);
+  }
+}
+svg { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<a class="back" href="/">&#8592; Top</a>
+<div class="scene">
+<svg id="scene" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-label="Astronaut floating in space">
+  <defs>
+    <linearGradient id="void" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#06081b"/>
+      <stop offset="100%" stop-color="#02030a"/>
+    </linearGradient>
+    <radialGradient id="nebulaBlue" cx="72%" cy="42%" r="35%">
+      <stop offset="0%" stop-color="#2e3aa4" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#2e3aa4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nebulaPurple" cx="84%" cy="78%" r="30%">
+      <stop offset="0%" stop-color="#7e2ca4" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#7e2ca4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="320" height="200" fill="url(#void)"/>
+  <rect width="320" height="200" fill="url(#nebulaBlue)"/>
+  <rect width="320" height="200" fill="url(#nebulaPurple)"/>
+
+  <g id="bgFar"></g>
+  <g id="bgMid"></g>
+  <g id="bgNear"></g>
+
+  <!-- Fixed astronaut (left-middle) -->
+  <g id="astronaut" transform="translate(36 98)">
+    <rect x="-1" y="-3" width="2" height="18" fill="#8fe1ff" opacity="0.45"/>
+    <rect x="6" y="5" width="11" height="11" fill="#f5f8ff"/>
+    <rect x="8" y="7" width="7" height="7" fill="#70cfff"/>
+    <rect x="5" y="6" width="1" height="8" fill="#d2d9e9"/>
+    <rect x="17" y="6" width="1" height="8" fill="#b8c2d8"/>
+    <rect x="8" y="3" width="8" height="2" fill="#d6deef"/>
+    <rect x="9" y="1" width="6" height="2" fill="#edf2ff"/>
+    <rect x="10" y="-1" width="4" height="2" fill="#d6deef"/>
+    <rect x="7" y="17" width="4" height="6" fill="#dde5f5"/>
+    <rect x="12" y="17" width="4" height="6" fill="#cad3e5"/>
+    <rect x="6" y="18" width="1" height="4" fill="#aab7cf"/>
+    <rect x="16" y="18" width="1" height="4" fill="#9eadc8"/>
+    <rect x="3" y="8" width="2" height="5" fill="#dde5f5"/>
+    <rect x="18" y="8" width="2" height="5" fill="#cad3e5"/>
+    <rect x="2" y="12" width="3" height="2" fill="#aab7cf"/>
+    <rect x="18" y="12" width="3" height="2" fill="#9eadc8"/>
+    <rect x="20" y="12" width="8" height="1" fill="#8fe1ff" opacity="0.5"/>
+    <rect x="28" y="12" width="2" height="1" fill="#c8f1ff" opacity="0.8"/>
+  </g>
+</svg>
+</div>
+
+<script>
+(() => {
+  const W = 320;
+  const bgFar = document.getElementById('bgFar');
+  const bgMid = document.getElementById('bgMid');
+  const bgNear = document.getElementById('bgNear');
+
+  function makeRect(x, y, w, h, color, opacity = 1) {
+    const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    r.setAttribute('x', x);
+    r.setAttribute('y', y);
+    r.setAttribute('width', w);
+    r.setAttribute('height', h);
+    r.setAttribute('fill', color);
+    if (opacity < 1) r.setAttribute('opacity', opacity);
+    return r;
+  }
+
+  function buildLayer(group, dots, color, size, jitterY) {
+    const packA = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const packB = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+    for (let i = 0; i < dots; i++) {
+      const x = Math.floor(Math.random() * W);
+      const y = Math.floor(Math.random() * (200 - jitterY));
+      const wobble = Math.floor(Math.random() * jitterY);
+      const s = size + (Math.random() > 0.8 ? 1 : 0);
+      const o = 0.45 + Math.random() * 0.5;
+      packA.appendChild(makeRect(x, y + wobble, s, s, color, o));
+      packB.appendChild(makeRect(x + W, y + wobble, s, s, color, o));
+    }
+
+    group.appendChild(packA);
+    group.appendChild(packB);
+    return { packA, packB };
+  }
+
+  const far = buildLayer(bgFar, 75, '#b9c3ff', 1, 0);
+  const mid = buildLayer(bgMid, 48, '#d9e4ff', 1, 12);
+  const near = buildLayer(bgNear, 24, '#ffffff', 2, 28);
+
+  const planetA = makeRect(210, 54, 22, 22, '#5c64c9', 0.7);
+  const planetB = makeRect(218, 60, 6, 6, '#94a0f2', 0.9);
+  const planetC = makeRect(244, 126, 14, 14, '#7f2fa8', 0.55);
+  bgMid.appendChild(planetA);
+  bgMid.appendChild(planetB);
+  bgNear.appendChild(planetC);
+
+  let last = performance.now();
+  let xFar = 0;
+  let xMid = 0;
+  let xNear = 0;
+
+  function tick(now) {
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+
+    xFar = (xFar + dt * 5) % W;
+    xMid = (xMid + dt * 10) % W;
+    xNear = (xNear + dt * 18) % W;
+
+    far.packA.setAttribute('transform', `translate(${-xFar} 0)`);
+    far.packB.setAttribute('transform', `translate(${-xFar} 0)`);
+    mid.packA.setAttribute('transform', `translate(${-xMid} 0)`);
+    mid.packB.setAttribute('transform', `translate(${-xMid} 0)`);
+    near.packA.setAttribute('transform', `translate(${-xNear} 0)`);
+    near.packB.setAttribute('transform', `translate(${-xNear} 0)`);
+
+    requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame((t) => {
+    last = t;
+    tick(t);
+  });
+})();
+</script>
+</body>
+</html>
