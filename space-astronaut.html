@@ -43,8 +43,19 @@
   }
   .astronaut-group {
     animation: astroFloat 8s ease-in-out infinite;
-    transform-origin: 65px 120px;
+    transform-origin: 51px 120px;
   }
+
+  /* ===== SPRITE FRAMES ===== */
+  .astroFrame { opacity: 0; }
+  .astroFrame0 { animation: spriteF0 2.4s steps(1) infinite; }
+  .astroFrame1 { animation: spriteF1 2.4s steps(1) infinite; }
+  .astroFrame2 { animation: spriteF2 2.4s steps(1) infinite; }
+  .astroFrame3 { animation: spriteF3 2.4s steps(1) infinite; }
+  @keyframes spriteF0 { 0%,24.9%{opacity:1} 25%,100%{opacity:0} }
+  @keyframes spriteF1 { 0%,24.9%{opacity:0} 25%,49.9%{opacity:1} 50%,100%{opacity:0} }
+  @keyframes spriteF2 { 0%,49.9%{opacity:0} 50%,74.9%{opacity:1} 75%,100%{opacity:0} }
+  @keyframes spriteF3 { 0%,74.9%{opacity:0} 75%,99.9%{opacity:1} }
 
   /* ===== STAR SCROLL ===== */
   @keyframes scrollFar {
@@ -70,20 +81,12 @@
   }
   .nebula-layer { animation: scrollNebula 200s linear infinite; }
 
-  /* ===== VISOR REFLECTION ===== */
-  @keyframes visorShimmer {
-    0%   { opacity: 0.3; }
-    50%  { opacity: 0.6; }
-    100% { opacity: 0.3; }
-  }
-  .visor-shine { animation: visorShimmer 4s ease-in-out infinite; }
-
   /* ===== TETHER SWAY ===== */
   @keyframes tetherSway {
-    0%   { d: path("M58,128 Q30,132 10,125 Q-10,118 -30,122"); }
-    33%  { d: path("M58,128 Q32,136 10,128 Q-10,120 -30,126"); }
-    66%  { d: path("M58,128 Q28,130 10,122 Q-10,116 -30,119"); }
-    100% { d: path("M58,128 Q30,132 10,125 Q-10,118 -30,122"); }
+    0%   { d: path("M27,120 Q10,124 -5,118 Q-20,112 -40,116"); }
+    33%  { d: path("M27,120 Q10,128 -5,122 Q-20,115 -40,120"); }
+    66%  { d: path("M27,120 Q10,121 -5,115 Q-20,109 -40,113"); }
+    100% { d: path("M27,120 Q10,124 -5,118 Q-20,112 -40,116"); }
   }
   .tether-line { animation: tetherSway 10s ease-in-out infinite; }
 
@@ -329,87 +332,14 @@
   <!-- ===== SCROLLING CELESTIAL OBJECTS (JS-spawned) ===== -->
   <g id="celestialLayer"></g>
 
-  <!-- ===== TETHER LINE ===== -->
+  <!-- ===== ASTRONAUT ===== -->
   <g class="astronaut-group">
-    <path class="tether-line" d="M58,128 Q30,132 10,125 Q-10,118 -30,122"
-          stroke="#888899" stroke-width="1" fill="none" stroke-dasharray="2,2" opacity="0.5"/>
-
-    <!-- ===== ASTRONAUT (pixel art) ===== -->
-    <!-- Backpack / life support -->
-    <rect x="44" y="107" width="10" height="18" fill="#ccccdd"/>
-    <rect x="45" y="108" width="8" height="16" fill="#b0b0c0"/>
-    <rect x="46" y="109" width="2" height="3" fill="#8888aa"/>
-    <rect x="50" y="109" width="2" height="3" fill="#8888aa"/>
-    <rect x="46" y="114" width="6" height="2" fill="#9999bb"/>
-    <rect x="47" y="117" width="4" height="2" fill="#7777aa"/>
-    <!-- Oxygen hose -->
-    <rect x="52" y="106" width="2" height="2" fill="#aaaacc"/>
-    <rect x="53" y="104" width="2" height="3" fill="#aaaacc"/>
-    <rect x="55" y="102" width="2" height="3" fill="#aaaacc"/>
-    <rect x="57" y="101" width="3" height="2" fill="#aaaacc"/>
-
-    <!-- Body / torso -->
-    <rect x="54" y="107" width="14" height="20" fill="#e8e8f0"/>
-    <rect x="55" y="108" width="12" height="18" fill="#d8d8e5"/>
-    <!-- Chest detail -->
-    <rect x="57" y="110" width="4" height="3" fill="#ccccdd"/>
-    <rect x="62" y="110" width="3" height="2" fill="#bbbbcc"/>
-    <rect x="58" y="114" width="6" height="1" fill="#ccccdd"/>
-    <!-- American flag patch (tiny) -->
-    <rect x="63" y="113" width="3" height="2" fill="#cc3333"/>
-    <rect x="63" y="113" width="1" height="1" fill="#3344aa"/>
-
-    <!-- Helmet -->
-    <rect x="55" y="95" width="16" height="14" fill="#e0e0ee"/>
-    <rect x="54" y="97" width="18" height="10" fill="#e0e0ee"/>
-    <rect x="56" y="94" width="14" height="2" fill="#d0d0dd"/>
-    <rect x="56" y="107" width="14" height="1" fill="#d0d0dd"/>
-    <!-- Visor -->
-    <rect x="58" y="97" width="12" height="8" fill="url(#visorGrad)"/>
-    <rect x="59" y="98" width="10" height="6" fill="#1a3060"/>
-    <!-- Visor reflection -->
-    <rect class="visor-shine" x="60" y="98" width="3" height="1" fill="#6699cc" opacity="0.5"/>
-    <rect class="visor-shine" x="61" y="99" width="2" height="1" fill="#88bbdd" opacity="0.3"/>
-    <!-- Helmet rim -->
-    <rect x="57" y="96" width="12" height="1" fill="#ccccdd"/>
-    <rect x="57" y="105" width="12" height="1" fill="#ccccdd"/>
-
-    <!-- Left arm (slightly raised, floating) -->
-    <rect x="48" y="108" width="6" height="4" fill="#e0e0ee"/>
-    <rect x="46" y="110" width="4" height="4" fill="#dddde8"/>
-    <rect x="44" y="112" width="4" height="4" fill="#d8d8e5"/>
-    <rect x="42" y="114" width="4" height="3" fill="#dddde8"/>
-    <!-- Left glove -->
-    <rect x="40" y="114" width="4" height="4" fill="#ccccdd"/>
-    <rect x="39" y="115" width="2" height="3" fill="#bbbbcc"/>
-
-    <!-- Right arm (relaxed, slightly down) -->
-    <rect x="68" y="109" width="6" height="4" fill="#e0e0ee"/>
-    <rect x="72" y="111" width="4" height="4" fill="#dddde8"/>
-    <rect x="74" y="114" width="4" height="4" fill="#d8d8e5"/>
-    <rect x="76" y="117" width="4" height="3" fill="#dddde8"/>
-    <!-- Right glove -->
-    <rect x="78" y="119" width="4" height="4" fill="#ccccdd"/>
-    <rect x="81" y="120" width="2" height="3" fill="#bbbbcc"/>
-
-    <!-- Left leg -->
-    <rect x="54" y="127" width="6" height="8" fill="#e0e0ee"/>
-    <rect x="53" y="133" width="6" height="6" fill="#dddde8"/>
-    <rect x="52" y="138" width="6" height="4" fill="#d8d8e5"/>
-    <!-- Left boot -->
-    <rect x="50" y="141" width="8" height="4" fill="#999aaa"/>
-    <rect x="49" y="143" width="4" height="2" fill="#888899"/>
-
-    <!-- Right leg (slightly bent) -->
-    <rect x="62" y="127" width="6" height="6" fill="#e0e0ee"/>
-    <rect x="64" y="132" width="6" height="6" fill="#dddde8"/>
-    <rect x="66" y="137" width="6" height="4" fill="#d8d8e5"/>
-    <!-- Right boot -->
-    <rect x="66" y="140" width="8" height="4" fill="#999aaa"/>
-    <rect x="73" y="142" width="4" height="2" fill="#888899"/>
-
-    <!-- Helmet light (small blinking light on top) -->
-    <rect id="helmetLight" x="62" y="93" width="2" height="2" fill="#44ff44" opacity="0.8"/>
+    <path class="tether-line" d="M27,120 Q10,124 -5,118 Q-20,112 -40,116"
+          stroke="#777788" stroke-width="1" fill="none" stroke-dasharray="2,2" opacity="0.45"/>
+    <!-- Sprite frames rendered by JS -->
+    <g id="astronautLayer"></g>
+    <!-- Helmet indicator light (top of helmet) -->
+    <rect id="helmetLight" x="48" y="71" width="6" height="6" fill="#44ff44" opacity="0.9"/>
   </g>
 </svg>
 </div>
@@ -421,6 +351,83 @@
 <script src="/shared/scene-ui.js"></script>
 <script>
   // ========================================
+  // ASTRONAUT SPRITE (pixel art, 4 frames)
+  // ========================================
+  (function renderAstronaut() {
+    const S = 6;   // each "pixel" = 6×6 SVG units
+    const OX = 21; // x origin (left edge of character)
+    const OY = 75; // y origin (top of helmet)
+
+    // Color palette (matches reference images)
+    const C = {
+      '1': '#1a1c30',  // dark navy suit / helmet body
+      '2': '#0e0f1e',  // very dark outline / shadow
+      '6': '#b0b4cc',  // silver-white helmet highlight
+      '3': '#c4a600',  // gold visor
+      '4': '#ead800',  // bright gold visor center
+      '5': '#dd1100',  // red indicator light
+      'M': '#2a2c48',  // medium suit seam/edge
+    };
+
+    // Static rows 0-9: helmet + neck + upper body
+    // 10 columns (0-9), each char = one pixel
+    const TOP = [
+      '..111111..',  // row 0: helmet top arc
+      '.11111111.',  // row 1: helmet
+      '.16111111.',  // row 2: helmet (6=silver highlight upper-left)
+      '.11111111.',  // row 3: helmet mid
+      '5113333115',  // row 4: visor top + red indicators at col0,9
+      '.11444411.',  // row 5: visor bright center
+      '.11333311.',  // row 6: visor lower gold
+      '.11111111.',  // row 7: helmet bottom
+      '..111111..',  // row 8: neck/collar
+      '.11111111.',  // row 9: shoulders / upper body
+    ];
+
+    // Variable rows 10-11: arm positions differ per frame
+    // Frame 0: arms extended horizontally (base pose)
+    // Frame 1: arms raised (up one row)
+    // Frame 2: arms fully spread wide
+    // Frame 3: arms lowered (down one row)
+    const FRAMES = [
+      ['.11111111.', '11.1111.11'],  // frame 0: body / arms-mid
+      ['11.1111.11', '.11111111.'],  // frame 1: arms-mid / body
+      ['1111111111', '..111111..'],  // frame 2: arms-wide / body-narrow
+      ['..111111..', '1111111111'],  // frame 3: body-narrow / arms-wide
+    ];
+
+    // Static rows 12-14: lower body + legs + boots
+    const BOT = [
+      '...1111...',  // row 12: hips
+      '...11.11..',  // row 13: upper legs
+      '..111.111.',  // row 14: boots
+    ];
+
+    const NS = 'http://www.w3.org/2000/svg';
+    const layer = document.getElementById('astronautLayer');
+
+    for (let f = 0; f < 4; f++) {
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'astroFrame astroFrame' + f);
+      const allRows = [...TOP, ...FRAMES[f], ...BOT];
+      allRows.forEach((row, ri) => {
+        for (let ci = 0; ci < row.length; ci++) {
+          const ch = row[ci];
+          if (!C[ch]) continue;
+          const r = document.createElementNS(NS, 'rect');
+          r.setAttribute('x', ci * S + OX);
+          r.setAttribute('y', ri * S + OY);
+          r.setAttribute('width', S);
+          r.setAttribute('height', S);
+          r.setAttribute('fill', C[ch]);
+          g.appendChild(r);
+        }
+      });
+      layer.appendChild(g);
+    }
+  })();
+
+  // ========================================
   // HELMET LIGHT BLINK
   // ========================================
   (function initHelmetLight() {
@@ -428,8 +435,8 @@
     let on = true;
     setInterval(() => {
       on = !on;
-      light.setAttribute('opacity', on ? '0.8' : '0.15');
-      light.setAttribute('fill', on ? '#44ff44' : '#226622');
+      light.setAttribute('opacity', on ? '0.9' : '0.1');
+      light.setAttribute('fill', on ? '#44ff44' : '#1a4420');
     }, 1200);
   })();
 
