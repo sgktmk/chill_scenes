@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campfire — Chill Scenes</title>
+<meta property="og:title" content="Campfire — Chill Scenes">
+<meta property="og:description" content="A pixel-art campfire under the stars with crackling sounds, sparks, and shooting stars.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://chill-scenes.vercel.app/campfire">
+<meta property="og:site_name" content="Chill Scenes">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Campfire — Chill Scenes">
+<meta name="twitter:description" content="A pixel-art campfire under the stars with crackling sounds, sparks, and shooting stars.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="/shared/scene-ui.css">
 <style>
@@ -353,6 +361,7 @@
   <button class="ab" id="aBtn"><span style="position:relative">🔇<span class="wi"><span></span><span></span><span></span></span></span></button>
   <input type="range" class="vs" id="vSl" min="0" max="100" value="40"/>
   <span class="vl" id="vLb">40%</span>
+  <button class="ab" id="ssBtn" title="Screenshot">📷</button>
 </div>
 <script src="/shared/scene-ui.js"></script>
 <script>
@@ -518,6 +527,7 @@
       }
     }
   });
+  initSceneScreenshot(document.getElementById('mainSvg'), 'campfire.png');
 </script>
 </body>
 </html>

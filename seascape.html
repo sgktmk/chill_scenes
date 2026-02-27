@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Seascape — Chill Scenes</title>
+<meta property="og:title" content="Seascape — Chill Scenes">
+<meta property="og:description" content="A full day-night cycle over the sea with procedural audio, ships, and pixel-art waves.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://chill-scenes.vercel.app/seascape">
+<meta property="og:site_name" content="Chill Scenes">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Seascape — Chill Scenes">
+<meta name="twitter:description" content="A full day-night cycle over the sea with procedural audio, ships, and pixel-art waves.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="/shared/scene-ui.css">
 <style>
@@ -238,6 +246,7 @@ svg{width:100%;height:100%;display:block;image-rendering:pixelated}
   <button class="ab" id="aBtn"><span style="position:relative">🔇<span class="wi"><span></span><span></span><span></span></span></span></button>
   <input type="range" class="vs" id="vSl" min="0" max="100" value="50"/>
   <span class="vl" id="vLb">50%</span>
+  <button class="ab" id="ssBtn" title="Screenshot">📷</button>
 </div>
 
 <script src="/shared/scene-ui.js"></script>
@@ -840,6 +849,7 @@ loop();
     onVolumeChange(v){if(ctx&&master&&playing){master.gain.setValueAtTime(master.gain.value,ctx.currentTime);master.gain.linearRampToValueAtTime(v/100*.7,ctx.currentTime+.1);}}
   });
 })();
+initSceneScreenshot(document.getElementById('S'), 'seascape.png');
 </script>
 </body>
 </html>
