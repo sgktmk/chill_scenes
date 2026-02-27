@@ -43,7 +43,7 @@
   }
   .astronaut-group {
     animation: astroFloat 8s ease-in-out infinite;
-    transform-origin: 51px 120px;
+    transform-origin: 30px 120px;
   }
 
   /* ===== SPRITE FRAMES ===== */
@@ -83,10 +83,10 @@
 
   /* ===== TETHER SWAY ===== */
   @keyframes tetherSway {
-    0%   { d: path("M27,120 Q10,124 -5,118 Q-20,112 -40,116"); }
-    33%  { d: path("M27,120 Q10,128 -5,122 Q-20,115 -40,120"); }
-    66%  { d: path("M27,120 Q10,121 -5,115 Q-20,109 -40,113"); }
-    100% { d: path("M27,120 Q10,124 -5,118 Q-20,112 -40,116"); }
+    0%   { d: path("M20,120 Q10,122 0,119 Q-10,116 -20,118"); }
+    33%  { d: path("M20,120 Q10,124 0,121 Q-10,118 -20,121"); }
+    66%  { d: path("M20,120 Q10,120 0,117 Q-10,114 -20,116"); }
+    100% { d: path("M20,120 Q10,122 0,119 Q-10,116 -20,118"); }
   }
   .tether-line { animation: tetherSway 10s ease-in-out infinite; }
 
@@ -334,12 +334,12 @@
 
   <!-- ===== ASTRONAUT ===== -->
   <g class="astronaut-group">
-    <path class="tether-line" d="M27,120 Q10,124 -5,118 Q-20,112 -40,116"
+    <path class="tether-line" d="M20,120 Q10,122 0,119 Q-10,116 -20,118"
           stroke="#777788" stroke-width="1" fill="none" stroke-dasharray="2,2" opacity="0.45"/>
     <!-- Sprite frames rendered by JS -->
     <g id="astronautLayer"></g>
     <!-- Helmet indicator light (top of helmet) -->
-    <rect id="helmetLight" x="48" y="71" width="6" height="6" fill="#44ff44" opacity="0.9"/>
+    <rect id="helmetLight" x="28" y="103" width="2" height="2" fill="#44ff44" opacity="0.9"/>
   </g>
 </svg>
 </div>
@@ -354,9 +354,9 @@
   // ASTRONAUT SPRITE (pixel art, 4 frames)
   // ========================================
   (function renderAstronaut() {
-    const S = 6;   // each "pixel" = 6×6 SVG units
-    const OX = 21; // x origin (left edge of character)
-    const OY = 75; // y origin (top of helmet)
+    const S = 2;    // each "pixel" = 2×2 SVG units
+    const OX = 20;  // x origin (left edge of character)
+    const OY = 105; // y origin (top of helmet)
 
     // Color palette (matches reference images)
     const C = {
