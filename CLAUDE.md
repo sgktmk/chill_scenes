@@ -24,8 +24,9 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `index.html` — Landing page hub linking to all scenes
 - `seascape.html` — "Seascape" scene (day-night cycle over the sea)
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
+- `scene-template.html` — Boilerplate for creating new scenes
 - `shared/scene-ui.css` — Shared audio panel & back button styles
-- `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
+- `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` and `initSceneScreenshot()` APIs)
 - `vercel.json` — Vercel routing config
 
 ## Architecture
@@ -106,7 +107,7 @@ Single self-contained HTML file with CSS animations and procedural audio.
 Common UI components are extracted into shared files loaded by each scene:
 
 - **`shared/scene-ui.css`** — Audio panel (`.ap`, `.ab`, `.vs`, `.vl`, `.wi`) and back button (`.back`) styles
-- **`shared/scene-ui.js`** — `initSceneAudio({ onStart, onStop, onVolumeChange })` callback-based API for audio toggle and volume control
+- **`shared/scene-ui.js`** — `initSceneAudio({ onStart, onStop, onVolumeChange })` callback-based API for audio toggle and volume control; `initSceneScreenshot(svgEl, filename)` for PNG download
 
 Each scene provides its own audio init/control logic via callbacks. The shared JS handles DOM element queries, button class toggles, emoji updates, and volume label updates.
 
@@ -115,19 +116,21 @@ Each scene provides its own audio init/control logic via callbacks. The shared J
 Planned features in recommended implementation order:
 
 1. ~~**Shared code extraction**~~ — Done. Shared UI code extracted into `shared/scene-ui.css` and `shared/scene-ui.js`
-2. **OGP meta tags** — Add Open Graph / Twitter Card meta tags to each scene for link previews on social media
-3. **Screenshot capture** — SVG → Canvas → PNG conversion using native browser APIs (no library needed); add camera button to UI panel
+2. ~~**OGP meta tags**~~ — Done. Open Graph / Twitter Card meta tags added to all pages
+3. ~~**Screenshot capture**~~ — Done. SVG → Canvas → PNG via `initSceneScreenshot()`; camera button (📷) in UI panel
 4. **SNS sharing** — Web Share API (mobile) with X/Twitter intent URL fallback (desktop); share button in UI panel
-5. **Scene template** — Standardize boilerplate for new scenes
+5. ~~**Scene template**~~ — Done. `scene-template.html` standardizes boilerplate for new scenes
 
 ### New Scene Checklist
 
 When adding a new scene:
 
-- [ ] Set `lang="en"` and title format `<Name> — Chill Scenes`
-- [ ] Include back button and audio panel HTML, load `shared/scene-ui.css` and `shared/scene-ui.js`, call `initSceneAudio()`
+- [ ] Copy `scene-template.html` and rename to `<scene-name>.html`
+- [ ] Set title, OGP meta tags, `og:url`, and `og:description`
+- [ ] Replace placeholder SVG content and scene animation logic
+- [ ] Replace placeholder audio logic in `startAudio()`
+- [ ] Update `initSceneScreenshot()` filename argument
 - [ ] Add card with preview SVG to `index.html` grid
-- [ ] Add OGP meta tags in `<head>` (once implemented)
 - [ ] Update this file's Files list and Architecture section
 - [ ] Add clean URL route in `vercel.json`
 

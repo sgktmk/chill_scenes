@@ -1,14 +1,11 @@
 /**
- * Shared Scene UI — Audio Control
+ * Shared Scene UI — Audio Control & Screenshot
  *
- * Provides a callback-based API for scene audio toggle and volume control.
+ * initSceneAudio({ onStart, onStop, onVolumeChange })
+ *   Callback-based API for scene audio toggle and volume control.
  *
- * Usage:
- *   initSceneAudio({
- *     onStart()          — called when user clicks play
- *     onStop()           — called when user clicks stop
- *     onVolumeChange(v)  — called with slider value 0-100
- *   });
+ * initSceneScreenshot(svgEl, filename)
+ *   Captures the current SVG state and downloads it as a PNG.
  */
 function initSceneAudio({ onStart, onStop, onVolumeChange }) {
   const btn = document.getElementById('aBtn');
@@ -36,5 +33,30 @@ function initSceneAudio({ onStart, onStop, onVolumeChange }) {
     if (isPlaying) {
       onVolumeChange(v);
     }
+  });
+}
+
+function initSceneScreenshot(svgEl, filename) {
+  const btn = document.getElementById('ssBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const svgData = new XMLSerializer().serializeToString(svgEl);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.onload = () => {
+      const vb = svgEl.viewBox.baseVal;
+      const canvas = document.createElement('canvas');
+      canvas.width = vb.width * 2;
+      canvas.height = vb.height * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      const a = document.createElement('a');
+      a.download = filename || 'scene.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    };
+    img.src = url;
   });
 }
