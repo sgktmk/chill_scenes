@@ -550,30 +550,6 @@ function startAudio(vol) {
   masterGain.gain.setValueAtTime(vol / 100 * 0.45, audioCtx.currentTime);
   masterGain.connect(audioCtx.destination);
 
-  // ---- Wind: low howl ----
-  const wSrc = makeNoiseSrc(audioCtx);
-  const wFilt = audioCtx.createBiquadFilter();
-  wFilt.type = 'bandpass';
-  wFilt.frequency.value = 320;
-  wFilt.Q.value = 0.8;
-  const wGain = audioCtx.createGain();
-  wGain.gain.value = 0.28;
-  wSrc.connect(wFilt);
-  wFilt.connect(wGain);
-  wGain.connect(masterGain);
-  wSrc.start();
-
-  // Wind gust modulation — slowly sweeps frequency and volume
-  (function gust() {
-    const t = audioCtx.currentTime;
-    const freq = 180 + Math.random() * 480;
-    const amp  = 0.12 + Math.random() * 0.28;
-    const dur  = 3.5 + Math.random() * 5.5;
-    wFilt.frequency.linearRampToValueAtTime(freq, t + dur);
-    wGain.gain.linearRampToValueAtTime(amp, t + dur);
-    windTimer = setTimeout(gust, Math.round(dur * 800));
-  })();
-
   // ---- Wind: high-frequency whisper through branches ----
   const wsSrc = makeNoiseSrc(audioCtx);
   const wsFilt = audioCtx.createBiquadFilter();
@@ -596,8 +572,41 @@ function startAudio(vol) {
   droneGain.connect(masterGain);
   drone.start();
 
+  // ---- Cricket chirping ----
+  scheduleCrickets();
+
   // ---- Occasional owl hoot ----
   scheduleOwl();
+}
+
+function playCricketBurst(freqHz, amp) {
+  if (!audioCtx) return;
+  const ac = audioCtx, t = ac.currentTime;
+  const n = 3 + Math.floor(Math.random() * 3); // 3–5 pulses per burst
+  for (let i = 0; i < n; i++) {
+    const s = t + i * 0.052;
+    const osc = ac.createOscillator();
+    const g = ac.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freqHz;
+    g.gain.setValueAtTime(0, s);
+    g.gain.linearRampToValueAtTime(amp, s + 0.004);
+    g.gain.setValueAtTime(amp, s + 0.030);
+    g.gain.linearRampToValueAtTime(0, s + 0.038);
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(s);
+    osc.stop(s + 0.045);
+  }
+}
+
+function scheduleCrickets() {
+  playCricketBurst(5100, 0.22);
+  // 2匹目：少し後ろにずらした別ピッチで重なり感を出す
+  if (Math.random() < 0.65) {
+    setTimeout(() => playCricketBurst(4760, 0.18), 110 + Math.random() * 90);
+  }
+  windTimer = setTimeout(scheduleCrickets, 380 + Math.random() * 680);
 }
 
 function scheduleOwl() {
