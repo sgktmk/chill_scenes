@@ -601,10 +601,10 @@ function playCricketBurst(freqHz, amp) {
 }
 
 function scheduleCrickets() {
-  playCricketBurst(5100, 0.22);
+  playCricketBurst(5100, 0.13);
   // 2匹目：低確率で少し後ろにずらして重なり感を出す
   if (Math.random() < 0.35) {
-    setTimeout(() => playCricketBurst(4760, 0.18), 110 + Math.random() * 90);
+    setTimeout(() => playCricketBurst(4760, 0.10), 110 + Math.random() * 90);
   }
   windTimer = setTimeout(scheduleCrickets, 1800 + Math.random() * 2200);
 }
