@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowy Cabin — Chill Scenes</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="/shared/scene-ui.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #060810;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    font-family: 'Press Start 2P', monospace;
+  }
+  .scene-container {
+    position: relative;
+    width: 100vw;
+    height: 56.25vw;
+    max-width: 100vw;
+    max-height: 100vh;
+  }
+  @media (min-aspect-ratio: 16/9) {
+    .scene-container {
+      height: 100vh;
+      width: 177.78vh;
+    }
+  }
+  svg { width: 100%; height: 100%; image-rendering: pixelated; }
+  /* ===== STAR TWINKLE ===== */
+  @keyframes twinkle1 { 0%,100%{opacity:.3}50%{opacity:1} }
+  @keyframes twinkle2 { 0%,100%{opacity:.5}50%{opacity:.1} }
+  @keyframes twinkle3 { 0%,100%{opacity:.7}50%{opacity:.2} }
+  .star-t1 { animation: twinkle1 3s ease-in-out infinite; }
+  .star-t2 { animation: twinkle2 4s ease-in-out infinite 1s; }
+  .star-t3 { animation: twinkle3 5s ease-in-out infinite 2s; }
+  .star-t4 { animation: twinkle1 3.5s ease-in-out infinite 0.5s; }
+  .star-t5 { animation: twinkle2 4.5s ease-in-out infinite 1.5s; }
+  .star-t6 { animation: twinkle3 2.8s ease-in-out infinite 0.8s; }
+  /* ===== WINDOW GLOW ===== */
+  @keyframes windowGlow {
+    0%   { opacity: 0.75; }
+    25%  { opacity: 0.88; }
+    50%  { opacity: 0.7; }
+    75%  { opacity: 0.85; }
+    100% { opacity: 0.75; }
+  }
+  .window-glow { animation: windowGlow 4s ease-in-out infinite; }
+  .window-glow2 { animation: windowGlow 4s ease-in-out infinite 2s; }
+  /* ===== CHIMNEY SMOKE ===== */
+  @keyframes cSmoke1 {
+    0%   { transform: translate(0,0) scaleX(1); opacity: .35 }
+    30%  { transform: translate(4px,-22px) scaleX(1.3); opacity: .25 }
+    60%  { transform: translate(8px,-50px) scaleX(1.8); opacity: .12 }
+    100% { transform: translate(14px,-90px) scaleX(2.5); opacity: 0 }
+  }
+  @keyframes cSmoke2 {
+    0%   { transform: translate(0,0) scaleX(1); opacity: .3 }
+    30%  { transform: translate(-3px,-20px) scaleX(1.2); opacity: .2 }
+    60%  { transform: translate(5px,-48px) scaleX(1.6); opacity: .1 }
+    100% { transform: translate(10px,-88px) scaleX(2.2); opacity: 0 }
+  }
+  @keyframes cSmoke3 {
+    0%   { transform: translate(0,0) scaleX(1); opacity: .28 }
+    30%  { transform: translate(2px,-25px) scaleX(1.15); opacity: .18 }
+    60%  { transform: translate(6px,-52px) scaleX(1.5); opacity: .1 }
+    100% { transform: translate(12px,-95px) scaleX(2); opacity: 0 }
+  }
+  .cSmoke1 { animation: cSmoke1 5s ease-out infinite; }
+  .cSmoke2 { animation: cSmoke2 5.5s ease-out infinite 1.8s; }
+  .cSmoke3 { animation: cSmoke3 4.8s ease-out infinite 3.2s; }
+  /* ===== GROUND GLOW ===== */
+  @keyframes groundGlow {
+    0%   { opacity: .18; }
+    30%  { opacity: .25; }
+    60%  { opacity: .15; }
+    100% { opacity: .18; }
+  }
+  .ground-glow { animation: groundGlow 4s ease-in-out infinite; }
+  .ground-glow2 { animation: groundGlow 4s ease-in-out infinite 2s; }
+</style>
+</head>
+<body>
+<a class="back" href="/">&#8592; Top</a>
+<div class="scene-container">
+<svg id="mainSvg" viewBox="0 0 426 240" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <defs>
+    <!-- Window light gradient for ground projection -->
+    <radialGradient id="winLightL" cx="190" cy="172" r="30" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffaa22" stop-opacity="0.3"/>
+      <stop offset="70%" stop-color="#ff8811" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#ff6600" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="winLightR" cx="236" cy="172" r="30" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffaa22" stop-opacity="0.3"/>
+      <stop offset="70%" stop-color="#ff8811" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#ff6600" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="doorLight" cx="213" cy="172" r="25" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff9922" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ff6600" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ===== NIGHT SKY ===== -->
+  <rect width="426" height="240" fill="#080c1a"/>
+  <rect y="0" width="426" height="80" fill="#0a0e22" opacity="0.6"/>
+  <rect y="80" width="426" height="60" fill="#0e1428" opacity="0.3"/>
+  <rect y="140" width="426" height="28" fill="#121830" opacity="0.15"/>
+
+  <!-- ===== STARS ===== -->
+  <g>
+    <!-- Small stars -->
+    <rect class="star-t1" x="12" y="8" width="2" height="2" fill="#eeeeff"/>
+    <rect class="star-t2" x="48" y="22" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t3" x="85" y="5" width="2" height="2" fill="#ffffff"/>
+    <rect class="star-t4" x="118" y="38" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t5" x="152" y="12" width="2" height="2" fill="#eeeeff"/>
+    <rect class="star-t6" x="188" y="45" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t1" x="222" y="8" width="1" height="1" fill="#ffffff"/>
+    <rect class="star-t2" x="260" y="25" width="2" height="2" fill="#eeeeff"/>
+    <rect class="star-t3" x="298" y="14" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t4" x="335" y="34" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t5" x="368" y="9" width="2" height="2" fill="#eeeeff"/>
+    <rect class="star-t6" x="398" y="30" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t1" x="35" y="52" width="1" height="1" fill="#bbbbdd"/>
+    <rect class="star-t2" x="72" y="40" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t3" x="105" y="3" width="1" height="1" fill="#ffffff"/>
+    <rect class="star-t4" x="242" y="48" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t5" x="282" y="6" width="1" height="1" fill="#eeeeff"/>
+    <rect class="star-t6" x="350" y="50" width="1" height="1" fill="#bbbbdd"/>
+    <rect class="star-t1" x="168" y="30" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t2" x="410" y="18" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t3" x="20" y="35" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t4" x="320" y="20" width="2" height="2" fill="#eeeeff"/>
+    <rect class="star-t5" x="390" y="42" width="1" height="1" fill="#bbbbdd"/>
+    <rect class="star-t6" x="140" y="55" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t1" x="205" y="18" width="1" height="1" fill="#ddddef"/>
+    <rect class="star-t2" x="62" y="62" width="1" height="1" fill="#bbbbdd"/>
+    <rect class="star-t3" x="380" y="55" width="1" height="1" fill="#ccccee"/>
+    <rect class="star-t4" x="270" y="42" width="1" height="1" fill="#ddddef"/>
+    <!-- Bright cross stars -->
+    <g class="star-t2">
+      <rect x="55" y="14" width="1" height="3" fill="#ffffff"/>
+      <rect x="54" y="15" width="3" height="1" fill="#ffffff"/>
+    </g>
+    <g class="star-t5">
+      <rect x="305" y="32" width="1" height="3" fill="#ffffff"/>
+      <rect x="304" y="33" width="3" height="1" fill="#ffffff"/>
+    </g>
+    <g class="star-t3">
+      <rect x="415" y="10" width="1" height="3" fill="#ffffff"/>
+      <rect x="414" y="11" width="3" height="1" fill="#ffffff"/>
+    </g>
+  </g>
+
+  <!-- Shooting stars container -->
+  <g id="shootingStars"></g>
+
+  <!-- ===== PINE TREES — LEFT GROUP ===== -->
+  <g>
+    <!-- Tree 1 (far left, small) cx=22 -->
+    <rect x="20" y="120" width="4" height="3" fill="#0a150a"/>
+    <rect x="16" y="123" width="12" height="4" fill="#0c180c"/>
+    <rect x="18" y="127" width="8" height="3" fill="#0a150a"/>
+    <rect x="13" y="130" width="18" height="5" fill="#0c180c"/>
+    <rect x="15" y="135" width="14" height="3" fill="#0a150a"/>
+    <rect x="10" y="138" width="24" height="6" fill="#0b170b"/>
+    <rect x="8" y="144" width="28" height="6" fill="#0c180c"/>
+    <rect x="12" y="150" width="20" height="4" fill="#0a150a"/>
+    <rect x="6" y="154" width="32" height="7" fill="#0b170b"/>
+    <rect x="19" y="161" width="6" height="7" fill="#2a1a10"/>
+    <!-- Snow on branches -->
+    <rect x="16" y="122" width="6" height="1" fill="#d8e2ee"/>
+    <rect x="13" y="129" width="8" height="1" fill="#dde6f0"/>
+    <rect x="8" y="143" width="10" height="1" fill="#d8e2ee"/>
+
+    <!-- Tree 2 (medium-tall) cx=52 -->
+    <rect x="50" y="105" width="4" height="3" fill="#0a150a"/>
+    <rect x="46" y="108" width="12" height="4" fill="#0c180c"/>
+    <rect x="48" y="112" width="8" height="3" fill="#0a150a"/>
+    <rect x="43" y="115" width="18" height="5" fill="#0c180c"/>
+    <rect x="45" y="120" width="14" height="3" fill="#0a150a"/>
+    <rect x="40" y="123" width="24" height="5" fill="#0b170b"/>
+    <rect x="42" y="128" width="20" height="3" fill="#0a150a"/>
+    <rect x="37" y="131" width="30" height="6" fill="#0c180c"/>
+    <rect x="35" y="137" width="34" height="6" fill="#0b170b"/>
+    <rect x="38" y="143" width="28" height="4" fill="#0a150a"/>
+    <rect x="33" y="147" width="38" height="6" fill="#0c180c"/>
+    <rect x="31" y="153" width="42" height="8" fill="#0b170b"/>
+    <rect x="49" y="161" width="6" height="7" fill="#2a1a10"/>
+    <!-- Snow on branches -->
+    <rect x="46" y="107" width="6" height="1" fill="#d8e2ee"/>
+    <rect x="43" y="114" width="8" height="1" fill="#dde6f0"/>
+    <rect x="40" y="122" width="10" height="1" fill="#d8e2ee"/>
+    <rect x="37" y="130" width="12" height="1" fill="#dde6f0"/>
+    <rect x="33" y="146" width="14" height="1" fill="#d8e2ee"/>
+
+    <!-- Tree 3 (tall, prominent) cx=88 -->
+    <rect x="86" y="90" width="4" height="3" fill="#0a150a"/>
+    <rect x="82" y="93" width="12" height="4" fill="#0c180c"/>
+    <rect x="84" y="97" width="8" height="3" fill="#0a150a"/>
+    <rect x="79" y="100" width="18" height="5" fill="#0c180c"/>
+    <rect x="81" y="105" width="14" height="3" fill="#0a150a"/>
+    <rect x="76" y="108" width="24" height="5" fill="#0b170b"/>
+    <rect x="78" y="113" width="20" height="3" fill="#0a150a"/>
+    <rect x="73" y="116" width="30" height="6" fill="#0c180c"/>
+    <rect x="71" y="122" width="34" height="5" fill="#0b170b"/>
+    <rect x="74" y="127" width="28" height="3" fill="#0a150a"/>
+    <rect x="69" y="130" width="38" height="6" fill="#0c180c"/>
+    <rect x="67" y="136" width="42" height="6" fill="#0b170b"/>
+    <rect x="70" y="142" width="36" height="4" fill="#0a150a"/>
+    <rect x="65" y="146" width="46" height="7" fill="#0c180c"/>
+    <rect x="63" y="153" width="50" height="8" fill="#0b170b"/>
+    <rect x="85" y="161" width="6" height="7" fill="#2a1a10"/>
+    <!-- Snow on branches -->
+    <rect x="82" y="92" width="6" height="1" fill="#d8e2ee"/>
+    <rect x="79" y="99" width="8" height="1" fill="#dde6f0"/>
+    <rect x="76" y="107" width="10" height="1" fill="#d8e2ee"/>
+    <rect x="73" y="115" width="12" height="1" fill="#dde6f0"/>
+    <rect x="69" y="129" width="14" height="1" fill="#d8e2ee"/>
+    <rect x="65" y="145" width="16" height="1" fill="#dde6f0"/>
+
+    <!-- Tree 4 (medium) cx=120 -->
+    <rect x="118" y="112" width="4" height="3" fill="#0a150a"/>
+    <rect x="114" y="115" width="12" height="4" fill="#0c180c"/>
+    <rect x="116" y="119" width="8" height="3" fill="#0a150a"/>
+    <rect x="111" y="122" width="18" height="5" fill="#0b170b"/>
+    <rect x="108" y="127" width="24" height="5" fill="#0c180c"/>
+    <rect x="110" y="132" width="20" height="3" fill="#0a150a"/>
+    <rect x="106" y="135" width="28" height="6" fill="#0b170b"/>
+    <rect x="104" y="141" width="32" height="6" fill="#0c180c"/>
+    <rect x="107" y="147" width="26" height="4" fill="#0a150a"/>
+    <rect x="102" y="151" width="36" height="6" fill="#0b170b"/>
+    <rect x="100" y="157" width="40" height="4" fill="#0c180c"/>
+    <rect x="117" y="161" width="6" height="7" fill="#2a1a10"/>
+    <!-- Snow on branches -->
+    <rect x="114" y="114" width="6" height="1" fill="#d8e2ee"/>
+    <rect x="111" y="121" width="8" height="1" fill="#dde6f0"/>
+    <rect x="106" y="134" width="10" height="1" fill="#d8e2ee"/>
+    <rect x="102" y="150" width="12" height="1" fill="#dde6f0"/>
+
+    <!-- Tree 5 (small, front) cx=148 -->
+    <rect x="146" y="125" width="4" height="3" fill="#0a150a"/>
+    <rect x="142" y="128" width="12" height="4" fill="#0c180c"/>
+    <rect x="139" y="132" width="18" height="5" fill="#0b170b"/>
+    <rect x="141" y="137" width="14" height="3" fill="#0a150a"/>
+    <rect x="136" y="140" width="24" height="6" fill="#0c180c"/>
+    <rect x="134" y="146" width="28" height="5" fill="#0b170b"/>
+    <rect x="137" y="151" width="22" height="3" fill="#0a150a"/>
+    <rect x="132" y="154" width="32" height="7" fill="#0c180c"/>
+    <rect x="145" y="161" width="6" height="7" fill="#2a1a10"/>
+    <!-- Snow on branches -->
+    <rect x="142" y="127" width="6" height="1" fill="#d8e2ee"/>
+    <rect x="136" y="139" width="8" height="1" fill="#dde6f0"/>
+    <rect x="132" y="153" width="10" height="1" fill="#d8e2ee"/>
+  </g>
+
+  <!-- ===== PINE TREES — RIGHT GROUP ===== -->
+  <g>
+    <!-- Tree 6 (small, front) cx=280 -->
+    <rect x="278" y="125" width="4" height="3" fill="#0a150a"/>
+    <rect x="274" y="128" width="12" height="4" fill="#0c180c"/>
+    <rect x="271" y="132" width="18" height="5" fill="#0b170b"/>
+    <rect x="273" y="137" width="14" height="3" fill="#0a150a"/>
+    <rect x="268" y="140" width="24" height="6" fill="#0c180c"/>
+    <rect x="266" y="146" width="28" height="5" fill="#0b170b"/>
+    <rect x="269" y="151" width="22" height="3" fill="#0a150a"/>
+    <rect x="264" y="154" width="32" height="7" fill="#0c180c"/>
+    <rect x="277" y="161" width="6" height="7" fill="#2a1a10"/>
+    <!-- Snow on branches -->
+    <rect x="274" y="127" width="6" height="1" fill="#d8e2ee"/>
+    <rect x="268" y="139" width="8" height="1" fill="#dde6f0"/>
+    <rect x="264" y="153" width="10" height="1" fill="#d8e2ee"/>
+
+    <!-- Tree 7 (medium) cx=308 -->
+    <rect x="306" y="112" width="4" height="3" fill="#0a150a"/>
+    <rect x="302" y="115" width="12" height="4" fill="#0c180c"/>
+    <rect x="304" y="119" width="8" height="3" fill="#0a150a"/>
+    <rect x="299" y="122" width="18" height="5" fill="#0b170b"/>
+    <rect x="296" y="127" width="24" height="5" fill="#0c180c"/>
+    <rect x="298" y="132" width="20" height="3" fill="#0a150a"/>
+    <rect x="294" y="135" width="28" height="6" fill="#0b170b"/>
+    <rect x="292" y="141" width="32" height="6" fill="#0c180c"/>
+    <rect x="295" y="147" width="26" height="4" fill="#0a150a"/>
+    <rect x="290" y="151" width="36" height="6" fill="#0b170b"/>
+    <rect x="288" y="157" width="40" height="4" fill="#0c180c"/>
+    <rect x="305" y="161" width="6" height="7" fill="#2a1a10"/>
+    <!-- Snow on branches -->
+    <rect x="302" y="114" width="6" height="1" fill="#d8e2ee"/>
+    <rect x="299" y="121" width="8" height="1" fill="#dde6f0"/>
+    <rect x="294" y="134" width="10" height="1" fill="#d8e2ee"/>
+    <rect x="290" y="150" width="12" height="1" fill="#dde6f0"/>
+
+    <!-- Tree 8 (tall, prominent) cx=340 -->
+    <rect x="338" y="90" width="4" height="3" fill="#0a150a"/>
+    <rect x="334" y="93" width="12" height="4" fill="#0c180c"/>
+    <rect x="336" y="97" width="8" height="3" fill="#0a150a"/>
+    <rect x="331" y="100" width="18" height="5" fill="#0c180c"/>
+    <rect x="333" y="105" width="14" height="3" fill="#0a150a"/>
+    <rect x="328" y="108" width="24" height="5" fill="#0b170b"/>
+    <rect x="330" y="113" width="20" height="3" fill="#0a150a"/>
+    <rect x="325" y="116" width="30" height="6" fill="#0c180c"/>
+    <rect x="323" y="122" width="34" height="5" fill="#0b170b"/>
+    <rect x="326" y="127" width="28" height="3" fill="#0a150a"/>
+    <rect x="321" y="130" width="38" height="6" fill="#0c180c"/>
+    <rect x="319" y="136" width="42" height="6" fill="#0b170b"/>
+    <rect x="322" y="142" width="36" height="4" fill="#0a150a"/>
+    <rect x="317" y="146" width="46" height="7" fill="#0c180c"/>
+    <rect x="315" y="153" width="50" height="8" fill="#0b170b"/>
+    <rect x="337" y="161" width="6" height="7" fill="#2a1a10"/>
+    <!-- Snow on branches -->
+    <rect x="334" y="92" width="6" height="1" fill="#d8e2ee"/>
+    <rect x="331" y="99" width="8" height="1" fill="#dde6f0"/>
+    <rect x="328" y="107" width="10" height="1" fill="#d8e2ee"/>
+    <rect x="325" y="115" width="12" height="1" fill="#dde6f0"/>
+    <rect x="321" y="129" width="14" height="1" fill="#d8e2ee"/>
+    <rect x="317" y="145" width="16" height="1" fill="#dde6f0"/>
+
+    <!-- Tree 9 (medium-tall) cx=375 -->
+    <rect x="373" y="105" width="4" height="3" fill="#0a150a"/>
+    <rect x="369" y="108" width="12" height="4" fill="#0c180c"/>
+    <rect x="371" y="112" width="8" height="3" fill="#0a150a"/>
+    <rect x="366" y="115" width="18" height="5" fill="#0c180c"/>
+    <rect x="368" y="120" width="14" height="3" fill="#0a150a"/>
+    <rect x="363" y="123" width="24" height="5" fill="#0b170b"/>
+    <rect x="365" y="128" width="20" height="3" fill="#0a150a"/>
+    <rect x="360" y="131" width="30" height="6" fill="#0c180c"/>
+    <rect x="358" y="137" width="34" height="6" fill="#0b170b"/>
+    <rect x="361" y="143" width="28" height="4" fill="#0a150a"/>
+    <rect x="356" y="147" width="38" height="6" fill="#0c180c"/>
+    <rect x="354" y="153" width="42" height="8" fill="#0b170b"/>
+    <rect x="372" y="161" width="6" height="7" fill="#2a1a10"/>
+    <!-- Snow on branches -->
+    <rect x="369" y="107" width="6" height="1" fill="#d8e2ee"/>
+    <rect x="366" y="114" width="8" height="1" fill="#dde6f0"/>
+    <rect x="363" y="122" width="10" height="1" fill="#d8e2ee"/>
+    <rect x="360" y="130" width="12" height="1" fill="#dde6f0"/>
+    <rect x="356" y="146" width="14" height="1" fill="#d8e2ee"/>
+
+    <!-- Tree 10 (small, far right) cx=405 -->
+    <rect x="403" y="120" width="4" height="3" fill="#0a150a"/>
+    <rect x="399" y="123" width="12" height="4" fill="#0c180c"/>
+    <rect x="401" y="127" width="8" height="3" fill="#0a150a"/>
+    <rect x="396" y="130" width="18" height="5" fill="#0c180c"/>
+    <rect x="398" y="135" width="14" height="3" fill="#0a150a"/>
+    <rect x="393" y="138" width="24" height="6" fill="#0b170b"/>
+    <rect x="391" y="144" width="28" height="6" fill="#0c180c"/>
+    <rect x="395" y="150" width="20" height="4" fill="#0a150a"/>
+    <rect x="389" y="154" width="32" height="7" fill="#0b170b"/>
+    <rect x="402" y="161" width="6" height="7" fill="#2a1a10"/>
+    <!-- Snow on branches -->
+    <rect x="399" y="122" width="6" height="1" fill="#d8e2ee"/>
+    <rect x="396" y="129" width="8" height="1" fill="#dde6f0"/>
+    <rect x="391" y="143" width="10" height="1" fill="#d8e2ee"/>
+  </g>
+
+  <!-- ===== SNOW GROUND ===== -->
+  <!-- Ground layers (back to front, getting lighter) -->
+  <rect x="0" y="166" width="426" height="4" fill="#a8b4c8"/>
+  <rect x="0" y="170" width="426" height="8" fill="#b8c4d6"/>
+  <rect x="0" y="178" width="426" height="10" fill="#c8d2e2"/>
+  <rect x="0" y="188" width="426" height="12" fill="#d4deec"/>
+  <rect x="0" y="200" width="426" height="14" fill="#dfe8f2"/>
+  <rect x="0" y="214" width="426" height="26" fill="#e8eff6"/>
+  <!-- Snow ground texture (subtle shade variations) -->
+  <g fill="#bcc8d8" opacity="0.5">
+    <rect x="10" y="175" width="6" height="2"/>
+    <rect x="55" y="182" width="8" height="2"/>
+    <rect x="110" y="178" width="4" height="2"/>
+    <rect x="160" y="185" width="5" height="2"/>
+    <rect x="260" y="180" width="6" height="2"/>
+    <rect x="320" y="176" width="5" height="2"/>
+    <rect x="370" y="183" width="7" height="2"/>
+    <rect x="410" y="179" width="4" height="2"/>
+  </g>
+  <!-- Snow drifts (gentle bumps) -->
+  <g fill="#d4deec">
+    <rect x="15" y="165" width="20" height="2"/>
+    <rect x="60" y="164" width="15" height="3"/>
+    <rect x="350" y="164" width="18" height="3"/>
+    <rect x="395" y="165" width="22" height="2"/>
+  </g>
+  <g fill="#c8d2e2">
+    <rect x="5" y="195" width="30" height="3"/>
+    <rect x="80" y="198" width="25" height="2"/>
+    <rect x="310" y="196" width="28" height="3"/>
+    <rect x="385" y="200" width="30" height="2"/>
+  </g>
+  <!-- Sparkle highlights on snow -->
+  <g fill="#f4f8ff" opacity="0.6">
+    <rect x="25" y="172" width="1" height="1"/>
+    <rect x="90" y="185" width="1" height="1"/>
+    <rect x="155" y="178" width="1" height="1"/>
+    <rect x="270" y="182" width="1" height="1"/>
+    <rect x="340" y="175" width="1" height="1"/>
+    <rect x="400" y="190" width="1" height="1"/>
+  </g>
+
+  <!-- ===== CABIN STRUCTURE ===== -->
+
+  <!-- Chimney (drawn first, behind roof) -->
+  <g>
+    <!-- Chimney body -->
+    <rect x="238" y="100" width="10" height="36" fill="#5a3a2a"/>
+    <!-- Brick pattern -->
+    <rect x="238" y="100" width="10" height="4" fill="#6a4a3a"/>
+    <rect x="238" y="104" width="10" height="4" fill="#5a3a2a"/>
+    <rect x="238" y="108" width="10" height="4" fill="#6a4a3a"/>
+    <rect x="238" y="112" width="10" height="4" fill="#5a3a2a"/>
+    <rect x="238" y="116" width="10" height="4" fill="#6a4a3a"/>
+    <rect x="238" y="120" width="10" height="4" fill="#5a3a2a"/>
+    <!-- Mortar lines -->
+    <rect x="238" y="103" width="10" height="1" fill="#4a2a1a"/>
+    <rect x="238" y="107" width="10" height="1" fill="#4a2a1a"/>
+    <rect x="238" y="111" width="10" height="1" fill="#4a2a1a"/>
+    <rect x="238" y="115" width="10" height="1" fill="#4a2a1a"/>
+    <rect x="238" y="119" width="10" height="1" fill="#4a2a1a"/>
+    <!-- Vertical mortar (offset per row) -->
+    <rect x="243" y="100" width="1" height="3" fill="#4a2a1a"/>
+    <rect x="241" y="104" width="1" height="3" fill="#4a2a1a"/>
+    <rect x="244" y="108" width="1" height="3" fill="#4a2a1a"/>
+    <rect x="242" y="112" width="1" height="3" fill="#4a2a1a"/>
+    <rect x="243" y="116" width="1" height="3" fill="#4a2a1a"/>
+    <!-- Chimney cap -->
+    <rect x="236" y="98" width="14" height="3" fill="#4a3028"/>
+    <!-- Snow on chimney -->
+    <rect x="235" y="96" width="16" height="3" fill="#dde4ee"/>
+    <rect x="237" y="95" width="12" height="2" fill="#e8eef6"/>
+    <rect x="239" y="94" width="8" height="2" fill="#f0f4ff"/>
+  </g>
+
+  <!-- Roof (triangular, stepped rows) -->
+  <g>
+    <!-- Dark roof shingles (bottom to top so upper rows paint over) -->
+    <rect x="168" y="134" width="90" height="3" fill="#3a2a1e"/>
+    <rect x="170" y="132" width="86" height="3" fill="#4a3a28"/>
+    <rect x="172" y="130" width="82" height="3" fill="#3a2a1e"/>
+    <rect x="175" y="128" width="76" height="3" fill="#4a3a28"/>
+    <rect x="178" y="126" width="70" height="3" fill="#3a2a1e"/>
+    <rect x="181" y="124" width="64" height="3" fill="#4a3a28"/>
+    <rect x="184" y="122" width="58" height="3" fill="#3a2a1e"/>
+    <rect x="188" y="120" width="50" height="3" fill="#4a3a28"/>
+    <rect x="192" y="118" width="42" height="3" fill="#3a2a1e"/>
+    <rect x="196" y="116" width="34" height="3" fill="#4a3a28"/>
+    <rect x="200" y="114" width="26" height="3" fill="#3a2a1e"/>
+    <rect x="204" y="112" width="18" height="3" fill="#4a3a28"/>
+    <rect x="208" y="110" width="10" height="3" fill="#3a2a1e"/>
+    <!-- Roof ridge highlight -->
+    <rect x="210" y="110" width="6" height="1" fill="#5a4a38"/>
+  </g>
+
+  <!-- Snow on roof -->
+  <g>
+    <!-- Snow follows roof contour — 2px thick on each step surface -->
+    <rect x="207" y="108" width="12" height="3" fill="#e8eef6"/>
+    <rect x="209" y="107" width="8" height="2" fill="#f0f4ff"/>
+    <rect x="203" y="111" width="20" height="2" fill="#e0e8f2"/>
+    <rect x="199" y="113" width="28" height="2" fill="#e8eef6"/>
+    <rect x="195" y="115" width="36" height="2" fill="#dde4ee"/>
+    <rect x="191" y="117" width="44" height="2" fill="#e8eef6"/>
+    <rect x="187" y="119" width="52" height="2" fill="#e0e8f2"/>
+    <rect x="183" y="121" width="60" height="2" fill="#e8eef6"/>
+    <rect x="180" y="123" width="66" height="2" fill="#dde4ee"/>
+    <rect x="177" y="125" width="72" height="2" fill="#e8eef6"/>
+    <rect x="174" y="127" width="78" height="2" fill="#e0e8f2"/>
+    <rect x="171" y="129" width="84" height="2" fill="#e8eef6"/>
+    <rect x="169" y="131" width="88" height="2" fill="#dde4ee"/>
+    <!-- Eaves snow (overhanging, slightly thicker) -->
+    <rect x="167" y="133" width="92" height="3" fill="#dde4ee"/>
+    <rect x="168" y="133" width="90" height="2" fill="#e8eef6"/>
+    <!-- Icicles hanging from eaves -->
+    <rect x="172" y="136" width="1" height="3" fill="#c8d4e4"/>
+    <rect x="182" y="136" width="1" height="4" fill="#d0dae8"/>
+    <rect x="192" y="136" width="1" height="3" fill="#c8d4e4"/>
+    <rect x="216" y="136" width="1" height="4" fill="#d0dae8"/>
+    <rect x="230" y="136" width="1" height="3" fill="#c8d4e4"/>
+    <rect x="245" y="136" width="1" height="4" fill="#d0dae8"/>
+    <rect x="253" y="136" width="1" height="3" fill="#c8d4e4"/>
+    <!-- Snow bumps on roof surface -->
+    <rect x="195" y="114" width="4" height="1" fill="#f0f4ff"/>
+    <rect x="220" y="118" width="5" height="1" fill="#f0f4ff"/>
+    <rect x="185" y="122" width="3" height="1" fill="#f0f4ff"/>
+    <rect x="240" y="126" width="4" height="1" fill="#f0f4ff"/>
+  </g>
+
+  <!-- Cabin walls (log cabin texture) -->
+  <g>
+    <!-- Main wall body -->
+    <rect x="178" y="136" width="70" height="32" fill="#4a2a12"/>
+    <!-- Log rows (4px each, alternating shades) -->
+    <rect x="178" y="136" width="70" height="4" fill="#5a3818"/>
+    <rect x="178" y="140" width="70" height="4" fill="#4a2a12"/>
+    <rect x="178" y="144" width="70" height="4" fill="#563416"/>
+    <rect x="178" y="148" width="70" height="4" fill="#4a2a12"/>
+    <rect x="178" y="152" width="70" height="4" fill="#5a3818"/>
+    <rect x="178" y="156" width="70" height="4" fill="#503014"/>
+    <rect x="178" y="160" width="70" height="4" fill="#563416"/>
+    <rect x="178" y="164" width="70" height="4" fill="#4a2a12"/>
+    <!-- Log gap lines (1px dark between each row) -->
+    <rect x="178" y="139" width="70" height="1" fill="#3a1a08"/>
+    <rect x="178" y="143" width="70" height="1" fill="#3a1a08"/>
+    <rect x="178" y="147" width="70" height="1" fill="#3a1a08"/>
+    <rect x="178" y="151" width="70" height="1" fill="#3a1a08"/>
+    <rect x="178" y="155" width="70" height="1" fill="#3a1a08"/>
+    <rect x="178" y="159" width="70" height="1" fill="#3a1a08"/>
+    <rect x="178" y="163" width="70" height="1" fill="#3a1a08"/>
+    <!-- Wall edge boards (darker vertical edges) -->
+    <rect x="178" y="136" width="2" height="32" fill="#3a1a08"/>
+    <rect x="246" y="136" width="2" height="32" fill="#3a1a08"/>
+    <!-- Foundation/base -->
+    <rect x="176" y="166" width="74" height="3" fill="#3a2210"/>
+    <rect x="176" y="166" width="74" height="1" fill="#4a3220"/>
+    <!-- Snow on window sills and wall top -->
+    <rect x="177" y="135" width="72" height="2" fill="#c8d2e2"/>
+  </g>
+
+  <!-- Door -->
+  <g>
+    <rect x="206" y="150" width="14" height="18" fill="#3a2210"/>
+    <!-- Door panels -->
+    <rect x="208" y="152" width="10" height="7" fill="#2a180c"/>
+    <rect x="208" y="161" width="10" height="5" fill="#2a180c"/>
+    <!-- Door frame -->
+    <rect x="206" y="150" width="14" height="1" fill="#4a3220"/>
+    <rect x="206" y="150" width="1" height="18" fill="#4a3220"/>
+    <rect x="219" y="150" width="1" height="18" fill="#2a1508"/>
+    <!-- Door handle -->
+    <rect x="216" y="158" width="2" height="2" fill="#887766"/>
+    <!-- Light under door -->
+    <rect x="208" y="167" width="10" height="1" fill="#cc8833" opacity="0.3"/>
+    <!-- Door step / snow at door -->
+    <rect x="204" y="168" width="18" height="2" fill="#d0d8e4"/>
+  </g>
+
+  <!-- Left window -->
+  <g>
+    <!-- Window frame (outer) -->
+    <rect x="184" y="144" width="12" height="12" fill="#3a2210"/>
+    <!-- Window glass (warm glow) -->
+    <rect class="window-glow" x="186" y="146" width="8" height="8" fill="#ffbb33"/>
+    <!-- Bright center -->
+    <rect class="window-glow" x="187" y="147" width="6" height="6" fill="#ffcc55" opacity="0.7"/>
+    <!-- Cross dividers -->
+    <rect x="189" y="144" width="2" height="12" fill="#3a2210"/>
+    <rect x="184" y="149" width="12" height="2" fill="#3a2210"/>
+    <!-- Window sill with snow -->
+    <rect x="183" y="156" width="14" height="2" fill="#4a3220"/>
+    <rect x="182" y="155" width="16" height="2" fill="#dde4ee"/>
+    <rect x="184" y="154" width="12" height="1" fill="#e8eef6"/>
+    <!-- Frame highlight (top) -->
+    <rect x="184" y="144" width="12" height="1" fill="#4a3220"/>
+  </g>
+
+  <!-- Right window -->
+  <g>
+    <!-- Window frame (outer) -->
+    <rect x="230" y="144" width="12" height="12" fill="#3a2210"/>
+    <!-- Window glass (warm glow) -->
+    <rect class="window-glow2" x="232" y="146" width="8" height="8" fill="#ffbb33"/>
+    <!-- Bright center -->
+    <rect class="window-glow2" x="233" y="147" width="6" height="6" fill="#ffcc55" opacity="0.7"/>
+    <!-- Cross dividers -->
+    <rect x="235" y="144" width="2" height="12" fill="#3a2210"/>
+    <rect x="230" y="149" width="12" height="2" fill="#3a2210"/>
+    <!-- Window sill with snow -->
+    <rect x="229" y="156" width="14" height="2" fill="#4a3220"/>
+    <rect x="228" y="155" width="16" height="2" fill="#dde4ee"/>
+    <rect x="230" y="154" width="12" height="1" fill="#e8eef6"/>
+    <!-- Frame highlight (top) -->
+    <rect x="230" y="144" width="12" height="1" fill="#4a3220"/>
+  </g>
+
+  <!-- ===== WINDOW LIGHT ON GROUND ===== -->
+  <g>
+    <!-- Left window light projection -->
+    <ellipse class="ground-glow" cx="190" cy="172" rx="14" ry="8" fill="url(#winLightL)"/>
+    <rect class="ground-glow" x="184" y="168" width="12" height="3" fill="#ffaa22" opacity="0.08"/>
+    <!-- Right window light projection -->
+    <ellipse class="ground-glow2" cx="236" cy="172" rx="14" ry="8" fill="url(#winLightR)"/>
+    <rect class="ground-glow2" x="230" y="168" width="12" height="3" fill="#ffaa22" opacity="0.08"/>
+    <!-- Door light -->
+    <ellipse class="ground-glow" cx="213" cy="172" rx="10" ry="6" fill="url(#doorLight)"/>
+  </g>
+
+  <!-- ===== CHIMNEY SMOKE ===== -->
+  <g>
+    <g class="cSmoke1">
+      <rect x="240" y="82" width="6" height="4" fill="#99aabb" opacity="0.3"/>
+      <rect x="239" y="86" width="8" height="3" fill="#8899aa" opacity="0.2"/>
+    </g>
+    <g class="cSmoke2">
+      <rect x="242" y="78" width="5" height="3" fill="#aabbcc" opacity="0.25"/>
+      <rect x="241" y="81" width="7" height="3" fill="#99aabb" opacity="0.18"/>
+    </g>
+    <g class="cSmoke3">
+      <rect x="241" y="72" width="4" height="3" fill="#bbccdd" opacity="0.22"/>
+      <rect x="240" y="75" width="6" height="3" fill="#aabbcc" opacity="0.15"/>
+    </g>
+  </g>
+
+  <!-- Snowfall container (particles added by JS) -->
+  <g id="snowfall"></g>
+
+</svg>
+</div>
+<div class="ap">
+  <button class="ab" id="aBtn"><span style="position:relative">🔇<span class="wi"><span></span><span></span><span></span></span></span></button>
+  <input type="range" class="vs" id="vSl" min="0" max="100" value="40"/>
+  <span class="vl" id="vLb">40%</span>
+</div>
+<script src="/shared/scene-ui.js"></script>
+<script>
+  // Placeholder — audio and particle systems will be added after SVG layout approval
+  initSceneAudio({
+    onStart() {},
+    onStop() {},
+    onVolumeChange() {}
+  });
+</script>
+</body>
+</html>
