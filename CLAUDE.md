@@ -24,6 +24,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `index.html` — Landing page hub linking to all scenes
 - `seascape.html` — "Seascape" scene (day-night cycle over the sea)
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
+- `snowy-forest.html` — "Snowy Forest" scene (moonlit winter forest at night)
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `vercel.json` — Vercel routing config
@@ -98,6 +99,32 @@ Single self-contained HTML file with CSS animations and procedural audio.
 - Brown noise layers for low rumble and mid warmth
 - Crackle buffers with random sharp spike transients
 - Volume slider + mute toggle in fixed UI panel
+
+### Snowy Forest Scene (`snowy-forest.html`)
+
+Single self-contained HTML file with a JS pixel-buffer renderer and CSS snow animations.
+
+#### Visual Elements (SVG pixel buffer)
+
+- 320×180 viewBox rendered via a 32-colour palette Uint8Array pixel buffer
+- Sky rendered as 8-band vertical gradient using palette indices
+- Moon with layered ellipses, crater detail, and scattered halo pixels (JS shimmer animation)
+- 70 procedurally placed stars with per-star twinkle animation driven by `requestAnimationFrame`
+- Distant sine-wave mountains and 3 depth layers of conifer trees (far / mid / near)
+- Trees drawn with `ft()` triangles per tier, with snow accumulation and draping at edges
+- Ground snow with surface highlight, moon reflection, texture noise, and drift mounds
+- Animal tracks in centre clearing
+- Two CSS-animated SVG snow overlay layers (far: 55 small slow flakes; near: 30 larger faster flakes)
+- Back button and inline audio panel with blue-toned styling to match the winter palette
+
+#### Audio System
+
+- Procedural Web Audio API (no audio files)
+- Bandpass-filtered white noise for low wind howl, slowly modulated via recursive `setTimeout`
+- Highpass-filtered white noise layer for high-frequency branch whisper
+- Low sine drone (48 Hz) for cold atmosphere depth
+- Synthesised owl hoots (two-note descending oscillator pair) scheduled every 10–30 s
+- Volume master gain; start/stop via button toggle
 
 ## Maintenance Notes
 
