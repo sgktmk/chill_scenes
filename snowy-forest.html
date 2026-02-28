@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>夜の雪の森 — Chill Scenes</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="/shared/scene-ui.css">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#06060e}
@@ -25,33 +26,6 @@ body{display:flex;align-items:center;justify-content:center;font-family:monospac
 svg rect{shape-rendering:crispEdges}
 .snow-svg{position:absolute;top:0;left:0;pointer-events:none}
 
-#ui{
-  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
-  display:flex;align-items:center;gap:10px;
-  background:rgba(5,5,15,.72);border:1px solid rgba(60,60,100,.3);
-  border-radius:6px;padding:5px 14px;z-index:10;
-  font-size:11px;user-select:none;backdrop-filter:blur(3px);
-}
-#ui button{
-  background:#1a1a2a;color:#99a;border:1px solid #334;
-  border-radius:4px;padding:4px 12px;cursor:pointer;
-  font-family:monospace;font-size:11px;transition:all .25s;
-}
-#ui button:hover{background:#252540;border-color:#556}
-#ui button.active{background:#182838;border-color:#4080b0;color:#90c8e8}
-#ui input[type=range]{width:65px;accent-color:#6090b0;cursor:pointer}
-#ui .lbl{opacity:.6;font-size:10px}
-
-#back-btn{
-  position:fixed;top:12px;left:12px;
-  background:rgba(5,5,15,.72);border:1px solid rgba(60,60,100,.3);
-  border-radius:6px;padding:5px 12px;
-  text-decoration:none;color:#8ab;font-size:11px;
-  font-family:monospace;z-index:20;backdrop-filter:blur(3px);
-  transition:border-color .25s,color .25s;
-}
-#back-btn:hover{border-color:rgba(100,140,200,.5);color:#acd}
-
 /* Snow fall */
 @keyframes snowA{0%{transform:translateY(-14px) translateX(0)}100%{transform:translateY(196px) translateX(7px)}}
 @keyframes snowB{0%{transform:translateY(-14px) translateX(0)}100%{transform:translateY(196px) translateX(-5px)}}
@@ -63,14 +37,14 @@ svg rect{shape-rendering:crispEdges}
 </style>
 </head>
 <body>
-<a id="back-btn" href="/">&#8592; Back</a>
+<a class="back" href="/">&#8592; Top</a>
 <div id="scene-wrap">
   <svg id="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid meet"></svg>
 </div>
-<div id="ui">
-  <button id="btn-snd">&#x2744; Sound: OFF</button>
-  <label style="display:flex;align-items:center;gap:4px">Vol<input type="range" id="vol" min="0" max="100" value="30"></label>
-  <span class="lbl" id="stxt">Night forest ambience</span>
+<div class="ap">
+  <button class="ab" id="aBtn"><span style="position:relative">🔇<span class="wi"><span></span><span></span><span></span></span></span></button>
+  <input type="range" class="vs" id="vSl" min="0" max="100" value="30"/>
+  <span class="vl" id="vLb">30%</span>
 </div>
 
 <script>
@@ -667,31 +641,20 @@ function setVolume(v) {
 }
 
 /* ===========================================================
-   UI EVENTS
-   =========================================================== */
-document.getElementById('btn-snd').addEventListener('click', function () {
-  if (!audioCtx) {
-    startAudio(Number(document.getElementById('vol').value));
-    this.textContent = '\u2744 Sound: ON';
-    this.classList.add('active');
-  } else {
-    stopAudio();
-    this.textContent = '\u2744 Sound: OFF';
-    this.classList.remove('active');
-  }
-});
-
-document.getElementById('vol').addEventListener('input', function () {
-  setVolume(Number(this.value));
-});
-
-/* ===========================================================
    INIT
    =========================================================== */
 paintScene();
 render();
 startAnimations();
 mkSnow();
+</script>
+<script src="/shared/scene-ui.js"></script>
+<script>
+initSceneAudio({
+  onStart(v)        { startAudio(v); },
+  onStop()          { stopAudio(); },
+  onVolumeChange(v) { setVolume(v); },
+});
 </script>
 </body>
 </html>
