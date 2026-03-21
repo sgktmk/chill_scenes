@@ -30,9 +30,12 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
 - `templates/scene.html` — Scene HTML template with standardized structure
 - `templates/card-snippet.html` — Index page card template
-- `.claude/commands/new-scene.md` — `/new-scene` slash command
-- `.claude/commands/refine-scene.md` — `/refine-scene` slash command
-- `.claude/commands/scene-audit.md` — `/scene-audit` slash command
+- `.claude/commands/new-scene.md` — `/new-scene` slash command (create new scene)
+- `.claude/commands/refine-scene.md` — `/refine-scene` slash command (refine existing scene)
+- `.claude/commands/scene-audit.md` — `/scene-audit` slash command (audit scene quality)
+- `.claude/commands/add-loop.md` — `/add-loop` slash command (dynamically add new PIV loop)
+- `.claude/commands/run-loop.md` — `/run-loop` slash command (autonomously execute PIV loop)
+- `.claude/commands/refine-loop.md` — `/refine-loop` slash command (fix failed acceptance criterion)
 - `vercel.json` — Vercel routing config
 
 ## Architecture
@@ -202,11 +205,64 @@ New pixel-art scenes follow this file structure:
 <script>           — initSceneAudio() call
 ```
 
+### PIV Loop System
+
+The project uses **autonomous loop execution** for structured development.
+
+#### Commands
+
+- **`/run-loop LN`** — Execute loop LN autonomously (Plan → Implement → Validate → Verify)
+- **`/run-loop LN skip-confirm`** — Skip plan confirmation (if already reviewed)
+- **`/refine-loop LN "criterion" "fix"`** — Fix a specific failed acceptance criterion
+- **`/add-loop "goal" "rationale"`** — Dynamically add a new loop during implementation
+
+#### Agents
+
+- **`loop-engine`** — Orchestrates full PIV cycle: reads plan, delegates implementation, validates, generates report
+- **`validation-executor`** — Runs acceptance criteria checks and generates validation report
+- **`loop-updater`** — Updates loop status in CLAUDE.md when loop completes
+- **`loop-manager`** — Manages loop renumbering and plan skeleton generation for `/add-loop`
+
+#### Flow
+
+1. User: `/run-loop L4`
+2. loop-engine reads `docs/plan-L4.md`, asks user confirmation
+3. loop-engine executes implementation steps (delegating to specialized agents like scene-renderer, animation-designer)
+4. loop-engine calls validation-executor to check acceptance criteria
+5. validation-executor generates `docs/validation-report-L4.md`
+6. If all criteria PASS: loop-updater marks L4 as `✅ Done` in CLAUDE.md
+7. If any criterion FAILS: `/refine-loop` is used to fix and re-validate
+
 ---
 
 ## Development Method: PIV Loop
 
 This project uses the **PIV Loop** (Plan → Implement → Validate → Verify) methodology for structured, focused development.
+
+### Autonomous Loop Execution
+
+Loops can be executed **autonomously** by Claude Code using the `/run-loop` command:
+
+```
+/run-loop L4
+```
+
+This spawns a **loop-engine agent** that:
+1. Reads `docs/plan-LN.md` (confirms goal, scope, acceptance criteria with user)
+2. Executes all implementation steps (delegating to specialized agents)
+3. Validates against acceptance criteria (runs validation commands, checks manually)
+4. Generates `docs/validation-report-LN.md`
+5. Updates loop status in CLAUDE.md
+
+**Supporting commands**:
+- `/run-loop L4 skip-confirm` — Skip plan confirmation (if already reviewed)
+- `/refine-loop L4 "criterion name" "fix description"` — Fix a specific failed criterion and re-validate
+- `/add-loop "goal" "rationale"` — Create a new loop during implementation
+
+**Agents involved**:
+- `loop-engine` — Orchestrates full PIV cycle
+- `validation-executor` — Runs acceptance criteria checks
+- `loop-updater` — Updates CLAUDE.md when loop completes
 
 ### Loop Table
 
