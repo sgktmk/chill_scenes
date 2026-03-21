@@ -27,6 +27,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `snowy-forest.html` — "Snowy Forest" scene (moonlit winter forest at night)
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
+- `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
 - `vercel.json` — Vercel routing config
 
 ## Architecture
@@ -128,14 +129,38 @@ Single self-contained HTML file with a JS pixel-buffer renderer and CSS snow ani
 
 ## Maintenance Notes
 
-### Shared UI Code (`shared/`)
+### Shared Code (`shared/`)
 
-Common UI components are extracted into shared files loaded by each scene:
+Common components are extracted into shared files loaded by each scene:
 
 - **`shared/scene-ui.css`** — Audio panel (`.ap`, `.ab`, `.vs`, `.vl`, `.wi`) and back button (`.back`) styles
 - **`shared/scene-ui.js`** — `initSceneAudio({ onStart, onStop, onVolumeChange })` callback-based API for audio toggle and volume control
+- **`shared/pixel.js`** — `PixelBuffer` class for palette-indexed pixel-art rendering
 
 Each scene provides its own audio init/control logic via callbacks. The shared JS handles DOM element queries, button class toggles, emoji updates, and volume label updates.
+
+#### PixelBuffer API (`shared/pixel.js`)
+
+`PixelBuffer` provides a palette-indexed pixel buffer with drawing primitives, a seeded PRNG, and RLE-compressed SVG output with optional named layers.
+
+```javascript
+const pb = new PixelBuffer(320, 180, palette);
+pb.seed(12345);         // seeded PRNG for reproducible scenes
+pb.clear(0);            // fill buffer with palette index 0
+pb.sp(x, y, c);         // set pixel
+pb.gp(x, y);            // get pixel (returns palette index, -1 if OOB)
+pb.fr(x, y, w, h, c);   // filled rect
+pb.fe(cx, cy, rx, ry, c); // filled ellipse
+pb.ft(x0,y0, x1,y1, x2,y2, c); // filled triangle
+pb.hline(x0, x1, y, c); // horizontal line
+pb.rn();                // random float [0,1)
+pb.ri(a, b);            // random int [a,b] inclusive
+pb.toSVG(svgEl);        // flush to SVG (simple)
+pb.toSVG(svgEl, {       // flush with named layers
+  layers: ['moon', 'stars'],
+  classify(x, y, idx) { ... }
+});
+```
 
 ### Future Roadmap
 
