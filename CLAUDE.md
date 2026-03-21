@@ -28,6 +28,11 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
+- `templates/scene.html` — Scene HTML template with standardized structure
+- `templates/card-snippet.html` — Index page card template
+- `.claude/commands/new-scene.md` — `/new-scene` slash command
+- `.claude/commands/refine-scene.md` — `/refine-scene` slash command
+- `.claude/commands/scene-audit.md` — `/scene-audit` slash command
 - `vercel.json` — Vercel routing config
 
 ## Architecture
@@ -162,22 +167,61 @@ pb.toSVG(svgEl, {       // flush with named layers
 });
 ```
 
+### Scene Creation System
+
+Slash commands and templates for creating new pixel-art scenes with consistent quality.
+
+#### Commands
+
+- **`/new-scene "file-name" "Title" "description"`** — Full scene creation workflow. Orchestrates sub-agents for scaffold, palette, rendering, animation, audio, preview card, and quality review.
+- **`/refine-scene file-name "feedback"`** — Apply visual/audio feedback after user review. Categorizes feedback and makes targeted edits.
+- **`/scene-audit file-name`** — Quality audit against the project's checklist. Use `all` to audit every scene.
+
+#### Templates (`templates/`)
+
+- **`templates/scene.html`** — Complete scene HTML template with standardized structure, section comments, and documented patterns for each section (palette, drawing, animation, audio).
+- **`templates/card-snippet.html`** — Index page card template with placeholder SVG.
+
+#### Standard Scene Structure
+
+New pixel-art scenes follow this file structure:
+```
+<style>            — scene-specific CSS, particle @keyframes
+<svg id="scene">   — target SVG (320×180 viewBox)
+<script pixel.js>  — shared pixel buffer
+<script>           — scene code in standard section order:
+  CONFIG           — dimensions, palette (32 colours)
+  PIXEL BUFFER     — PixelBuffer instance + local wrappers
+  DRAWING HELPERS  — reusable functions with depth parameter
+  PAINT SCENE      — depth-layered rendering (sky→celestial→distant→far→ground→light→texture→mid→detail→near)
+  SVG RENDER       — pb.toSVG() with optional layers
+  ANIMATIONS       — requestAnimationFrame loop
+  AUDIO            — Web Audio procedural sound
+  INIT             — paintScene + render + startAnimations
+<script scene-ui>  — shared audio UI
+<script>           — initSceneAudio() call
+```
+
 ### Future Roadmap
 
 Planned features in recommended implementation order:
 
 1. ~~**Shared code extraction**~~ — Done. Shared UI code extracted into `shared/scene-ui.css` and `shared/scene-ui.js`
-2. **OGP meta tags** — Add Open Graph / Twitter Card meta tags to each scene for link previews on social media
-3. **Screenshot capture** — SVG → Canvas → PNG conversion using native browser APIs (no library needed); add camera button to UI panel
-4. **SNS sharing** — Web Share API (mobile) with X/Twitter intent URL fallback (desktop); share button in UI panel
-5. **Scene template** — Standardize boilerplate for new scenes
+2. ~~**Scene template & creation system**~~ — Done. Templates, `/new-scene`, `/refine-scene`, `/scene-audit` commands
+3. **OGP meta tags** — Add Open Graph / Twitter Card meta tags to each scene for link previews on social media
+4. **Screenshot capture** — SVG → Canvas → PNG conversion using native browser APIs (no library needed); add camera button to UI panel
+5. **SNS sharing** — Web Share API (mobile) with X/Twitter intent URL fallback (desktop); share button in UI panel
 
 ### New Scene Checklist
 
-When adding a new scene:
+When adding a new scene (automated by `/new-scene`):
 
 - [ ] Set `lang="en"` and title format `<Name> — Chill Scenes`
-- [ ] Include back button and audio panel HTML, load `shared/scene-ui.css` and `shared/scene-ui.js`, call `initSceneAudio()`
+- [ ] Include back button and audio panel HTML, load `shared/scene-ui.css`, `shared/pixel.js`, and `shared/scene-ui.js`, call `initSceneAudio()`
+- [ ] 32-colour palette with semantic comments, grouped by purpose
+- [ ] `paintScene()` follows standard depth order
+- [ ] `prefers-reduced-motion` respected in animations
+- [ ] `stopAudio()` clears all timers and closes AudioContext
 - [ ] Add card with preview SVG to `index.html` grid
 - [ ] Add OGP meta tags in `<head>` (once implemented)
 - [ ] Update this file's Files list and Architecture section
