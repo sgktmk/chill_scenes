@@ -202,6 +202,55 @@ New pixel-art scenes follow this file structure:
 <script>           — initSceneAudio() call
 ```
 
+---
+
+## Development Method: PIV Loop
+
+This project uses the **PIV Loop** (Plan → Implement → Validate → Verify) methodology for structured, focused development.
+
+### Loop Table
+
+| Loop | Goal | Status | Plan | Report |
+|------|------|--------|------|--------|
+| L1 | Extract `shared/pixel.js` from snowy-forest | ✅ Done | — | — |
+| L2 | Create scene templates and `/new-scene` skill | ✅ Done | — | — |
+| L3 | Create 8 sub-agents for scene creation | ✅ Done | — | — |
+| L4 | Test scene creation system with first new scene | 未着手 | `docs/plan-L4.md` | — |
+| L5 | Implement missing roadmap features (OGP, screenshots) | 未着手 | `docs/plan-L5.md` | — |
+
+**Status values**: `未着手` → `計画完了` → `進行中` → `✅ Done`
+
+### PIV Loop Rules
+
+1. **Plan**: Write `docs/plan-LN.md` before implementation. Define goal, scope, Acceptance Criteria, and implementation steps.
+2. **Implement**: Follow the plan exactly. Do NOT implement anything outside the plan scope.
+3. **Validate**: Run manual tests (visual browser check) and verify Acceptance Criteria.
+4. **Verify**: Write `docs/validation-report-LN.md` and confirm the loop is complete.
+
+**Important discipline rules:**
+- **1 loop = 1 goal** — No scope creep
+- **Incidental fixes go to a new loop** — Don't fix unrelated bugs in the same loop
+- **Ambiguities stay as TODO comments** — Don't guess at unclear requirements
+
+### Dynamic Loop Addition
+
+During implementation, if new work is discovered that **doesn't fit the current plan**, use `/add-loop` to create a new loop:
+
+```
+/add-loop "brief goal" "rationale for creating new loop"
+```
+
+This will:
+1. Prompt you to choose insertion position (after current loop, or after specific loop)
+2. Create a skeleton `docs/plan-LN.md` and add to the loop table
+3. Update CLAUDE.md automatically
+
+**When to add a loop:**
+- Discovering that a prerequisite task is necessary before current loop
+- Finding scope creep that should be deferred to a dedicated loop
+- Identifying a bug/issue severe enough to require immediate attention
+- Realizing the current loop is becoming too complex (split it)
+
 ### Future Roadmap
 
 Planned features in recommended implementation order:
