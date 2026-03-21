@@ -47,6 +47,7 @@ svg rect{shape-rendering:crispEdges}
   <span class="vl" id="vLb">30%</span>
 </div>
 
+<script src="/shared/pixel.js"></script>
 <script>
 /* ===========================================================
    CONFIG
@@ -91,32 +92,17 @@ const P = [
 ];
 
 /* ===========================================================
-   PIXEL BUFFER
+   PIXEL BUFFER (shared/pixel.js)
    =========================================================== */
-const buf = new Uint8Array(W * H);
-let _s = 77;
-function sr(v) { _s = v; }
-function rn() { _s = (_s * 1103515245 + 12345) & 0x7fffffff; return _s / 0x7fffffff; }
-function ri(a, b) { return Math.floor(a + rn() * (b - a + 1)); }
-function sp(x, y, c) { x = Math.round(x); y = Math.round(y); if (x >= 0 && x < W && y >= 0 && y < H) buf[y * W + x] = c; }
-function fr(x0, y0, w, h, c) { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) sp(x, y, c); }
-function fe(cx, cy, rx, ry, c) {
-  for (let y = cy - ry; y <= cy + ry; y++) {
-    let dy = (y - cy) / ry, dx = Math.sqrt(Math.max(0, 1 - dy * dy)) * rx;
-    for (let x = Math.round(cx - dx); x <= Math.round(cx + dx); x++) sp(x, y, c);
-  }
-}
-function ft(x0, y0, x1, y1, x2, y2, c) {
-  let pts = [{ x: x0, y: y0 }, { x: x1, y: y1 }, { x: x2, y: y2 }].sort((a, b) => a.y - b.y);
-  let [A, B, C] = pts;
-  for (let y = A.y; y <= C.y; y++) {
-    let xa, xb;
-    if (y < B.y) { xa = A.x + (B.x - A.x) * (y - A.y) / (B.y - A.y || 1); xb = A.x + (C.x - A.x) * (y - A.y) / (C.y - A.y || 1); }
-    else { xa = B.x + (C.x - B.x) * (y - B.y) / (C.y - B.y || 1); xb = A.x + (C.x - A.x) * (y - A.y) / (C.y - A.y || 1); }
-    if (xa > xb)[xa, xb] = [xb, xa];
-    for (let x = Math.floor(xa); x <= Math.ceil(xb); x++) sp(x, y, c);
-  }
-}
+const pb = new PixelBuffer(W, H, P);
+const buf = pb.buf;
+function sr(v) { pb.seed(v); }
+function rn() { return pb.rn(); }
+function ri(a, b) { return pb.ri(a, b); }
+function sp(x, y, c) { pb.sp(x, y, c); }
+function fr(x0, y0, w, h, c) { pb.fr(x0, y0, w, h, c); }
+function fe(cx, cy, rx, ry, c) { pb.fe(cx, cy, rx, ry, c); }
+function ft(x0, y0, x1, y1, x2, y2, c) { pb.ft(x0, y0, x1, y1, x2, y2, c); }
 
 /* ===========================================================
    TREE DRAWING — layered conifers with snow
@@ -392,13 +378,9 @@ function paintScene() {
 }
 
 /* ===========================================================
-   SVG RENDER
+   SVG RENDER (via shared/pixel.js)
    =========================================================== */
 function render() {
-  let mainRects = '';
-  let moonRects = '';
-  let starRects = '';
-
   const moonSet = new Set(moonPixels.map(p => p.y * W + p.x));
   const haloSet = new Set(moonHaloPixels.map(p => p.y * W + p.x));
   const starPositions = new Set();
@@ -408,35 +390,14 @@ function render() {
     if (s.cross) { starPositions.add(s.y * W + s.x + 1); starPositions.add(s.y * W + s.x - 1); starPositions.add((s.y + 1) * W + s.x); starPositions.add((s.y - 1) * W + s.x); }
   }
 
-  for (let y = 0; y < H; y++) {
-    let x = 0;
-    while (x < W) {
-      let c = buf[y * W + x], run = 1;
-      while (x + run < W && buf[y * W + x + run] === c) run++;
-      let r = '<rect x="' + x + '" y="' + y + '" width="' + run + '" height="1" fill="' + P[c] + '"/>';
-
-      let isMoon = false, isStar = false;
-      for (let wx = x; wx < x + run; wx++) {
-        let k = y * W + wx;
-        if (moonSet.has(k) || haloSet.has(k)) { isMoon = true; break; }
-      }
-      if (!isMoon && run <= 5) {
-        for (let wx = x; wx < x + run; wx++) {
-          if (starPositions.has(y * W + wx)) { isStar = true; break; }
-        }
-      }
-
-      if (isMoon) moonRects += r;
-      else if (isStar) starRects += r;
-      else mainRects += r;
-      x += run;
+  pb.toSVG(document.getElementById('svg'), {
+    layers: ['moon-g', 'stars-g'],
+    classify(x, y, idx) {
+      if (moonSet.has(idx) || haloSet.has(idx)) return 'moon-g';
+      if (starPositions.has(idx)) return 'stars-g';
+      return null;
     }
-  }
-
-  document.getElementById('svg').innerHTML =
-    '<g>' + mainRects + '</g>' +
-    '<g id="moon-g">' + moonRects + '</g>' +
-    '<g id="stars-g">' + starRects + '</g>';
+  });
 }
 
 /* ===========================================================
