@@ -23,6 +23,8 @@ body{display:flex;align-items:center;justify-content:center;font-family:monospac
   image-rendering:crisp-edges;
 }
 svg rect{shape-rendering:crispEdges}
+@keyframes strap-sway{from{transform:rotate(-2.5deg)}to{transform:rotate(2.5deg)}}
+@media(prefers-reduced-motion:reduce){[id^="strap-"]{animation:none!important}}
 </style>
 </head>
 <body>
@@ -293,7 +295,39 @@ const TRAIN_PIXELS = new Uint8Array([
 /* ---- Render static scene ---- */
 const pb = new PixelBuffer(320, 180, TRAIN_PALETTE);
 pb.buf.set(TRAIN_PIXELS);
-pb.toSVG(document.getElementById('svg'));
+
+// 6 straps: [x_start, x_end, center_x]
+const STRAPS = [
+  [5,  35,  19],
+  [57, 83,  70],
+  [103,129, 116],
+  [149,176, 162],
+  [197,222, 210],
+  [243,269, 256],
+];
+const STRAP_Y = 45;
+
+pb.toSVG(document.getElementById('svg'), {
+  layers: STRAPS.map((_, i) => `strap-${i}`),
+  classify(x, y) {
+    if (y < STRAP_Y) {
+      for (let i = 0; i < STRAPS.length; i++) {
+        if (x >= STRAPS[i][0] && x <= STRAPS[i][1]) return `strap-${i}`;
+      }
+    }
+    return null;
+  }
+});
+
+STRAPS.forEach(([,, cx], i) => {
+  const g = document.getElementById(`strap-${i}`);
+  if (!g) return;
+  g.style.transformOrigin = '50% 0%';
+  const dur = (2.8 + i * 0.18).toFixed(2) + 's';
+  const delay = (i * 0.45).toFixed(2) + 's';
+  g.style.animation = `strap-sway ${dur} ease-in-out infinite alternate`;
+  g.style.animationDelay = delay;
+});
 
 /* ---- Audio ---- */
 (function() {
