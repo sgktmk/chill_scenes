@@ -23,7 +23,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:monospac
   image-rendering:crisp-edges;
 }
 svg rect{shape-rendering:crispEdges}
-@keyframes strap-sway{0%,100%{transform:translateX(0)}25%{transform:translateX(2px)}75%{transform:translateX(-2px)}}
+@keyframes strap-sway{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
 @media(prefers-reduced-motion:reduce){[id^="strap-"]{animation:none!important}}
 </style>
 </head>
@@ -347,8 +347,9 @@ svgEl.innerHTML = bgHTML + strapHTML;
 STRAPS.forEach((_, i) => {
   const g = svgEl.querySelector(`#strap-${i}`);
   if (!g) return;
+  g.style.transformOrigin = '50% 0%';
   const dur = (2.8 + i * 0.18).toFixed(2) + 's';
-  g.style.animation = `strap-sway ${dur} ease-in-out infinite`;
+  g.style.animation = `strap-sway ${dur} ease-in-out infinite alternate`;
   g.style.animationDelay = (i * 0.45).toFixed(2) + 's';
 });
 
