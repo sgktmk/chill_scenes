@@ -307,15 +307,24 @@ const STRAPS = [
 ];
 const STRAP_Y = 45;
 
-// Step 1: Replace strap pixels with ceiling color, render clean background
-const CEIL = 19; // #88857a
-const strapBackup = new Map();
+// Luminance of each palette entry (to distinguish strap frame from ceiling bg)
+const LUMA = TRAIN_PALETTE.map(h => {
+  const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
+  return 0.299*r + 0.587*g + 0.114*b;
+});
+const LUMA_THRESH = 150; // index 19 (#88857a) = 133, strap frame ≥ 165
+
+// Step 1: Replace only bright strap pixels with ceiling color → clean background
+const CEIL = 19;
+const brightBackup = new Map();
 for (let y = 0; y < STRAP_Y; y++) {
   for (let i = 0; i < STRAPS.length; i++) {
     for (let x = STRAPS[i][0]; x <= STRAPS[i][1]; x++) {
       const idx = y * 320 + x;
-      strapBackup.set(idx, pb.buf[idx]);
-      pb.buf[idx] = CEIL;
+      if (LUMA[pb.buf[idx]] > LUMA_THRESH) {
+        brightBackup.set(idx, pb.buf[idx]);
+        pb.buf[idx] = CEIL;
+      }
     }
   }
 }
@@ -323,21 +332,22 @@ const svgEl = document.getElementById('svg');
 pb.toSVG(svgEl);
 const bgHTML = svgEl.innerHTML;
 
-// Step 2: Restore strap pixels, render strap layers only
-for (const [idx, c] of strapBackup) pb.buf[idx] = c;
+// Step 2: Restore bright pixels, classify only bright pixels → strap layers
+for (const [idx, c] of brightBackup) pb.buf[idx] = c;
 pb.toSVG(svgEl, {
   layers: STRAPS.map((_, i) => `strap-${i}`),
   classify(x, y) {
     if (y < STRAP_Y) {
       for (let i = 0; i < STRAPS.length; i++) {
-        if (x >= STRAPS[i][0] && x <= STRAPS[i][1]) return `strap-${i}`;
+        if (x >= STRAPS[i][0] && x <= STRAPS[i][1] && LUMA[pb.gp(x,y)] > LUMA_THRESH)
+          return `strap-${i}`;
       }
     }
     return null;
   }
 });
 
-// Step 3: Combine — clean background + animated strap groups on top
+// Step 3: Complete background + bright strap pixels on top
 const strapHTML = STRAPS.map((_, i) =>
   svgEl.querySelector(`#strap-${i}`)?.outerHTML || ''
 ).join('');
