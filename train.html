@@ -23,7 +23,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:monospac
   image-rendering:crisp-edges;
 }
 svg rect{shape-rendering:crispEdges}
-@keyframes strap-sway{from{transform:rotate(-2.5deg)}to{transform:rotate(2.5deg)}}
+@keyframes strap-sway{0%,100%{transform:translateX(0)}25%{transform:translateX(2px)}75%{transform:translateX(-2px)}}
 @media(prefers-reduced-motion:reduce){[id^="strap-"]{animation:none!important}}
 </style>
 </head>
@@ -307,7 +307,25 @@ const STRAPS = [
 ];
 const STRAP_Y = 45;
 
-pb.toSVG(document.getElementById('svg'), {
+// Step 1: Replace strap pixels with ceiling color, render clean background
+const CEIL = 19; // #88857a
+const strapBackup = new Map();
+for (let y = 0; y < STRAP_Y; y++) {
+  for (let i = 0; i < STRAPS.length; i++) {
+    for (let x = STRAPS[i][0]; x <= STRAPS[i][1]; x++) {
+      const idx = y * 320 + x;
+      strapBackup.set(idx, pb.buf[idx]);
+      pb.buf[idx] = CEIL;
+    }
+  }
+}
+const svgEl = document.getElementById('svg');
+pb.toSVG(svgEl);
+const bgHTML = svgEl.innerHTML;
+
+// Step 2: Restore strap pixels, render strap layers only
+for (const [idx, c] of strapBackup) pb.buf[idx] = c;
+pb.toSVG(svgEl, {
   layers: STRAPS.map((_, i) => `strap-${i}`),
   classify(x, y) {
     if (y < STRAP_Y) {
@@ -319,14 +337,19 @@ pb.toSVG(document.getElementById('svg'), {
   }
 });
 
-STRAPS.forEach(([,, cx], i) => {
-  const g = document.getElementById(`strap-${i}`);
+// Step 3: Combine — clean background + animated strap groups on top
+const strapHTML = STRAPS.map((_, i) =>
+  svgEl.querySelector(`#strap-${i}`)?.outerHTML || ''
+).join('');
+svgEl.innerHTML = bgHTML + strapHTML;
+
+// Step 4: Apply animation to each strap group
+STRAPS.forEach((_, i) => {
+  const g = svgEl.querySelector(`#strap-${i}`);
   if (!g) return;
-  g.style.transformOrigin = '50% 0%';
   const dur = (2.8 + i * 0.18).toFixed(2) + 's';
-  const delay = (i * 0.45).toFixed(2) + 's';
-  g.style.animation = `strap-sway ${dur} ease-in-out infinite alternate`;
-  g.style.animationDelay = delay;
+  g.style.animation = `strap-sway ${dur} ease-in-out infinite`;
+  g.style.animationDelay = (i * 0.45).toFixed(2) + 's';
 });
 
 /* ---- Audio ---- */
