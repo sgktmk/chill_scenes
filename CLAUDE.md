@@ -25,6 +25,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `seascape.html` — "Seascape" scene (day-night cycle over the sea)
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
 - `snowy-forest.html` — "Snowy Forest" scene (moonlit winter forest at night)
+- `rice-terrace.html` — "Rice Terraces" scene (GBA-style terraced paddies below Mt. Fuji with a day-night cycle)
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
@@ -126,6 +127,30 @@ Single self-contained HTML file with a JS pixel-buffer renderer and CSS snow ani
 - Low sine drone (48 Hz) for cold atmosphere depth
 - Synthesised owl hoots (two-note descending oscillator pair) scheduled every 10–30 s
 - Volume master gain; start/stop via button toggle
+
+### Rice Terrace Scene (`rice-terrace.html`)
+
+Single self-contained HTML file rendered at the GBA native resolution (240×160 viewBox) using the shared `PixelBuffer`.
+
+#### Visual Elements
+
+- Static terrain painted once into a 27-colour palette buffer (palette index 0 = `'none'` for transparent sky); day-night look achieved dynamically without repainting
+- Mt. Fuji in the upper right: concave slopes, zigzag snowline, snow gullies clipped to the snow boundary
+- 7 stepped rice terraces seen from the side, each with water surface, grass lip (azemichi), dirt retaining wall, and rice seedling rows following the terrace contours; far hills and valley haze at the horizon; lone tree on a bund
+- 3-minute day-night cycle (`CYCLE = 180`): 10-keyframe interpolation (`KF` array) drives 11 sky band colours, terrain `brightness()/saturate()` CSS filter, star opacity, and cloud tint
+- Sun arcs left→right (phase 0–0.62) with elevation-dependent colour; moon arcs right→left through the night; both occluded by terrain when below the horizon
+- Paddy water reflects the sky: water pixels RLE-compressed into a fill-inheriting overlay group whose fill tracks the horizon keyframe colour
+- Twinkling stars (CSS), two drifting pixel clouds, fireflies at deep night
+- Rare egret (シラサギ) event: pixel-sprite bird flies in from the right, stands/pecks in a paddy with water ripples, then flies off; daytime-biased random scheduling
+- Debug URL params: `?t=0.25` freezes the phase, `?egret=1` forces the egret event
+
+#### Audio System
+
+- Procedural Web Audio API (no audio files)
+- Bandpassed noise wind body + highpassed rustle layer, swelling together via recursive `setTimeout` gusts
+- Insects: cricket bursts and detuned bell-cricket rings, louder at night (reads `curNight` from the visual loop)
+- Black kite (トンビ) "pee-hyororo" call: sine glide 1480→1580→920 Hz with 11 Hz vibrato onset, daytime only, occasional distant reply
+- Faint frog chorus at night (sawtooth through bandpass)
 
 ## Maintenance Notes
 
