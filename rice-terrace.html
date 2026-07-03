@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>棚田 — Chill Scenes</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="/shared/scene-ui.css">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#06080e}
+body{display:flex;align-items:center;justify-content:center;font-family:monospace;color:#cdc}
+
+/* GBA native resolution 240x160 → 3:2 aspect */
+#scene-wrap{
+  position:relative;
+  width:100vw;height:66.667vw;
+  max-height:100vh;max-width:150vh;
+  overflow:hidden;cursor:default;
+}
+#scene-wrap svg{
+  display:block;width:100%;height:100%;
+  image-rendering:pixelated;
+  image-rendering:-moz-crisp-edges;
+  image-rendering:crisp-edges;
+}
+svg rect{shape-rendering:crispEdges}
+
+/* Star twinkle */
+@keyframes tw{0%,100%{opacity:.15}50%{opacity:1}}
+.tw{animation:tw 3s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){
+  .tw{animation:none!important}
+}
+</style>
+</head>
+<body>
+<a class="back" href="/">&#8592; Top</a>
+<div id="scene-wrap">
+  <svg id="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <radialGradient id="sunGlowG">
+        <stop offset="0%" stop-color="#ffd890" stop-opacity=".55"/>
+        <stop offset="55%" stop-color="#ffb060" stop-opacity=".2"/>
+        <stop offset="100%" stop-color="#ff9040" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="moonGlowG">
+        <stop offset="0%" stop-color="#e8ecd8" stop-opacity=".35"/>
+        <stop offset="60%" stop-color="#c8d0c0" stop-opacity=".12"/>
+        <stop offset="100%" stop-color="#a8b0a8" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <g id="skyB"></g>
+    <g id="starsG" opacity="0"></g>
+    <circle id="sunGlow" r="16" fill="url(#sunGlowG)"/>
+    <g id="sunG"></g>
+    <circle id="moonGlow" r="12" fill="url(#moonGlowG)" opacity="0"/>
+    <g id="moonG" opacity="0"></g>
+    <g id="cloudA" opacity=".85"></g>
+    <g id="cloudB" opacity=".65"></g>
+    <g id="terrainG"></g>
+    <g id="waterG" opacity=".38"></g>
+    <g id="fireflyG"></g>
+    <g id="egretG"></g>
+  </svg>
+</div>
+<div class="ap">
+  <button class="ab" id="aBtn"><span style="position:relative">🔇<span class="wi"><span></span><span></span><span></span></span></span></button>
+  <input type="range" class="vs" id="vSl" min="0" max="100" value="30"/>
+  <span class="vl" id="vLb">30%</span>
+</div>
+
+<script src="/shared/pixel.js"></script>
+<script>
+/* ===========================================================
+   CONFIG — GBA-style rice terrace scene
+   240×160 = Game Boy Advance native resolution
+   =========================================================== */
+const W = 240, H = 160, HOR = 66;
+const CYCLE = 180; // seconds for a full day-night loop
+
+// Debug hooks: ?t=0.25 freezes phase, ?egret=1 forces the egret event
+const qp = new URLSearchParams(location.search);
+const FIXED_T = qp.has('t') ? Math.min(.999, Math.max(0, parseFloat(qp.get('t')))) : null;
+const FORCE_EGRET = qp.has('egret');
+
+/* 27-colour GBA-flavoured palette (index 0 = transparent sky) */
+const P = [
+  'none',    // 0  sky (transparent — sky is drawn as dynamic bands)
+  '#8a94c4', // 1  Fuji lit slope
+  '#6e7aae', // 2  Fuji mid
+  '#59639a', // 3  Fuji shaded slope
+  '#f4f7fa', // 4  Fuji snow bright
+  '#ccd8ea', // 5  Fuji snow shade
+  '#7e96b8', // 6  far hills
+  '#93accc', // 7  far hill rim light
+  '#9db88e', // 8  valley haze fields
+  '#2e6b38', // 9  grass dark
+  '#468a42', // 10 grass mid
+  '#63aa50', // 11 grass light
+  '#8cc860', // 12 grass highlight
+  '#7c5c40', // 13 dirt wall light
+  '#5e4430', // 14 dirt wall dark
+  '#8c8062', // 15 stone fleck
+  '#7fa8cc', // 16 paddy water
+  '#6c94bc', // 17 paddy water shade
+  '#a4c8e0', // 18 water sparkle
+  '#3c9048', // 19 rice base
+  '#5cb45c', // 20 rice light
+  '#79d06a', // 21 rice bright
+  '#1e4a28', // 22 tree dark
+  '#2f6636', // 23 tree mid
+  '#4a3020', // 24 trunk
+  '#86a07a', // 25 haze field stripe
+  '#c0cede', // 26 Fuji snow gully
+];
+
+const pb = new PixelBuffer(W, H, P);
+const buf = pb.buf;
+function rn() { return pb.rn(); }
+function ri(a, b) { return pb.ri(a, b); }
+function sp(x, y, c) { pb.sp(x, y, c); }
+
+/* ===========================================================
+   TERRACE GEOMETRY — boundary curves, tilted toward the valley
+   =========================================================== */
+const TOPS  = [72, 80, 89, 99, 111, 125, 142, 163];
+const TILT  = [3, 4, 5, 6, 7, 8, 9, 10];
+const WALLH = [3, 3, 4, 4, 5, 6, 7];
+
+function bY(i, x) {
+  return TOPS[i] + TILT[i] * (x / W)
+    + Math.sin(x * 0.045 + i * 2.1) * 1.8
+    + Math.sin(x * 0.11 + i * 0.7) * 0.8;
+}
+
+const waterMask = new Uint8Array(W * H);
+
+/* ===========================================================
+   MT. FUJI — majestic, upper right
+   =========================================================== */
+const FX = 176, FPEAK = 12, FHALF = 72;
+
+function drawFuji() {
+  for (let y = FPEAK; y <= HOR + 1; y++) {
+    const t = (y - FPEAK) / (HOR - FPEAK);
+    const hw = 3.5 + (FHALF - 3.5) * Math.pow(t, 1.6);
+    const xl = Math.round(FX - hw * 1.04), xr = Math.round(FX + hw * 0.97);
+    for (let x = xl; x <= xr; x++) {
+      const snowT = 0.32 + Math.sin(x * 0.45) * 0.035 + Math.sin(x * 1.3 + 2) * 0.02;
+      let c;
+      if (t < snowT) {
+        c = x > FX + hw * 0.4 ? 5 : 4;
+      } else {
+        c = x < FX - hw * 0.34 ? 1 : (x > FX + hw * 0.3 ? 3 : 2);
+      }
+      sp(x, y, c);
+    }
+  }
+  // Snow gullies streaking down from the snowline.
+  // Only draw where the column crosses the snow boundary (pixel above is
+  // snow cap, not open sky) so no gully floats off the silhouette.
+  for (const gx of [-12, -8, -4, 1, 6, 10]) {
+    const x = FX + gx;
+    let y0 = -1;
+    for (let y = FPEAK; y <= HOR; y++) {
+      const c = pb.gp(x, y);
+      if (c >= 1 && c <= 3) { y0 = y; break; }
+    }
+    if (y0 < 0) continue;
+    const above = pb.gp(x, y0 - 1);
+    if (above !== 4 && above !== 5 && above !== 26) continue;
+    const len = ri(3, 7);
+    for (let d = 0; d < len; d++) sp(x, y0 + d, d < len - 2 ? 4 : 26);
+  }
+}
+
+/* ===========================================================
+   TERRACES — stepped paddies seen from the side
+   =========================================================== */
+function drawTerraces() {
+  for (let i = 0; i < 7; i++) {
+    for (let x = 0; x < W; x++) {
+      const yT = Math.round(bY(i, x));
+      const yB = Math.round(bY(i + 1, x));
+      const wall = WALLH[i];
+      const wBot = yB - wall;
+      // Water surface
+      for (let y = yT; y < wBot; y++) {
+        let c = (y - yT) < 1 ? 17 : 16;
+        if (rn() < 0.02) c = 17;
+        if (rn() < 0.012) c = 18;
+        sp(x, y, c);
+        if (y >= 0 && y < H) waterMask[y * W + x] = 1;
+      }
+      // Grass lip (azemichi) on top of the retaining wall
+      sp(x, wBot, rn() < 0.2 ? 11 : 12);
+      sp(x, wBot + 1, rn() < 0.25 ? 9 : 10);
+      // Dirt wall face
+      for (let y = wBot + 2; y < yB; y++) {
+        let c = rn() < 0.28 ? 14 : 13;
+        if (rn() < 0.04) c = 15;
+        if (y === yB - 1) c = 14;
+        sp(x, y, c);
+      }
+    }
+  }
+
+  // Rice seedling rows following each terrace contour
+  for (let i = 0; i < 7; i++) {
+    const spacing = i < 3 ? 4 : 5;
+    const step = i < 3 ? 3 : 4;
+    for (let x = 0; x < W; x++) {
+      if ((x + i * 3) % step) continue;
+      const yT = Math.round(bY(i, x));
+      const wBot = Math.round(bY(i + 1, x)) - WALLH[i];
+      for (let y = yT + 3; y < wBot - 1; y += spacing) {
+        sp(x, y, 19);
+        sp(x, y - 1, rn() < 0.4 ? 21 : 20);
+        if (i >= 4) {
+          sp(x + 1, y, 19);
+          if (rn() < 0.5) sp(x + 1, y - 1, 20);
+        }
+      }
+    }
+  }
+}
+
+/* ===========================================================
+   PAINT STATIC TERRAIN
+   =========================================================== */
+function paintScene() {
+  pb.seed(24601);
+  buf.fill(0);
+
+  drawFuji();
+
+  // Far hills on the left, descending toward Fuji
+  for (let x = 0; x < W; x++) {
+    const hy = 50 + x * 0.09 + Math.sin(x * 0.02 + 1) * 5 + Math.sin(x * 0.055) * 3;
+    for (let y = Math.round(hy); y < HOR + 2; y++) {
+      if (y < 0) continue;
+      sp(x, y, (y - hy) < 2 ? 7 : 6);
+    }
+  }
+
+  // Valley haze fields between horizon and first terrace
+  for (let x = 0; x < W; x++) {
+    const yEnd = Math.round(bY(0, x));
+    for (let y = HOR; y < yEnd; y++) {
+      let c = 8;
+      if (y % 3 === 0 && rn() < 0.5) c = 25;
+      sp(x, y, c);
+    }
+  }
+
+  drawTerraces();
+
+  // Lone tree on a bund, mid-left
+  const tx = 46, tBase = Math.round(bY(3, tx)) - WALLH[2] + 1;
+  pb.fr(tx - 1, tBase - 7, 2, 7, 24);
+  pb.fe(tx, tBase - 11, 7, 5, 23);
+  pb.fe(tx - 4, tBase - 13, 4, 3, 23);
+  pb.fe(tx + 3, tBase - 13, 4, 3, 23);
+  for (let k = 0; k < 26; k++) {
+    const ax = tx + ri(-7, 7), ay = tBase - 11 + ri(-4, 4);
+    if (pb.gp(ax, ay) === 23) sp(ax, ay, rn() < 0.4 ? 22 : (rn() < 0.3 ? 11 : 23));
+  }
+
+  // Scattered grass tufts on the lips
+  for (let k = 0; k < 90; k++) {
+    const i = ri(0, 6), x = ri(2, W - 3);
+    const y = Math.round(bY(i + 1, x)) - WALLH[i];
+    sp(x, y - 1, rn() < 0.5 ? 11 : 12);
+  }
+}
+
+/* ===========================================================
+   RENDER STATIC LAYERS
+   =========================================================== */
+function renderTerrain() {
+  pb.toSVG(document.getElementById('terrainG'));
+}
+
+// Water reflection overlay — RLE the water mask into fill-inheriting rects
+function buildWaterOverlay() {
+  let html = '';
+  for (let y = 0; y < H; y++) {
+    let x = 0;
+    while (x < W) {
+      if (!waterMask[y * W + x]) { x++; continue; }
+      let run = 1;
+      while (x + run < W && waterMask[y * W + x + run]) run++;
+      html += '<rect x="' + x + '" y="' + y + '" width="' + run + '" height="1"/>';
+      x += run;
+    }
+  }
+  document.getElementById('waterG').innerHTML = html;
+}
+
+/* ===========================================================
+   DAY-NIGHT CYCLE — 3-minute loop
+   phase 0.0 = sunrise, 0.62 = sunset, 0.76 = night, 1.0 wraps
+   =========================================================== */
+const KF = [
+  { p: 0.00, top: '#3a4878', mid: '#c87858', hor: '#f8c078', br: 0.72, sat: 0.92, ni: 0.18, cl: '#e0a088' },
+  { p: 0.07, top: '#5a8cc8', mid: '#a0c4e4', hor: '#f8e8b8', br: 0.95, sat: 1.00, ni: 0.00, cl: '#f8f0e0' },
+  { p: 0.22, top: '#3f83dc', mid: '#84b8ee', hor: '#c8e4f6', br: 1.05, sat: 1.05, ni: 0.00, cl: '#ffffff' },
+  { p: 0.42, top: '#4a86d8', mid: '#8cbcee', hor: '#cee6f6', br: 1.00, sat: 1.00, ni: 0.00, cl: '#f8f8f0' },
+  { p: 0.52, top: '#5578bc', mid: '#b0a488', hor: '#f0c868', br: 0.90, sat: 0.95, ni: 0.00, cl: '#f0dca8' },
+  { p: 0.60, top: '#463868', mid: '#cc6448', hor: '#f89040', br: 0.68, sat: 0.90, ni: 0.08, cl: '#e08058' },
+  { p: 0.68, top: '#241f42', mid: '#66416a', hor: '#a86058', br: 0.50, sat: 0.72, ni: 0.50, cl: '#5c4a62' },
+  { p: 0.76, top: '#0b1126', mid: '#1a2a4c', hor: '#2a3c5e', br: 0.40, sat: 0.62, ni: 1.00, cl: '#26304a' },
+  { p: 0.90, top: '#080e1e', mid: '#152340', hor: '#223250', br: 0.37, sat: 0.58, ni: 1.00, cl: '#202a40' },
+  { p: 0.96, top: '#182050', mid: '#3c3a6a', hor: '#7a5666', br: 0.50, sat: 0.70, ni: 0.55, cl: '#4c4462' },
+];
+KF.push(Object.assign({}, KF[0], { p: 1.0 }));
+
+const startOffset = 0.10 * CYCLE; // begin in the morning
+function phase() {
+  if (FIXED_T !== null) return FIXED_T;
+  return ((performance.now() / 1000 + startOffset) % CYCLE) / CYCLE;
+}
+
+function hx(c) { return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]; }
+function lerpHex(a, b, t) {
+  const A = hx(a), B = hx(b);
+  const r = [0, 1, 2].map(i => Math.round(A[i] + (B[i] - A[i]) * t));
+  return 'rgb(' + r[0] + ',' + r[1] + ',' + r[2] + ')';
+}
+function lerpN(a, b, t) { return a + (b - a) * t; }
+
+function interpKF(p) {
+  let a = KF[0], b = KF[KF.length - 1];
+  for (let i = 0; i < KF.length - 1; i++) {
+    if (p >= KF[i].p && p <= KF[i + 1].p) { a = KF[i]; b = KF[i + 1]; break; }
+  }
+  const t = (p - a.p) / ((b.p - a.p) || 1);
+  return {
+    top: lerpHex(a.top, b.top, t),
+    mid: lerpHex(a.mid, b.mid, t),
+    hor: lerpHex(a.hor, b.hor, t),
+    br: lerpN(a.br, b.br, t),
+    sat: lerpN(a.sat, b.sat, t),
+    ni: lerpN(a.ni, b.ni, t),
+    cl: lerpHex(a.cl, b.cl, t),
+  };
+}
+
+// rgb() → components (for band interpolation of already-lerped colours)
+function rgbC(s) { return s.match(/\d+/g).map(Number); }
+function mixRgb(a, b, t) {
+  const A = rgbC(a), B = rgbC(b);
+  return 'rgb(' + Math.round(A[0] + (B[0] - A[0]) * t) + ',' + Math.round(A[1] + (B[1] - A[1]) * t) + ',' + Math.round(A[2] + (B[2] - A[2]) * t) + ')';
+}
+
+/* ---- Sky bands ---- */
+const NBANDS = 11;
+const bandEls = [];
+function buildSky() {
+  const g = document.getElementById('skyB');
+  let html = '';
+  const bh = Math.ceil((HOR + 2) / NBANDS);
+  for (let k = 0; k < NBANDS; k++) {
+    html += '<rect x="0" y="' + (k * bh) + '" width="' + W + '" height="' + bh + '" fill="#000"/>';
+  }
+  g.innerHTML = html;
+  for (const r of g.children) bandEls.push(r);
+}
+
+/* ---- Stars ---- */
+function buildStars() {
+  const g = document.getElementById('starsG');
+  pb.seed(555);
+  let html = '';
+  for (let i = 0; i < 46; i++) {
+    const x = ri(2, W - 3), y = ri(1, HOR - 10);
+    const sz = rn() < 0.12 ? 2 : 1;
+    const dur = (2 + rn() * 4).toFixed(1), del = (rn() * 5).toFixed(1);
+    const c = rn() < 0.3 ? '#fff' : (rn() < 0.5 ? '#d8e4f0' : '#b8c8e0');
+    html += '<rect class="tw" x="' + x + '" y="' + y + '" width="' + sz + '" height="' + sz + '" fill="' + c
+      + '" style="animation-duration:' + dur + 's;animation-delay:-' + del + 's"/>';
+  }
+  g.innerHTML = html;
+}
+
+/* ---- Sun & moon (pixel discs) ---- */
+const sunShape = [[-1, -3, 3, 1], [-2, -2, 5, 1], [-3, -1, 7, 3], [-2, 2, 5, 1], [-1, 3, 3, 1]];
+const sunCore = [[-1, -2, 3, 1], [-2, -1, 4, 2], [-1, 1, 3, 1]];
+
+function buildSun() {
+  const g = document.getElementById('sunG');
+  let html = '';
+  for (const r of sunShape) html += '<rect class="sd" x="' + r[0] + '" y="' + r[1] + '" width="' + r[2] + '" height="' + r[3] + '"/>';
+  for (const r of sunCore) html += '<rect class="sc" x="' + r[0] + '" y="' + r[1] + '" width="' + r[2] + '" height="' + r[3] + '"/>';
+  g.innerHTML = html;
+}
+
+function buildMoon() {
+  const g = document.getElementById('moonG');
+  let html = '';
+  for (const r of sunShape) html += '<rect x="' + r[0] + '" y="' + r[1] + '" width="' + r[2] + '" height="' + r[3] + '" fill="#e6e8d8"/>';
+  html += '<rect x="-1" y="-2" width="2" height="1" fill="#f4f6ea"/>';
+  html += '<rect x="-2" y="0" width="2" height="2" fill="#f4f6ea"/>';
+  html += '<rect x="1" y="-1" width="1" height="1" fill="#c2c6b0"/>';
+  html += '<rect x="0" y="1" width="2" height="1" fill="#c2c6b0"/>';
+  html += '<rect x="2" y="1" width="1" height="1" fill="#c2c6b0"/>';
+  g.innerHTML = html;
+}
+
+/* ---- Clouds ---- */
+const cloudShape = [[0, 3, 18, 2], [4, 1, 9, 2], [6, 0, 5, 1], [-5, 4, 7, 2], [15, 4, 6, 1], [11, 2, 5, 1]];
+function buildClouds() {
+  for (const id of ['cloudA', 'cloudB']) {
+    let html = '';
+    for (const r of cloudShape) html += '<rect x="' + r[0] + '" y="' + r[1] + '" width="' + r[2] + '" height="' + r[3] + '"/>';
+    document.getElementById(id).innerHTML = html;
+  }
+}
+
+/* ---- Fireflies ---- */
+const flies = [];
+function buildFireflies() {
+  const g = document.getElementById('fireflyG');
+  pb.seed(9182);
+  let html = '';
+  for (let i = 0; i < 6; i++) {
+    const f = { bx: ri(20, 220), by: ri(95, 140), ph: rn() * 6.28, sa: 0.25 + rn() * 0.3, sb: 0.35 + rn() * 0.3 };
+    flies.push(f);
+    html += '<rect x="0" y="0" width="1" height="1" fill="#d8f088" opacity="0"/>';
+  }
+  g.innerHTML = html;
+}
+
+/* ===========================================================
+   EGRET (シラサギ) — rare visitor event
+   =========================================================== */
+const EGP = ['#f6f8fa', '#c2ceda', '#eec84e', '#262a32'];
+const EG_STAND = { ax: 7, ay: 12, r: [
+  [0, 1, 2, 1, 2], [2, 0, 3, 2, 0], [2, 1, 1, 1, 3],
+  [4, 2, 1, 2, 0], [5, 3, 1, 2, 0],
+  [4, 5, 6, 3, 0], [9, 4, 2, 2, 0], [10, 4, 1, 1, 1],
+  [4, 7, 6, 1, 1], [5, 6, 3, 1, 1],
+  [6, 8, 1, 4, 3], [8, 8, 1, 4, 3],
+] };
+const EG_PECK = { ax: 7, ay: 12, r: [
+  [4, 5, 6, 3, 0], [9, 4, 2, 2, 0], [10, 4, 1, 1, 1],
+  [4, 7, 6, 1, 1], [5, 6, 3, 1, 1],
+  [6, 8, 1, 4, 3], [8, 8, 1, 4, 3],
+  [3, 5, 1, 2, 0], [1, 6, 3, 2, 0], [1, 7, 1, 1, 3], [0, 8, 1, 3, 2],
+] };
+const EG_FLY_BASE = [
+  [0, 4, 2, 1, 2], [2, 3, 3, 2, 0], [2, 4, 1, 1, 3],
+  [5, 4, 2, 1, 0], [7, 3, 6, 3, 0], [7, 5, 6, 1, 1],
+  [13, 3, 2, 1, 1], [13, 4, 3, 1, 3],
+];
+const EG_FLY1 = { ax: 9, ay: 6, r: EG_FLY_BASE.concat([
+  [11, 0, 3, 1, 0], [10, 1, 3, 1, 0], [9, 2, 3, 1, 0], [8, 2, 1, 1, 1],
+]) };
+const EG_FLY2 = { ax: 9, ay: 6, r: EG_FLY_BASE.concat([
+  [8, 6, 4, 1, 0], [9, 7, 3, 1, 1], [10, 8, 2, 1, 1],
+]) };
+
+function egFrameHTML(f) {
+  let s = '';
+  for (const [x, y, w, h, c] of f.r) {
+    s += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + EGP[c] + '"/>';
+  }
+  return s;
+}
+const EG_HTML = {
+  stand: egFrameHTML(EG_STAND), peck: egFrameHTML(EG_PECK),
+  fly1: egFrameHTML(EG_FLY1), fly2: egFrameHTML(EG_FLY2),
+};
+
+const EG_SPOTS = [
+  { x: 150, i: 4 }, { x: 88, i: 5 }, { x: 175, i: 3 }, { x: 118, i: 5 },
+];
+
+const EG = {
+  st: 'away',
+  next: FORCE_EGRET ? 1 : 30 + Math.random() * 45,
+  spot: null, t0: 0, stayUntil: 0, peckUntil: 0, nextPeck: 0,
+};
+const egretG = document.getElementById('egretG');
+
+function smooth(k) { return k * k * (3 - 2 * k); }
+
+function updEgret(now, night, filterStr) {
+  if (EG.st === 'away') {
+    egretG.innerHTML = '';
+    if (now >= EG.next) {
+      // Egrets visit in daylight; roll the dice rarely
+      if (night < 0.5 && (FORCE_EGRET || Math.random() < 0.35)) {
+        const s = EG_SPOTS[Math.floor(Math.random() * EG_SPOTS.length)];
+        EG.spot = { x: s.x, y: Math.round(bY(s.i, s.x)) + 3 };
+        EG.st = 'flyin';
+        EG.t0 = now;
+      } else {
+        EG.next = now + 25 + Math.random() * 35;
+      }
+    }
+    return;
+  }
+
+  egretG.style.filter = filterStr;
+  let frame, px, py, ripple = '';
+
+  if (EG.st === 'flyin') {
+    const k = Math.min(1, (now - EG.t0) / 4);
+    const e = smooth(k);
+    px = (W + 30) + (EG.spot.x - (W + 30)) * e;
+    py = (EG.spot.y - 46) + 46 * e - Math.sin(k * Math.PI) * 6;
+    frame = (Math.floor(now * 7) % 2) ? EG_HTML.fly1 : EG_HTML.fly2;
+    var anchor = EG_FLY1;
+    if (k >= 1) {
+      EG.st = 'stand';
+      EG.stayUntil = now + 16 + Math.random() * 18;
+      EG.nextPeck = now + 2 + Math.random() * 4;
+    }
+  } else if (EG.st === 'flyout') {
+    const k = Math.min(1, (now - EG.t0) / 3.5);
+    const e = smooth(k);
+    px = EG.spot.x + (-30 - EG.spot.x) * e;
+    py = EG.spot.y - 55 * e;
+    frame = (Math.floor(now * 7) % 2) ? EG_HTML.fly1 : EG_HTML.fly2;
+    anchor = EG_FLY1;
+    if (k >= 1) {
+      EG.st = 'away';
+      EG.next = now + 70 + Math.random() * 140;
+      return;
+    }
+  } else {
+    // stand / peck
+    px = EG.spot.x; py = EG.spot.y;
+    anchor = EG_STAND;
+    if (EG.st === 'stand' && now >= EG.nextPeck) {
+      EG.st = 'peck';
+      EG.peckUntil = now + 1.1;
+    }
+    if (EG.st === 'peck' && now >= EG.peckUntil) {
+      EG.st = 'stand';
+      EG.nextPeck = now + 2.5 + Math.random() * 5;
+    }
+    frame = EG.st === 'peck' ? EG_HTML.peck : EG_HTML.stand;
+    // Night falls — leave early
+    if (now >= EG.stayUntil || night > 0.75) {
+      EG.st = 'flyout';
+      EG.t0 = now;
+    }
+    const ripW = 8 + Math.round(Math.sin(now * 2.2) * 2);
+    ripple = '<rect x="' + (7 - ripW / 2) + '" y="12" width="' + ripW + '" height="1" fill="#3a5a80" opacity="0.35"/>';
+  }
+
+  egretG.innerHTML = ripple + frame;
+  egretG.setAttribute('transform', 'translate(' + (px - anchor.ax).toFixed(1) + ',' + (py - anchor.ay).toFixed(1) + ')');
+}
+
+/* ===========================================================
+   MAIN ANIMATION LOOP
+   =========================================================== */
+let curNight = 0, curPhase = 0.1; // read by the audio module
+
+const terrainG = document.getElementById('terrainG');
+const waterG = document.getElementById('waterG');
+const starsG = document.getElementById('starsG');
+const sunG = document.getElementById('sunG');
+const sunGlow = document.getElementById('sunGlow');
+const moonG = document.getElementById('moonG');
+const moonGlow = document.getElementById('moonGlow');
+const cloudA = document.getElementById('cloudA');
+const cloudB = document.getElementById('cloudB');
+const fireflyG = document.getElementById('fireflyG');
+
+function tick(nowMs) {
+  const now = nowMs / 1000;
+  const p = phase();
+  const K = interpKF(p);
+  curNight = K.ni;
+  curPhase = p;
+
+  // Sky bands (top → mid at 55% → horizon)
+  const bh = Math.ceil((HOR + 2) / NBANDS);
+  for (let k = 0; k < NBANDS; k++) {
+    const q = (k * bh + bh / 2) / (HOR + 2);
+    const col = q < 0.55 ? mixRgb(K.top, K.mid, q / 0.55) : mixRgb(K.mid, K.hor, (q - 0.55) / 0.45);
+    bandEls[k].setAttribute('fill', col);
+  }
+
+  // Terrain lighting
+  const filterStr = 'brightness(' + K.br.toFixed(3) + ') saturate(' + K.sat.toFixed(3) + ')';
+  terrainG.style.filter = filterStr;
+
+  // Water mirrors the sky near the horizon
+  waterG.setAttribute('fill', K.hor);
+  waterG.setAttribute('opacity', (0.34 + Math.sin(now * 0.7) * 0.04).toFixed(3));
+
+  // Stars
+  starsG.setAttribute('opacity', K.ni.toFixed(3));
+
+  // Sun — up from sunrise (p=0) to sunset (p=0.62)
+  if (p <= 0.63) {
+    const st = p / 0.62;
+    const sx = 16 + st * 208;
+    const sy = HOR + 6 - Math.sin(st * Math.PI) * 56;
+    const el = Math.max(0, Math.sin(st * Math.PI));
+    const main = lerpHex('#ff8f40', '#ffe9a0', Math.min(1, el * 1.6));
+    const core = lerpHex('#ffb060', '#fff8d0', Math.min(1, el * 1.6));
+    sunG.setAttribute('transform', 'translate(' + sx.toFixed(1) + ',' + sy.toFixed(1) + ')');
+    sunG.style.display = '';
+    for (const r of sunG.querySelectorAll('.sd')) r.setAttribute('fill', main);
+    for (const r of sunG.querySelectorAll('.sc')) r.setAttribute('fill', core);
+    sunGlow.setAttribute('cx', sx.toFixed(1));
+    sunGlow.setAttribute('cy', sy.toFixed(1));
+    sunGlow.setAttribute('opacity', (0.5 + (1 - el) * 0.3).toFixed(2));
+  } else {
+    sunG.style.display = 'none';
+    sunGlow.setAttribute('opacity', '0');
+  }
+
+  // Moon — arcs right-to-left through the night (p 0.64 → 1.0)
+  if (p >= 0.64) {
+    const mt = (p - 0.64) / 0.36;
+    const mx = 222 - mt * 204;
+    const my = HOR + 4 - Math.sin(mt * Math.PI) * 54;
+    const mo = Math.min(1, K.ni * 1.4);
+    moonG.setAttribute('transform', 'translate(' + mx.toFixed(1) + ',' + my.toFixed(1) + ')');
+    moonG.setAttribute('opacity', mo.toFixed(2));
+    moonGlow.setAttribute('cx', mx.toFixed(1));
+    moonGlow.setAttribute('cy', my.toFixed(1));
+    moonGlow.setAttribute('opacity', (mo * 0.9).toFixed(2));
+  } else {
+    moonG.setAttribute('opacity', '0');
+    moonGlow.setAttribute('opacity', '0');
+  }
+
+  // Clouds drift slowly
+  const ca = ((now * 1.6) % (W + 90)) - 45;
+  const cb = ((now * 1.0 + 140) % (W + 90)) - 45;
+  cloudA.setAttribute('transform', 'translate(' + ca.toFixed(1) + ',20)');
+  cloudB.setAttribute('transform', 'translate(' + cb.toFixed(1) + ',34) scale(0.7)');
+  cloudA.setAttribute('fill', K.cl);
+  cloudB.setAttribute('fill', K.cl);
+
+  // Fireflies — deep night only
+  const fGate = Math.max(0, (K.ni - 0.6) / 0.4);
+  for (let i = 0; i < flies.length; i++) {
+    const f = flies[i], el2 = fireflyG.children[i];
+    if (!el2) continue;
+    if (fGate <= 0) { el2.setAttribute('opacity', '0'); continue; }
+    const fx = f.bx + Math.sin(now * f.sa + f.ph) * 9;
+    const fy = f.by + Math.sin(now * f.sb + f.ph * 2) * 4;
+    const blink = Math.pow(Math.max(0, Math.sin(now * 1.2 + f.ph * 3)), 3);
+    el2.setAttribute('x', fx.toFixed(1));
+    el2.setAttribute('y', fy.toFixed(1));
+    el2.setAttribute('opacity', (blink * fGate * 0.9).toFixed(2));
+  }
+
+  updEgret(now, K.ni, filterStr);
+
+  requestAnimationFrame(tick);
+}
+
+/* ===========================================================
+   AUDIO — wind, insects, black kite (tonbi), frogs
+   =========================================================== */
+let audioCtx = null, masterGain = null;
+const timers = [];
+function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+function makeNoiseSrc(ac) {
+  const sz = ac.sampleRate * 2;
+  const abuf = ac.createBuffer(1, sz, ac.sampleRate);
+  const d = abuf.getChannelData(0);
+  for (let i = 0; i < sz; i++) d[i] = Math.random() * 2 - 1;
+  const src = ac.createBufferSource();
+  src.buffer = abuf;
+  src.loop = true;
+  return src;
+}
+
+let windGain = null, rustleGain = null;
+
+function startAudio(vol) {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const ac = audioCtx;
+  masterGain = ac.createGain();
+  masterGain.gain.setValueAtTime(vol / 100 * 0.5, ac.currentTime);
+  masterGain.connect(ac.destination);
+
+  // ---- Wind body: bandpassed noise, slowly breathing ----
+  const wSrc = makeNoiseSrc(ac);
+  const wFilt = ac.createBiquadFilter();
+  wFilt.type = 'bandpass';
+  wFilt.frequency.value = 520;
+  wFilt.Q.value = 0.7;
+  windGain = ac.createGain();
+  windGain.gain.value = 0.05;
+  wSrc.connect(wFilt); wFilt.connect(windGain); windGain.connect(masterGain);
+  wSrc.start();
+
+  // ---- Rustle: rice stalks whispering (highpassed noise) ----
+  const rSrc = makeNoiseSrc(ac);
+  const rFilt = ac.createBiquadFilter();
+  rFilt.type = 'highpass';
+  rFilt.frequency.value = 3000;
+  rustleGain = ac.createGain();
+  rustleGain.gain.value = 0.012;
+  rSrc.connect(rFilt); rFilt.connect(rustleGain); rustleGain.connect(masterGain);
+  rSrc.start();
+
+  breatheWind();
+  scheduleInsects();
+  scheduleTonbi();
+  scheduleFrogs();
+}
+
+// Slow gusts: wind and rustle swell together
+function breatheWind() {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const target = 0.03 + Math.random() * 0.07;
+  const dur = 2.5 + Math.random() * 3;
+  windGain.gain.cancelScheduledValues(t);
+  windGain.gain.setValueAtTime(windGain.gain.value, t);
+  windGain.gain.linearRampToValueAtTime(target, t + dur);
+  rustleGain.gain.cancelScheduledValues(t);
+  rustleGain.gain.setValueAtTime(rustleGain.gain.value, t);
+  rustleGain.gain.linearRampToValueAtTime(target * 0.35, t + dur);
+  later(breatheWind, dur * 1000 + Math.random() * 1500);
+}
+
+// ---- Insects: crickets & bell crickets, louder at night ----
+function playCricketBurst(freqHz, amp) {
+  if (!audioCtx) return;
+  const ac = audioCtx, t = ac.currentTime;
+  const n = 3 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < n; i++) {
+    const s = t + i * 0.055;
+    const osc = ac.createOscillator();
+    const g = ac.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freqHz;
+    g.gain.setValueAtTime(0, s);
+    g.gain.linearRampToValueAtTime(amp, s + 0.004);
+    g.gain.setValueAtTime(amp, s + 0.03);
+    g.gain.linearRampToValueAtTime(0, s + 0.04);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(s); osc.stop(s + 0.05);
+  }
+}
+
+function playBellCricket(amp) {
+  if (!audioCtx) return;
+  const ac = audioCtx, t = ac.currentTime;
+  for (const det of [0, 6]) {
+    const osc = ac.createOscillator();
+    const g = ac.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 4400 + det;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(amp * 0.5, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(t); osc.stop(t + 0.55);
+  }
+}
+
+function scheduleInsects() {
+  if (!audioCtx) return;
+  const nAmp = 0.25 + 0.75 * curNight;
+  if (Math.random() < 0.7) playCricketBurst(4900 + Math.random() * 500, 0.11 * nAmp);
+  if (curNight > 0.3 && Math.random() < 0.4) {
+    later(() => playBellCricket(0.12 * nAmp), 200 + Math.random() * 400);
+  }
+  const gap = (1400 + Math.random() * 2400) / (0.4 + curNight);
+  later(scheduleInsects, gap);
+}
+
+// ---- Black kite (tonbi): "pee-hyororo" descending whistle ----
+function playTonbi(amp) {
+  if (!audioCtx) return;
+  const ac = audioCtx, t = ac.currentTime;
+  const osc = ac.createOscillator();
+  const g = ac.createGain();
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 2600;
+  osc.type = 'sine';
+  // "pee—" rising hold, then "hyororo" falling with vibrato
+  osc.frequency.setValueAtTime(1480, t);
+  osc.frequency.linearRampToValueAtTime(1580, t + 0.28);
+  osc.frequency.setValueAtTime(1580, t + 0.3);
+  osc.frequency.exponentialRampToValueAtTime(920, t + 1.2);
+  const vib = ac.createOscillator();
+  vib.frequency.value = 11;
+  const vg = ac.createGain();
+  vg.gain.setValueAtTime(0, t);
+  vg.gain.setValueAtTime(0, t + 0.3);
+  vg.gain.linearRampToValueAtTime(150, t + 0.5);
+  vib.connect(vg); vg.connect(osc.frequency);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(amp, t + 0.06);
+  g.gain.setValueAtTime(amp, t + 0.3);
+  g.gain.linearRampToValueAtTime(amp * 0.6, t + 0.9);
+  g.gain.linearRampToValueAtTime(0.0001, t + 1.35);
+  osc.connect(lp); lp.connect(g); g.connect(masterGain);
+  osc.start(t); vib.start(t);
+  osc.stop(t + 1.4); vib.stop(t + 1.4);
+}
+
+function scheduleTonbi() {
+  if (!audioCtx) return;
+  if (curNight < 0.3 && Math.random() < 0.65) {
+    playTonbi(0.085);
+    // Sometimes a distant reply
+    if (Math.random() < 0.4) later(() => playTonbi(0.04), 2200 + Math.random() * 1500);
+  }
+  later(scheduleTonbi, 14000 + Math.random() * 24000);
+}
+
+// ---- Frogs at night, faint chorus from the paddies ----
+function playFrog(amp) {
+  if (!audioCtx) return;
+  const ac = audioCtx, t = ac.currentTime;
+  const n = 2 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < n; i++) {
+    const s = t + i * 0.22;
+    const osc = ac.createOscillator();
+    const bp = ac.createBiquadFilter();
+    const g = ac.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(85 + Math.random() * 25, s);
+    bp.type = 'bandpass';
+    bp.frequency.value = 620;
+    bp.Q.value = 2.5;
+    g.gain.setValueAtTime(0, s);
+    g.gain.linearRampToValueAtTime(amp, s + 0.02);
+    g.gain.linearRampToValueAtTime(0, s + 0.13);
+    osc.connect(bp); bp.connect(g); g.connect(masterGain);
+    osc.start(s); osc.stop(s + 0.15);
+  }
+}
+
+function scheduleFrogs() {
+  if (!audioCtx) return;
+  if (curNight > 0.45 && Math.random() < 0.6) playFrog(0.05 + curNight * 0.03);
+  later(scheduleFrogs, 3500 + Math.random() * 5500);
+}
+
+function stopAudio() {
+  for (const tm of timers) clearTimeout(tm);
+  timers.length = 0;
+  if (audioCtx) { audioCtx.close(); audioCtx = null; masterGain = null; windGain = null; rustleGain = null; }
+}
+
+function setVolume(v) {
+  if (masterGain) masterGain.gain.setValueAtTime(v / 100 * 0.5, audioCtx.currentTime);
+}
+
+/* ===========================================================
+   INIT
+   =========================================================== */
+paintScene();
+renderTerrain();
+buildWaterOverlay();
+buildSky();
+buildStars();
+buildSun();
+buildMoon();
+buildClouds();
+buildFireflies();
+requestAnimationFrame(tick);
+</script>
+<script src="/shared/scene-ui.js"></script>
+<script>
+initSceneAudio({
+  onStart(v)        { startAudio(v); },
+  onStop()          { stopAudio(); },
+  onVolumeChange(v) { setVolume(v); },
+});
+</script>
+</body>
+</html>
