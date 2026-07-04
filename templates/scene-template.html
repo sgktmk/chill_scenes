@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- TODO: scene name -->
+<title>Scene Name — Chill Scenes</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="/shared/scene-ui.css">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#06080e}
+body{display:flex;align-items:center;justify-content:center;font-family:monospace;color:#cdc}
+
+/* 240x160 (GBA, 3:2) — for 320x180 (16:9) use height:56.25vw / max-width:177.8vh */
+#scene-wrap{
+  position:relative;
+  width:100vw;height:66.667vw;
+  max-height:100vh;max-width:150vh;
+  overflow:hidden;cursor:default;
+}
+#scene-wrap svg{
+  display:block;width:100%;height:100%;
+  image-rendering:pixelated;
+  image-rendering:-moz-crisp-edges;
+  image-rendering:crisp-edges;
+}
+svg rect{shape-rendering:crispEdges}
+
+/* Star twinkle */
+@keyframes tw{0%,100%{opacity:.15}50%{opacity:1}}
+.tw{animation:tw 3s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){
+  .tw{animation:none!important}
+}
+</style>
+</head>
+<body>
+<a class="back" href="/">&#8592; Top</a>
+<div id="scene-wrap">
+  <!-- TODO: match viewBox to your image size -->
+  <svg id="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" preserveAspectRatio="xMidYMid meet">
+    <g id="skyB"></g>
+    <g id="starsG" opacity="0"></g>
+    <g id="terrainG"></g>
+    <!-- Add more layers as the spec needs: waterG, cloudG, spriteG, ... -->
+  </svg>
+</div>
+<div class="ap">
+  <button class="ab" id="aBtn"><span style="position:relative">🔇<span class="wi"><span></span><span></span><span></span></span></span></button>
+  <input type="range" class="vs" id="vSl" min="0" max="100" value="30"/>
+  <span class="vl" id="vLb">30%</span>
+</div>
+
+<script src="/shared/pixel.js"></script>
+<script src="/shared/cycle.js"></script>
+<script src="/shared/audio-kit.js"></script>
+<script>
+/* ===========================================================
+   IMAGE — paste the output of tools/png2pixel.mjs here:
+     node tools/png2pixel.mjs refs/<scene>/base.png -w 240 -h 160
+   The placeholder below is a flat horizon so the template runs as-is.
+   Sky pixels should be 'none' (transparent) — the sky is drawn as
+   dynamic bands behind the terrain. If your image has an opaque sky,
+   either erase it to transparency before converting, or skip those
+   palette indices when blitting.
+   =========================================================== */
+const SCENE_IMG = {
+  w: 240, h: 160,
+  palette: ['none', '#3a5a40', '#2c4632'],
+  data: 'A26400B4800C7200' // TODO: replace with converted image
+};
+
+const W = SCENE_IMG.w, H = SCENE_IMG.h;
+const HOR = 110; // TODO: horizon y in your image (sky bands stop here)
+
+/* ---- static terrain: image → pixel buffer → SVG ---- */
+const pb = PixelBuffer.fromImage(SCENE_IMG);
+// Post-process here if needed: pb.sp()/pb.fr()/... or pb.blit(SPRITE, x, y)
+pb.toSVG(document.getElementById('terrainG'));
+// For independently animatable pixel groups (e.g. water reflection),
+// use pb.toSVG(el, { layers, classify }) — see rice-terrace.html.
+
+/* ===========================================================
+   DAY-NIGHT CYCLE — tune keyframes to the scene's mood
+   phase 0.0 = sunrise, ~0.62 = sunset, ~0.76 = night, 1.0 wraps
+   =========================================================== */
+const cycle = createCycle({
+  cycle: 180,
+  startOffset: 0.10, // begin in the morning
+  keyframes: [
+    { p: 0.00, top: '#3a4878', mid: '#c87858', hor: '#f8c078', br: 0.72, sat: 0.92, ni: 0.18 },
+    { p: 0.22, top: '#3f83dc', mid: '#84b8ee', hor: '#c8e4f6', br: 1.05, sat: 1.05, ni: 0.00 },
+    { p: 0.60, top: '#463868', mid: '#cc6448', hor: '#f89040', br: 0.68, sat: 0.90, ni: 0.08 },
+    { p: 0.76, top: '#0b1126', mid: '#1a2a4c', hor: '#2a3c5e', br: 0.40, sat: 0.62, ni: 1.00 },
+    { p: 0.96, top: '#182050', mid: '#3c3a6a', hor: '#7a5666', br: 0.50, sat: 0.70, ni: 0.55 },
+  ],
+});
+
+/* ---- sky bands (vertical gradient top → mid → hor) ---- */
+const NBANDS = 11;
+const bandEls = [];
+(function buildSky() {
+  const g = document.getElementById('skyB');
+  const bh = Math.ceil((HOR + 2) / NBANDS);
+  let html = '';
+  for (let k = 0; k < NBANDS; k++) {
+    html += '<rect x="0" y="' + (k * bh) + '" width="' + W + '" height="' + bh + '" fill="#000"/>';
+  }
+  g.innerHTML = html;
+  for (const r of g.children) bandEls.push(r);
+})();
+
+/* ---- stars ---- */
+(function buildStars() {
+  pb.seed(4242);
+  const g = document.getElementById('starsG');
+  let html = '';
+  for (let i = 0; i < 40; i++) {
+    const x = pb.ri(2, W - 3), y = pb.ri(2, HOR - 20);
+    html += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="#e8ecf8" class="tw" style="animation-delay:'
+      + (pb.rn() * 3).toFixed(2) + 's"/>';
+  }
+  g.innerHTML = html;
+})();
+
+/* ---- animation loop ---- */
+const terrainG = document.getElementById('terrainG');
+const starsG = document.getElementById('starsG');
+let curNight = 0; // read by the audio layer
+
+function tick() {
+  const p = cycle.phase();
+  const K = cycle.sample(p);
+  curNight = K.ni;
+
+  for (let k = 0; k < NBANDS; k++) {
+    const t = k / (NBANDS - 1);
+    // top → mid over the upper 60%, mid → hor below
+    const c = t < 0.6 ? cycle.mixRgb(K.top, K.mid, t / 0.6)
+                      : cycle.mixRgb(K.mid, K.hor, (t - 0.6) / 0.4);
+    bandEls[k].setAttribute('fill', c);
+  }
+  terrainG.setAttribute('style', 'filter:brightness(' + K.br.toFixed(3) + ') saturate(' + K.sat.toFixed(3) + ')');
+  starsG.setAttribute('opacity', K.ni.toFixed(3));
+
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+/* ===========================================================
+   AUDIO — procedural layers via shared/audio-kit.js
+   Replace/extend with the layers your spec calls for; see
+   rice-terrace.html (insects, kite) for one-shot voice examples.
+   =========================================================== */
+let engine = null;
+
+function startAudio(vol) {
+  if (engine) return;
+  engine = createAudioEngine(vol);
+
+  // Wind body + high rustle, swelling together in slow gusts
+  const wind = engine.filteredNoise({ type: 'bandpass', freq: 520, Q: 0.7, gain: 0.05 });
+  const rustle = engine.filteredNoise({ type: 'highpass', freq: 3000, gain: 0.012 });
+  engine.schedule(() => {
+    const target = 0.03 + Math.random() * 0.07;
+    const dur = 2.5 + Math.random() * 3;
+    engine.ramp(wind.gain, target, dur);
+    engine.ramp(rustle.gain, target * 0.35, dur);
+    return dur * 1000 + Math.random() * 1500; // next gust after this one settles
+  }, 0, 0, 0);
+}
+</script>
+<script src="/shared/scene-ui.js"></script>
+<script>
+initSceneAudio({
+  onStart(v)        { startAudio(v); },
+  onStop()          { if (engine) { engine.stop(); engine = null; } },
+  onVolumeChange(v) { if (engine) engine.setVolume(v); },
+});
+</script>
+</body>
+</html>

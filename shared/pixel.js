@@ -24,6 +24,11 @@
  *     }
  *   });
  *   // Produces: <g>...</g><g id="moon">...</g><g id="stars">...</g>
+ *
+ * Loading converted images (see tools/png2pixel.mjs):
+ *   const pb = PixelBuffer.fromImage(SCENE_IMG);       // whole image
+ *   pb.blit(SPRITE_IMG, 40, 100);                      // paste at (40,100)
+ *   const mask = PixelBuffer.decodeRLE(MASK_IMG.data); // raw index array
  */
 class PixelBuffer {
   /**
@@ -122,6 +127,66 @@ class PixelBuffer {
     for (let x = x0; x <= x1; x++) this.sp(x, y, c);
   }
 
+  /* ---- Converted image loading (tools/png2pixel.mjs output) ---- */
+
+  /**
+   * Decode an RLE string produced by tools/png2pixel.mjs.
+   * Format: letter = palette index (A-Z → 0-25, a-z → 26-51),
+   * followed by decimal digits = run length.
+   * @returns {Uint8Array} flat palette-index array
+   */
+  static decodeRLE(str) {
+    const out = [];
+    let i = 0;
+    while (i < str.length) {
+      const ch = str.charCodeAt(i++);
+      const idx = ch >= 97 ? ch - 97 + 26 : ch - 65; // a-z | A-Z
+      let run = 0;
+      while (i < str.length && str[i] >= '0' && str[i] <= '9') {
+        run = run * 10 + (str.charCodeAt(i++) - 48);
+      }
+      for (let k = 0; k < run; k++) out.push(idx);
+    }
+    return Uint8Array.from(out);
+  }
+
+  /**
+   * Create a PixelBuffer pre-loaded with a converted image.
+   * @param {{w: number, h: number, palette: string[], data: string}} img
+   */
+  static fromImage(img) {
+    const pb = new PixelBuffer(img.w, img.h, img.palette);
+    pb.buf.set(PixelBuffer.decodeRLE(img.data));
+    return pb;
+  }
+
+  /**
+   * Paste a converted image into this buffer at (dx, dy).
+   * Image palette indices are written as-is — the image is expected to
+   * share this buffer's palette (or pass opts.map to translate).
+   *
+   * @param {{w: number, h: number, palette?: string[], data: string}} img
+   * @param {number} [dx=0]
+   * @param {number} [dy=0]
+   * @param {Object} [opts]
+   * @param {number} [opts.transparent] — image index to skip; defaults to
+   *   the image palette's 'none' entry if present, else nothing is skipped
+   * @param {number[]} [opts.map] — translate image index → buffer index
+   */
+  blit(img, dx, dy, opts) {
+    dx = dx || 0; dy = dy || 0; opts = opts || {};
+    let skip = opts.transparent;
+    if (skip === undefined && img.palette) skip = img.palette.indexOf('none');
+    const src = PixelBuffer.decodeRLE(img.data);
+    for (let y = 0; y < img.h; y++) {
+      for (let x = 0; x < img.w; x++) {
+        const c = src[y * img.w + x];
+        if (c === skip) continue;
+        this.sp(dx + x, dy + y, opts.map ? opts.map[c] : c);
+      }
+    }
+  }
+
   /* ---- SVG output ---- */
 
   /**
@@ -187,3 +252,6 @@ class PixelBuffer {
     svgEl.innerHTML = html;
   }
 }
+
+// Node (tooling/tests) — no effect in the browser
+if (typeof module !== 'undefined' && module.exports) module.exports = { PixelBuffer };

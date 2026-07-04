@@ -29,6 +29,14 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
+- `shared/cycle.js` — Day-night cycle keyframe interpolation engine (`createCycle()`)
+- `shared/audio-kit.js` — Procedural Web Audio boilerplate (`createAudioEngine()`)
+- `tools/png2pixel.mjs` — PNG → PixelBuffer data converter (zero-dependency Node script)
+- `tools/screenshot.sh` — Headless Chromium scene capture for visual verification
+- `templates/scene-template.html` — Runnable boilerplate for new pixel-art scenes
+- `refs/` — Per-scene reference material (`<scene>/base.png` + `spec.md`); `refs/_template/spec.md` is the blank spec form
+- `docs/scene-workflow.md` — Image-to-scene workflow manual (Japanese, for the repo owner)
+- `.claude/skills/port-scene/` — Claude Code skill: checklist for porting a reference image into a scene
 - `vercel.json` — Vercel routing config
 
 ## Architecture
@@ -152,6 +160,34 @@ Single self-contained HTML file rendered at the GBA native resolution (240×160 
 - Black kite (トンビ) "pee-hyororo" call: sine glide 1480→1580→920 Hz with 11 Hz vibrato onset, daytime only, occasional distant reply
 - Faint frog chorus at night (sawtooth through bandpass)
 
+## Creating New Scenes (image-to-scene pipeline)
+
+New pixel-art scenes are built from a reference image, not drawn procedurally
+by hand. The composition comes from `refs/<scene>/base.png`, converted to
+palette-indexed pixel data; motion and audio are specified in
+`refs/<scene>/spec.md` and implemented on top. Full manual:
+`docs/scene-workflow.md`. Claude Code should follow the `port-scene` skill
+(`.claude/skills/port-scene/SKILL.md`) when asked to build a scene from refs.
+
+```bash
+# image → JS data ({ w, h, palette, data }, ≤32 colours, RLE-encoded)
+node tools/png2pixel.mjs refs/<scene>/base.png -w 240 -h 160
+
+# verify a scene at a frozen day-night phase (?t=) — local files are served
+# via a temporary http server (root-absolute /shared/ paths break file://)
+tools/screenshot.sh "<scene>.html?t=0.3" /tmp/day.png
+```
+
+Key invariants:
+
+- The reference image is the source of truth for composition; procedural
+  drawing is only for dynamic elements (sun/moon, sprites, particles).
+- Converted data loads via `PixelBuffer.fromImage()` / `pb.blit()`; palette
+  entry `'none'` (index 0 when the source has transparency) marks
+  transparent sky for dynamic sky bands.
+- Every scene supports `?t=<0-1>` to freeze the cycle phase (built into
+  `createCycle()`), enabling reproducible screenshot verification.
+
 ## Maintenance Notes
 
 ### Shared Code (`shared/`)
@@ -185,7 +221,30 @@ pb.toSVG(svgEl, {       // flush with named layers
   layers: ['moon', 'stars'],
   classify(x, y, idx) { ... }
 });
+
+// Converted images (tools/png2pixel.mjs output: { w, h, palette, data })
+PixelBuffer.fromImage(img);      // new buffer pre-loaded with the image
+pb.blit(img, dx, dy, opts);      // paste ('none' entries skipped; opts.map remaps indices)
+PixelBuffer.decodeRLE(img.data); // raw Uint8Array of palette indices (e.g. masks)
 ```
+
+#### Cycle API (`shared/cycle.js`)
+
+`createCycle({ cycle, startOffset, keyframes })` returns `{ phase, sample, mixRgb, ... }`.
+Keyframes are `{ p: 0.0-1.0, ...channels }`; channels may be hex colours,
+numbers, or arrays of either — `sample(p)` interpolates them all (colours
+come back as `'rgb(r,g,b)'`). The loop closes automatically (p=1.0 mirrors
+the first keyframe) and `?t=` in the URL freezes `phase()` for debugging.
+
+#### Audio Kit API (`shared/audio-kit.js`)
+
+`createAudioEngine(vol)` wraps AudioContext + master gain and provides:
+`whiteNoiseSrc()` / `brownNoiseSrc()`, `filteredNoise({ type, freq, Q, gain, brown })`
+(noise → biquad → gain → master, started), `ramp(gainNode, target, sec)`,
+`schedule(fn, minMs, maxMs)` (tracked random-interval rescheduling; fn may
+return the next delay), `setVolume(0-100)`, and `stop()` (clears timers,
+closes the context). Sound design stays in each scene; the kit only removes
+plumbing. Wire it to `initSceneAudio()` as shown in `templates/scene-template.html`.
 
 ### Future Roadmap
 
@@ -195,18 +254,21 @@ Planned features in recommended implementation order:
 2. **OGP meta tags** — Add Open Graph / Twitter Card meta tags to each scene for link previews on social media
 3. **Screenshot capture** — SVG → Canvas → PNG conversion using native browser APIs (no library needed); add camera button to UI panel
 4. **SNS sharing** — Web Share API (mobile) with X/Twitter intent URL fallback (desktop); share button in UI panel
-5. **Scene template** — Standardize boilerplate for new scenes
+5. ~~**Scene template**~~ — Done. `templates/scene-template.html` + image-to-scene pipeline (`tools/`, `shared/cycle.js`, `shared/audio-kit.js`, `docs/scene-workflow.md`)
+6. **Migrate existing scenes to shared modules** — Optional: port seascape/rice-terrace day-night code to `shared/cycle.js` and audio plumbing to `shared/audio-kit.js` (currently only new scenes use them)
 
 ### New Scene Checklist
 
-When adding a new scene:
+When adding a new scene (start from `templates/scene-template.html`; for
+image-based scenes follow `docs/scene-workflow.md` / the `port-scene` skill):
 
 - [ ] Set `lang="en"` and title format `<Name> — Chill Scenes`
 - [ ] Include back button and audio panel HTML, load `shared/scene-ui.css` and `shared/scene-ui.js`, call `initSceneAudio()`
+- [ ] Support `?t=` phase freeze and verify day/dusk/night with `tools/screenshot.sh`
 - [ ] Add card with preview SVG to `index.html` grid
 - [ ] Add OGP meta tags in `<head>` (once implemented)
 - [ ] Update this file's Files list and Architecture section
-- [ ] Add clean URL route in `vercel.json`
+- [ ] No `vercel.json` change needed (`cleanUrls` is global)
 
 ### Architecture Decision: Build Tool
 
