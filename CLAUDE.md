@@ -29,6 +29,14 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
+- `templates/scene.html` — Scene HTML template with standardized structure
+- `templates/card-snippet.html` — Index page card template
+- `.claude/commands/new-scene.md` — `/new-scene` slash command (create new scene)
+- `.claude/commands/refine-scene.md` — `/refine-scene` slash command (refine existing scene)
+- `.claude/commands/scene-audit.md` — `/scene-audit` slash command (audit scene quality)
+- `.claude/commands/add-loop.md` — `/add-loop` slash command (dynamically add new PIV loop)
+- `.claude/commands/run-loop.md` — `/run-loop` slash command (autonomously execute PIV loop)
+- `.claude/commands/refine-loop.md` — `/refine-loop` slash command (fix failed acceptance criterion)
 - `vercel.json` — Vercel routing config
 
 ## Architecture
@@ -187,22 +195,163 @@ pb.toSVG(svgEl, {       // flush with named layers
 });
 ```
 
+### Scene Creation System
+
+Slash commands and templates for creating new pixel-art scenes with consistent quality.
+
+#### Commands
+
+- **`/new-scene "file-name" "Title" "description"`** — Full scene creation workflow. Orchestrates sub-agents for scaffold, palette, rendering, animation, audio, preview card, and quality review.
+- **`/refine-scene file-name "feedback"`** — Apply visual/audio feedback after user review. Categorizes feedback and makes targeted edits.
+- **`/scene-audit file-name`** — Quality audit against the project's checklist. Use `all` to audit every scene.
+
+#### Templates (`templates/`)
+
+- **`templates/scene.html`** — Complete scene HTML template with standardized structure, section comments, and documented patterns for each section (palette, drawing, animation, audio).
+- **`templates/card-snippet.html`** — Index page card template with placeholder SVG.
+
+#### Standard Scene Structure
+
+New pixel-art scenes follow this file structure:
+```
+<style>            — scene-specific CSS, particle @keyframes
+<svg id="scene">   — target SVG (320×180 viewBox)
+<script pixel.js>  — shared pixel buffer
+<script>           — scene code in standard section order:
+  CONFIG           — dimensions, palette (32 colours)
+  PIXEL BUFFER     — PixelBuffer instance + local wrappers
+  DRAWING HELPERS  — reusable functions with depth parameter
+  PAINT SCENE      — depth-layered rendering (sky→celestial→distant→far→ground→light→texture→mid→detail→near)
+  SVG RENDER       — pb.toSVG() with optional layers
+  ANIMATIONS       — requestAnimationFrame loop
+  AUDIO            — Web Audio procedural sound
+  INIT             — paintScene + render + startAnimations
+<script scene-ui>  — shared audio UI
+<script>           — initSceneAudio() call
+```
+
+### PIV Loop System
+
+The project uses **autonomous loop execution** for structured development.
+
+#### Commands
+
+- **`/run-loop LN`** — Execute loop LN autonomously (Plan → Implement → Validate → Verify)
+- **`/run-loop LN skip-confirm`** — Skip plan confirmation (if already reviewed)
+- **`/refine-loop LN "criterion" "fix"`** — Fix a specific failed acceptance criterion
+- **`/add-loop "goal" "rationale"`** — Dynamically add a new loop during implementation
+
+#### Agents
+
+- **`loop-engine`** — Orchestrates full PIV cycle: reads plan, delegates implementation, validates, generates report
+- **`validation-executor`** — Runs acceptance criteria checks and generates validation report
+- **`loop-updater`** — Updates loop status in CLAUDE.md when loop completes
+- **`loop-manager`** — Manages loop renumbering and plan skeleton generation for `/add-loop`
+
+#### Flow
+
+1. User: `/run-loop L4`
+2. loop-engine reads `docs/plan-L4.md`, asks user confirmation
+3. loop-engine executes implementation steps (delegating to specialized agents like scene-renderer, animation-designer)
+4. loop-engine calls validation-executor to check acceptance criteria
+5. validation-executor generates `docs/validation-report-L4.md`
+6. If all criteria PASS: loop-updater marks L4 as `✅ Done` in CLAUDE.md
+7. If any criterion FAILS: `/refine-loop` is used to fix and re-validate
+
+---
+
+## Development Method: PIV Loop
+
+This project uses the **PIV Loop** (Plan → Implement → Validate → Verify) methodology for structured, focused development.
+
+### Autonomous Loop Execution
+
+Loops can be executed **autonomously** by Claude Code using the `/run-loop` command:
+
+```
+/run-loop L4
+```
+
+This spawns a **loop-engine agent** that:
+1. Reads `docs/plan-LN.md` (confirms goal, scope, acceptance criteria with user)
+2. Executes all implementation steps (delegating to specialized agents)
+3. Validates against acceptance criteria (runs validation commands, checks manually)
+4. Generates `docs/validation-report-LN.md`
+5. Updates loop status in CLAUDE.md
+
+**Supporting commands**:
+- `/run-loop L4 skip-confirm` — Skip plan confirmation (if already reviewed)
+- `/refine-loop L4 "criterion name" "fix description"` — Fix a specific failed criterion and re-validate
+- `/add-loop "goal" "rationale"` — Create a new loop during implementation
+
+**Agents involved**:
+- `loop-engine` — Orchestrates full PIV cycle
+- `validation-executor` — Runs acceptance criteria checks
+- `loop-updater` — Updates CLAUDE.md when loop completes
+
+### Loop Table
+
+| Loop | Goal | Status | Plan | Report |
+|------|------|--------|------|--------|
+| L1 | Extract `shared/pixel.js` from snowy-forest | ✅ Done | — | — |
+| L2 | Create scene templates and `/new-scene` skill | ✅ Done | — | — |
+| L3 | Create 8 sub-agents for scene creation | ✅ Done | — | — |
+| L4 | Test scene creation system with first new scene | 未着手 | `docs/plan-L4.md` | — |
+| L5 | Implement missing roadmap features (OGP, screenshots) | 未着手 | `docs/plan-L5.md` | — |
+
+**Status values**: `未着手` → `計画完了` → `進行中` → `✅ Done`
+
+### PIV Loop Rules
+
+1. **Plan**: Write `docs/plan-LN.md` before implementation. Define goal, scope, Acceptance Criteria, and implementation steps.
+2. **Implement**: Follow the plan exactly. Do NOT implement anything outside the plan scope.
+3. **Validate**: Run manual tests (visual browser check) and verify Acceptance Criteria.
+4. **Verify**: Write `docs/validation-report-LN.md` and confirm the loop is complete.
+
+**Important discipline rules:**
+- **1 loop = 1 goal** — No scope creep
+- **Incidental fixes go to a new loop** — Don't fix unrelated bugs in the same loop
+- **Ambiguities stay as TODO comments** — Don't guess at unclear requirements
+
+### Dynamic Loop Addition
+
+During implementation, if new work is discovered that **doesn't fit the current plan**, use `/add-loop` to create a new loop:
+
+```
+/add-loop "brief goal" "rationale for creating new loop"
+```
+
+This will:
+1. Prompt you to choose insertion position (after current loop, or after specific loop)
+2. Create a skeleton `docs/plan-LN.md` and add to the loop table
+3. Update CLAUDE.md automatically
+
+**When to add a loop:**
+- Discovering that a prerequisite task is necessary before current loop
+- Finding scope creep that should be deferred to a dedicated loop
+- Identifying a bug/issue severe enough to require immediate attention
+- Realizing the current loop is becoming too complex (split it)
+
 ### Future Roadmap
 
 Planned features in recommended implementation order:
 
 1. ~~**Shared code extraction**~~ — Done. Shared UI code extracted into `shared/scene-ui.css` and `shared/scene-ui.js`
-2. **OGP meta tags** — Add Open Graph / Twitter Card meta tags to each scene for link previews on social media
-3. **Screenshot capture** — SVG → Canvas → PNG conversion using native browser APIs (no library needed); add camera button to UI panel
-4. **SNS sharing** — Web Share API (mobile) with X/Twitter intent URL fallback (desktop); share button in UI panel
-5. **Scene template** — Standardize boilerplate for new scenes
+2. ~~**Scene template & creation system**~~ — Done. Templates, `/new-scene`, `/refine-scene`, `/scene-audit` commands
+3. **OGP meta tags** — Add Open Graph / Twitter Card meta tags to each scene for link previews on social media
+4. **Screenshot capture** — SVG → Canvas → PNG conversion using native browser APIs (no library needed); add camera button to UI panel
+5. **SNS sharing** — Web Share API (mobile) with X/Twitter intent URL fallback (desktop); share button in UI panel
 
 ### New Scene Checklist
 
-When adding a new scene:
+When adding a new scene (automated by `/new-scene`):
 
 - [ ] Set `lang="en"` and title format `<Name> — Chill Scenes`
-- [ ] Include back button and audio panel HTML, load `shared/scene-ui.css` and `shared/scene-ui.js`, call `initSceneAudio()`
+- [ ] Include back button and audio panel HTML, load `shared/scene-ui.css`, `shared/pixel.js`, and `shared/scene-ui.js`, call `initSceneAudio()`
+- [ ] 32-colour palette with semantic comments, grouped by purpose
+- [ ] `paintScene()` follows standard depth order
+- [ ] `prefers-reduced-motion` respected in animations
+- [ ] `stopAudio()` clears all timers and closes AudioContext
 - [ ] Add card with preview SVG to `index.html` grid
 - [ ] Add OGP meta tags in `<head>` (once implemented)
 - [ ] Update this file's Files list and Architecture section
