@@ -1,0 +1,20 @@
+    <!-- {{SCENE_TITLE}} -->
+    <a class="card" href="{{SCENE_FILE}}">
+      <div class="card-visual">
+        <svg viewBox="0 0 320 140" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" preserveAspectRatio="xMidYMid slice">
+          <!-- TODO: Create static preview SVG for this scene.
+               Guidelines:
+               - Use gradients for sky/atmosphere (linearGradient, 4-6 stops)
+               - Add focal point (moon, sun, fire) at ~30-50% from left
+               - Layer depth: far silhouettes (dim) → mid elements → near elements (dark)
+               - Use polygons for silhouettes, rects for structured elements
+               - Pull colors from the scene's palette
+               - Keep it simple: 20-40 SVG elements max -->
+          <rect width="320" height="140" fill="#0a0e1c"/>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{SCENE_TITLE}}</div>
+        <div class="card-desc">{{SCENE_DESC}}</div>
+      </div>
+    </a>
