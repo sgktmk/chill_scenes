@@ -172,15 +172,26 @@ storefront light never changes.
 - 320×240 viewBox; the storefront is the converted image (32-colour palette,
   RLE-encoded) loaded once with `PixelBuffer.fromImage()` and flushed to SVG
 - Subtle twinkling-star overlay (CSS) adds a little life over the baked sky
-- Late-night visitors: a lone pixel-sprite customer walks in from a screen
-  edge along the apron (`FEET_Y`), steps up into the automatic doors
-  (`DOOR_X`) and fades inside, waits a few seconds, then re-emerges and
-  wanders off — never more than one figure on screen, with a long quiet gap
-  between arrivals. The sprite is drawn procedurally (facing mirrored via
-  `scale(dir,1)`) with a 2-frame leg cycle; horizontal position is a pure
+- Pole-sign marquee: the bulbs ringing the "Chill Mart" sign chase and
+  flicker. Bulb positions (`BULBS`) were detected from the baked image
+  (bright-gold pixels in the sign box) so the overlay lands on the real
+  bulbs, and it only ever brightens them (never darkens) plus an occasional
+  whole-sign buzz-dip (`renderSign()`)
+- Automatic doors: when a customer nears the entrance the central glass doors
+  slide open (`renderDoor()` / `doorOpenness()`), a warm gap widening from the
+  centre with light spilling onto the apron, then slide shut once they pass
+- Late-night visitors: a lone detailed pixel-sprite customer walks in from a
+  random screen edge along the apron (`FEET_Y`), trips the doors, steps
+  through and fades inside, browses for **1–3 minutes**, then re-emerges and
+  leaves toward a **freshly-random** edge (independent of the arrival side) —
+  never more than one figure on screen, with a long quiet gap between
+  arrivals. The sprite is an 11×25 glyph grid (`SP_A`/`SP_B`, jacket colours
+  varied per person) sized to match the storefront's dithering, mirrored via
+  `scale(dir,1)`, with a 2-frame leg cycle; horizontal position is a pure
   function of elapsed time so motion survives frame drops
-- Debug URL params: `?people=1` speeds up the visitor schedule; `?px=<n>`
-  freezes a standing figure at feet-x `<n>` for scale/placement checks
+- Debug URL params: `?people=1` speeds up the visitor schedule (and shortens
+  the stay); `?px=<n>` freezes a standing figure at feet-x `<n>` with the
+  doors held open for scale/placement checks
 
 #### Audio System
 

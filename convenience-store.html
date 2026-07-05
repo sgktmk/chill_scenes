@@ -41,6 +41,8 @@ svg rect{shape-rendering:crispEdges}
 <div id="scene-wrap">
   <svg id="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" preserveAspectRatio="xMidYMid meet">
     <g id="sceneG"></g>   <!-- static storefront (converted image) -->
+    <g id="doorG"></g>    <!-- automatic-door open animation -->
+    <g id="signG"></g>    <!-- pole-sign marquee bulbs (flicker) -->
     <g id="starsG"></g>   <!-- subtle twinkle overlay -->
     <g id="peopleG"></g>  <!-- late-night visitors -->
   </svg>
@@ -325,6 +327,69 @@ const PX = qp.has('px') ? parseFloat(qp.get('px')) : null;
 })();
 
 /* ===========================================================
+   POLE-SIGN MARQUEE — the bulbs ringing the "Chill Mart" sign
+   chase and flicker. Positions were detected from the baked image
+   (bright-gold pixels in the sign box) so the overlay lands on the
+   real bulbs; the overlay only ever brightens them, never darkens.
+   =========================================================== */
+const signG = document.getElementById('signG');
+const BULBS = [
+  [34,62],[38,57],[35,53],[35,46],[38,50],[40,45],[43,46],[46,45],[53,45],
+  [65,45],[68,48],[69,73],[69,77],[67,88],[61,86],[60,88],[54,88],[35,92],
+  [34,88],[34,86],[32,88],[34,81],[34,77],[38,71],[34,73],[34,69],
+];
+const SIGN_C = { x: 46, y: 66 };
+for (const b of BULBS) b.push(Math.atan2(b[1] - SIGN_C.y, b[0] - SIGN_C.x)); // [x,y,angle]
+let signBuzz = 0; // brief whole-sign dip, scheduled at random
+function renderSign(now) {
+  if (now > signBuzz + 0.16 && Math.random() < 0.006) signBuzz = now; // occasional buzz
+  const buzz = now < signBuzz + 0.13 ? 0.4 : 1; // all bulbs dip together briefly
+  let s = '';
+  for (const [x, y, ang] of BULBS) {
+    const chase = Math.sin(now * 3.0 - ang * 2.2);          // rotating chase around the ring
+    const op = (0.12 + 0.62 * Math.max(0, chase)) * buzz;
+    s += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="#fff0b4" opacity="' + op.toFixed(2) + '"/>';
+  }
+  signG.innerHTML = s;
+}
+
+/* ===========================================================
+   AUTOMATIC DOOR — the central glass doors slide open when a
+   customer arrives, spilling warm light onto the apron, then slide
+   shut once they have passed through. Driven by triggerDoor().
+   =========================================================== */
+const doorG = document.getElementById('doorG');
+const DOOR_L = 167, DOOR_R = 197, DOOR_T = 118, DOOR_B = 150; // opening bounds
+const DOOR_CX = (DOOR_L + DOOR_R) / 2;
+const DOOR = { openAt: -100, closeAt: -100 };
+function triggerDoor(now) { DOOR.openAt = now; DOOR.closeAt = now + 1.5; }
+function doorOpenness(now) {
+  if (now < DOOR.openAt) return 0;
+  const op = Math.min(1, (now - DOOR.openAt) / 0.45);       // slide open
+  if (now < DOOR.closeAt) return op;
+  return Math.max(0, op * (1 - (now - DOOR.closeAt) / 0.5)); // slide shut
+}
+function renderDoor(open) {
+  if (open <= 0.02) { doorG.innerHTML = ''; return; }
+  const half = (DOOR_R - DOOR_L) / 2;
+  const gap = open * half;                                   // half-width of the parted opening
+  const hgt = DOOR_B - DOOR_T;
+  let s = '';
+  // warm interior light revealed in the widening centre gap
+  s += '<rect x="' + (DOOR_CX - gap).toFixed(1) + '" y="' + DOOR_T + '" width="' + (gap * 2).toFixed(1)
+    + '" height="' + hgt + '" fill="#f6e4a4" opacity="' + (0.55 * open).toFixed(2) + '"/>';
+  // leading edges of the two sliding leaves
+  s += '<rect x="' + (DOOR_CX - gap - 1).toFixed(1) + '" y="' + DOOR_T + '" width="1" height="' + hgt + '" fill="#12202e"/>';
+  s += '<rect x="' + (DOOR_CX + gap).toFixed(1) + '" y="' + DOOR_T + '" width="1" height="' + hgt + '" fill="#12202e"/>';
+  // light spilling out across the apron in front of the doorway
+  s += '<rect x="' + (DOOR_L - 3) + '" y="' + DOOR_B + '" width="' + (DOOR_R - DOOR_L + 6)
+    + '" height="9" fill="#ffd98a" opacity="' + (0.3 * open).toFixed(2) + '"/>';
+  s += '<rect x="' + (DOOR_L + 1) + '" y="' + (DOOR_B + 9) + '" width="' + (DOOR_R - DOOR_L - 2)
+    + '" height="6" fill="#ffcf7a" opacity="' + (0.16 * open).toFixed(2) + '"/>';
+  doorG.innerHTML = s;
+}
+
+/* ===========================================================
    LATE-NIGHT VISITORS — a lone customer arrives, steps inside,
    comes back out, and wanders off; then a long quiet gap. Never
    more than one figure on screen (深夜なので控えめに).
@@ -336,33 +401,57 @@ const DOOR_IN_Y = 150;   // feet level once stepped up into the doorway
 const LEFT_X = -14, RIGHT_X = 334;
 const WALK_SPEED = 20;   // px per second (unhurried night pace)
 
-const HAIR  = ['#141018', '#1a1512', '#20180f', '#101014'];
-const SKIN  = ['#c89a78', '#b98a66', '#caa583'];
-const SHIRT = ['#9a4a44', '#3f5f86', '#575760', '#6f6a4a', '#7a4f74', '#4a7a6a', '#8a7350'];
-const PANTS = ['#26262d', '#2a2622', '#22242a'];
-function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
-function newColors() { return { hair: pick(HAIR), skin: pick(SKIN), shirt: pick(SHIRT), pants: pick(PANTS) }; }
+/* Detailed pixel-art pedestrian, authored as an 11×25 glyph grid so it holds
+   up against the finely-dithered storefront. Origin is the feet-centre and the
+   figure faces right (mirrored via scale(dir,1)). Jacket glyphs J/j/e are
+   recoloured per person for variety; a 2-frame leg cycle drives the walk. */
+const SP_BASE = {
+  H: '#1b1720', h: '#3a3446',                 // hair, hair highlight
+  K: '#c89c72', k: '#9a7048', E: '#2a1e18',   // skin, skin shadow, eye
+  P: '#33333e', p: '#1e1e28',                 // trousers, trouser shadow
+  S: '#121217', s: '#2c2c36',                 // shoe, shoe side
+};
+const JACKETS = [
+  { J: '#3f6f9a', j: '#2a4a68', e: '#78a4ca' }, // blue
+  { J: '#9a4a44', j: '#6c2f2c', e: '#c66a60' }, // red
+  { J: '#4a7a5a', j: '#315438', e: '#7aa886' }, // green
+  { J: '#5a5a64', j: '#3a3a42', e: '#828690' }, // grey
+  { J: '#8a7350', j: '#5f4f38', e: '#b09268' }, // tan
+  { J: '#6a4f74', j: '#463452', e: '#8f7498' }, // purple
+];
+function newColors() { return JACKETS[Math.floor(Math.random() * JACKETS.length)]; }
 
-/* Sprite rects, origin at feet-centre, facing right. step 0/1 = leg frame. */
-function personRects(step, c) {
-  const H_ = c.hair, S = c.skin, T = c.shirt, P = c.pants, Sh = '#0d0d11';
-  const r = [
-    [-2, -26, 4, 3, H_], [-2, -24, 4, 1, H_], [-2, -23, 4, 3, S], // head + fringe + face
-    [-3, -21, 6, 9, T],                                           // torso
-    [-4, -20, 1, 6, T], [-4, -14, 1, 1, S],                       // back arm + hand
-    [3, -20, 1, 6, T], [3, -14, 1, 1, S],                         // front arm + hand
-  ];
-  if (step === 0) {
-    r.push([-3, -12, 2, 12, P], [1, -12, 2, 12, P], [-4, -2, 3, 2, Sh], [1, -2, 3, 2, Sh]);
-  } else {
-    r.push([-2, -12, 3, 12, P], [-2, -2, 4, 2, Sh]);
-  }
-  return r;
-}
-function personHTML(step, c) {
+const SP_CX = 5, SP_FOOT = 25; // centre column, feet-baseline row
+const SP_A = [
+  "...HHHH....", "..HHHHHH...", "..HhhhhH...", "..HKKKKk...", "..HKKEKk...",
+  "..kKKKk....", "...kKk.....", "..jJJJJj...", ".eeJJJJjj..", ".eeJJJJjj..",
+  ".eeJJJJjj..", ".KeJJJJjK..", ".KeJJJJjK..", "..jJJJJj...", "..jJJJJj...",
+  "..pPPPPp...", "..pPPPPp...", "..pPPPPp...", "...Pp.Pp...", "...Pp.Pp...",
+  "...Pp.Pp...", "...Pp.Pp...", "...Pp.Pp...", "...Pp.Pp...", "..SSs.SSs..",
+];
+const SP_B = [
+  "...HHHH....", "..HHHHHH...", "..HhhhhH...", "..HKKKKk...", "..HKKEKk...",
+  "..kKKKk....", "...kKk.....", "..jJJJJj...", ".eeJJJJjj..", ".eeJJJJjj..",
+  ".eeJJJJjj..", ".KeJJJJjK..", ".KeJJJJjK..", "..jJJJJj...", "..jJJJJj...",
+  "..pPPPPp...", "..pPPPPp...", "..pPPPPp...", "...pPPp....", "...pPPp....",
+  "...pPPp....", "...pPPp....", "...pPPp....", "...pPPp....", "...SSss....",
+];
+function personHTML(step, jak) {
+  const grid = step === 0 ? SP_A : SP_B;
+  const cmap = Object.assign({}, SP_BASE, jak);
   let s = '';
-  for (const [x, y, w, h, col] of personRects(step, c)) {
-    s += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + col + '"/>';
+  for (let y = 0; y < grid.length; y++) {
+    const row = grid[y];
+    let x = 0;
+    while (x < row.length) {
+      const ch = row[x];
+      if (ch === '.') { x++; continue; }
+      let run = 1;
+      while (x + run < row.length && row[x + run] === ch) run++;
+      s += '<rect x="' + (x - SP_CX) + '" y="' + (y - SP_FOOT) + '" width="' + run
+        + '" height="1" fill="' + cmap[ch] + '"/>';
+      x += run;
+    }
   }
   return s;
 }
@@ -378,7 +467,7 @@ const STEP_RATE = 2.2; // leg swaps (and footfalls) per second — an unhurried 
 const P = {
   st: 'away',
   next: FORCE ? 1.5 : 6 + Math.random() * 10,
-  x: 0, startX: 0, dir: 1, col: newColors(), t0: 0, until: 0, lastStep: -1,
+  x: 0, startX: 0, dir: 1, col: newColors(), t0: 0, until: 0, lastStep: -1, knocked: false,
 };
 
 function walkStep(now) { return Math.floor(now * STEP_RATE) % 2; }
@@ -397,11 +486,13 @@ function updPeople(now) {
     case 'away':
       peopleG.innerHTML = '';
       if (now >= P.next) {
+        // arrival side is random and independent of the eventual exit side
         const fromLeft = Math.random() < 0.5;
         P.startX = fromLeft ? LEFT_X : RIGHT_X;
         P.dir = fromLeft ? 1 : -1;
         P.col = newColors();
         P.t0 = now;
+        P.knocked = false;
         P.st = 'approach';
       }
       break;
@@ -409,23 +500,33 @@ function updPeople(now) {
     case 'approach':
       // position is a pure function of elapsed time (robust under frame drops)
       P.x = P.startX + P.dir * WALK_SPEED * (now - P.t0);
+      // sensor trips as they near the doors: doors open + chime/slide fire here
+      if (!P.knocked && Math.abs(P.x - DOOR_X) <= 16) { P.knocked = true; triggerDoor(now); doorGreeting(); }
       drawPerson(P.x, FEET_Y, P.dir, footfall(now), P.col, 1);
       if ((P.dir > 0 && P.x >= DOOR_X) || (P.dir < 0 && P.x <= DOOR_X)) {
-        P.x = DOOR_X; P.st = 'enter'; P.t0 = now; doorGreeting();
+        P.x = DOOR_X; P.st = 'enter'; P.t0 = now;
       }
       break;
 
     case 'enter': {
       const k = Math.min(1, (now - P.t0) / 1.0);
-      const e = smooth(Math.max(0, (k - 0.25) / 0.75)); // brief pause, then step in
+      const e = smooth(Math.max(0, (k - 0.15) / 0.85)); // step in through the open doors
       drawPerson(DOOR_X, FEET_Y + (DOOR_IN_Y - FEET_Y) * e, P.dir, walkStep(now), P.col, 1 - e);
-      if (k >= 1) { P.st = 'inside'; P.until = now + 4 + Math.random() * 7; }
+      if (k >= 1) {
+        P.st = 'inside';
+        // browse for a while — 1 to 3 minutes (short when forcing for tests)
+        P.until = now + (FORCE ? 4 + Math.random() * 5 : 60 + Math.random() * 120);
+      }
       break;
     }
 
     case 'inside':
       peopleG.innerHTML = '';
-      if (now >= P.until) { P.st = 'exit'; P.t0 = now; P.col = newColors(); P.dir = Math.random() < 0.5 ? 1 : -1; doorGreeting(); }
+      if (now >= P.until) {
+        P.st = 'exit'; P.t0 = now; P.col = newColors();
+        P.dir = Math.random() < 0.5 ? 1 : -1; // exit side is freshly random
+        triggerDoor(now); doorGreeting();
+      }
       break;
 
     case 'exit': {
@@ -446,7 +547,10 @@ function updPeople(now) {
 
 /* ---- animation loop ---- */
 function tick(nowMs) {
-  updPeople(nowMs / 1000);
+  const now = nowMs / 1000;
+  renderSign(now);
+  renderDoor(PX !== null ? 1 : doorOpenness(now)); // ?px= also shows the doors open
+  updPeople(now);
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
