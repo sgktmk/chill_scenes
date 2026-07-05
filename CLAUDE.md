@@ -29,6 +29,11 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
+- `templates/scene.html` — Scene HTML template with standardized structure
+- `templates/card-snippet.html` — Index page card template
+- `.claude/commands/new-scene.md` — `/new-scene` slash command
+- `.claude/commands/refine-scene.md` — `/refine-scene` slash command
+- `.claude/commands/scene-audit.md` — `/scene-audit` slash command
 - `vercel.json` — Vercel routing config
 
 ## Architecture
@@ -187,22 +192,110 @@ pb.toSVG(svgEl, {       // flush with named layers
 });
 ```
 
+### Scene Creation System
+
+Slash commands and templates for creating new pixel-art scenes with consistent quality.
+
+#### Commands
+
+- **`/new-scene "file-name" "Title" "description"`** — Full scene creation workflow. Orchestrates sub-agents for scaffold, palette, rendering, animation, audio, preview card, and quality review.
+- **`/refine-scene file-name "feedback"`** — Apply visual/audio feedback after user review. Categorizes feedback and makes targeted edits.
+- **`/scene-audit file-name`** — Quality audit against the project's checklist. Use `all` to audit every scene.
+
+#### Templates (`templates/`)
+
+- **`templates/scene.html`** — Complete scene HTML template with standardized structure, section comments, and documented patterns for each section (palette, drawing, animation, audio).
+- **`templates/card-snippet.html`** — Index page card template with placeholder SVG.
+
+#### Standard Scene Structure
+
+New pixel-art scenes follow this file structure:
+```
+<style>            — scene-specific CSS, particle @keyframes
+<svg id="scene">   — target SVG (320×180 viewBox)
+<script pixel.js>  — shared pixel buffer
+<script>           — scene code in standard section order:
+  CONFIG           — dimensions, palette (32 colours)
+  PIXEL BUFFER     — PixelBuffer instance + local wrappers
+  DRAWING HELPERS  — reusable functions with depth parameter
+  PAINT SCENE      — depth-layered rendering (sky→celestial→distant→far→ground→light→texture→mid→detail→near)
+  SVG RENDER       — pb.toSVG() with optional layers
+  ANIMATIONS       — requestAnimationFrame loop
+  AUDIO            — Web Audio procedural sound
+  INIT             — paintScene + render + startAnimations
+<script scene-ui>  — shared audio UI
+<script>           — initSceneAudio() call
+```
+
+---
+
+## Development Method: PIV Loop
+
+This project uses the **PIV Loop** (Plan → Implement → Validate → Verify) methodology for structured, focused development.
+
+### Loop Table
+
+| Loop | Goal | Status | Plan | Report |
+|------|------|--------|------|--------|
+| L1 | Extract `shared/pixel.js` from snowy-forest | ✅ Done | — | — |
+| L2 | Create scene templates and `/new-scene` skill | ✅ Done | — | — |
+| L3 | Create 8 sub-agents for scene creation | ✅ Done | — | — |
+| L4 | Test scene creation system with first new scene | 未着手 | `docs/plan-L4.md` | — |
+| L5 | Implement missing roadmap features (OGP, screenshots) | 未着手 | `docs/plan-L5.md` | — |
+
+**Status values**: `未着手` → `計画完了` → `進行中` → `✅ Done`
+
+### PIV Loop Rules
+
+1. **Plan**: Write `docs/plan-LN.md` before implementation. Define goal, scope, Acceptance Criteria, and implementation steps.
+2. **Implement**: Follow the plan exactly. Do NOT implement anything outside the plan scope.
+3. **Validate**: Run manual tests (visual browser check) and verify Acceptance Criteria.
+4. **Verify**: Write `docs/validation-report-LN.md` and confirm the loop is complete.
+
+**Important discipline rules:**
+- **1 loop = 1 goal** — No scope creep
+- **Incidental fixes go to a new loop** — Don't fix unrelated bugs in the same loop
+- **Ambiguities stay as TODO comments** — Don't guess at unclear requirements
+
+### Dynamic Loop Addition
+
+During implementation, if new work is discovered that **doesn't fit the current plan**, use `/add-loop` to create a new loop:
+
+```
+/add-loop "brief goal" "rationale for creating new loop"
+```
+
+This will:
+1. Prompt you to choose insertion position (after current loop, or after specific loop)
+2. Create a skeleton `docs/plan-LN.md` and add to the loop table
+3. Update CLAUDE.md automatically
+
+**When to add a loop:**
+- Discovering that a prerequisite task is necessary before current loop
+- Finding scope creep that should be deferred to a dedicated loop
+- Identifying a bug/issue severe enough to require immediate attention
+- Realizing the current loop is becoming too complex (split it)
+
 ### Future Roadmap
 
 Planned features in recommended implementation order:
 
 1. ~~**Shared code extraction**~~ — Done. Shared UI code extracted into `shared/scene-ui.css` and `shared/scene-ui.js`
-2. **OGP meta tags** — Add Open Graph / Twitter Card meta tags to each scene for link previews on social media
-3. **Screenshot capture** — SVG → Canvas → PNG conversion using native browser APIs (no library needed); add camera button to UI panel
-4. **SNS sharing** — Web Share API (mobile) with X/Twitter intent URL fallback (desktop); share button in UI panel
-5. **Scene template** — Standardize boilerplate for new scenes
+2. ~~**Scene template & creation system**~~ — Done. Templates, `/new-scene`, `/refine-scene`, `/scene-audit` commands
+3. **OGP meta tags** — Add Open Graph / Twitter Card meta tags to each scene for link previews on social media
+4. **Screenshot capture** — SVG → Canvas → PNG conversion using native browser APIs (no library needed); add camera button to UI panel
+5. **SNS sharing** — Web Share API (mobile) with X/Twitter intent URL fallback (desktop); share button in UI panel
 
 ### New Scene Checklist
 
-When adding a new scene:
+When adding a new scene (automated by `/new-scene`):
 
 - [ ] Set `lang="en"` and title format `<Name> — Chill Scenes`
-- [ ] Include back button and audio panel HTML, load `shared/scene-ui.css` and `shared/scene-ui.js`, call `initSceneAudio()`
+- [ ] Include back button and audio panel HTML, load `shared/scene-ui.css`, `shared/pixel.js`, and `shared/scene-ui.js`, call `initSceneAudio()`
+- [ ] 32-colour palette with semantic comments, grouped by purpose
+- [ ] `paintScene()` follows standard depth order
+- [ ] `prefers-reduced-motion` respected in animations
+- [ ] `stopAudio()` clears all timers and closes AudioContext
 - [ ] Add card with preview SVG to `index.html` grid
 - [ ] Add OGP meta tags in `<head>` (once implemented)
 - [ ] Update this file's Files list and Architecture section
