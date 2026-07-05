@@ -26,6 +26,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
 - `snowy-forest.html` — "Snowy Forest" scene (moonlit winter forest at night)
 - `rice-terrace.html` — "Rice Terraces" scene (GBA-style terraced paddies below Mt. Fuji with a day-night cycle)
+- `convenience-store.html` — "Convenience Store" scene (late-night roadside "Chill Mart" where the odd customer comes and goes through the automatic doors)
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
@@ -159,6 +160,51 @@ Single self-contained HTML file rendered at the GBA native resolution (240×160 
 - Insects: cricket bursts and detuned bell-cricket rings, louder at night (reads `curNight` from the visual loop)
 - Black kite (トンビ) "pee-hyororo" call: sine glide 1480→1580→920 Hz with 11 Hz vibrato onset, daytime only, occasional distant reply
 - Faint frog chorus at night (sawtooth through bandpass)
+
+### Convenience Store Scene (`convenience-store.html`)
+
+Single self-contained HTML file built from `refs/chill-mart/base.png` via the
+image-to-scene pipeline. A fixed midnight scene — no day-night cycle; the
+storefront light never changes.
+
+#### Visual Elements
+
+- 320×240 viewBox; the storefront is the converted image (32-colour palette,
+  RLE-encoded) loaded once with `PixelBuffer.fromImage()` and flushed to SVG
+- Subtle twinkling-star overlay (CSS) adds a little life over the baked sky
+- Pole-sign marquee: the bulbs ringing the "Chill Mart" sign chase and
+  flicker. Bulb positions (`BULBS`) were detected from the baked image
+  (bright-gold pixels in the sign box) so the overlay lands on the real
+  bulbs, and it only ever brightens them (never darkens) plus an occasional
+  whole-sign buzz-dip (`renderSign()`)
+- Automatic doors: when a customer nears the entrance the central glass doors
+  slide open (`renderDoor()` / `doorOpenness()`), a warm gap widening from the
+  centre with light spilling onto the apron, then slide shut once they pass
+- Late-night visitors: a lone detailed pixel-sprite customer walks in from a
+  random screen edge along the apron (`FEET_Y`), trips the doors, steps
+  through and fades inside, browses for **1–3 minutes**, then re-emerges and
+  leaves toward a **freshly-random** edge (independent of the arrival side) —
+  never more than one figure on screen, with a long quiet gap between
+  arrivals. The sprite is an 11×25 glyph grid (`SP_A`/`SP_B`, jacket colours
+  varied per person) sized to match the storefront's dithering, mirrored via
+  `scale(dir,1)`, with a 2-frame leg cycle; horizontal position is a pure
+  function of elapsed time so motion survives frame drops
+- Debug URL params: `?people=1` speeds up the visitor schedule (and shortens
+  the stay); `?px=<n>` freezes a standing figure at feet-x `<n>` with the
+  doors held open for scale/placement checks
+
+#### Audio System
+
+- Procedural Web Audio API (no audio files), via `createAudioEngine()`
+- Ambient bed: low-passed brown-noise town rumble + a faint electric hum
+  (60/100/200 Hz sines for the fridge cases, vending machine and fluorescents)
+- Sparse crickets and the occasional passing car (bandpassed-noise swell with
+  an approach→recede filter sweep)
+- Per-visitor sound: soft footsteps synced to the leg cycle, the automatic
+  sliding-door "shhhk" (bandpass sweep + settle-thunk) and the "pin-pon"
+  entrance chime, fired together on entry/exit
+- All event sounds route through a low-passed, attenuated "far" bus so they
+  read as coming from across the parking lot, matching the pulled-back view
 
 ## Creating New Scenes (image-to-scene pipeline)
 
