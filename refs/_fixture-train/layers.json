@@ -1,0 +1,17 @@
+{
+  "name": "FIXTURE_TRAIN",
+  "resolution": { "w": 120, "h": 80 },
+  "colors": 24,
+  "layers": [
+    { "id": "sky", "role": "background",
+      "note": "empty group for dynamic content; hidden here because scenery is opaque" },
+    { "id": "scenery", "role": "movable", "src": "scenery.png", "at": [0, 0],
+      "motion": "scroll-x: loops left, pattern repeats every 120px" },
+    { "id": "door", "role": "movable", "src": "base.png", "mask": "mask-door.png",
+      "motion": "slide-x: opens by sliding left up to 26px behind the wall" },
+    { "id": "cabin", "role": "static", "src": "base.png",
+      "note": "window aperture is transparent in base.png; door hole is cut automatically" },
+    { "id": "strap", "role": "movable", "src": "part-strap.png", "at": [55, 8], "pivot": [60, 9],
+      "motion": "swing: rotate around the pivot, about ±8 degrees" }
+  ]
+}

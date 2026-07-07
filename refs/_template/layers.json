@@ -1,0 +1,19 @@
+{
+  "name": "MY_SCENE",
+  "resolution": { "w": 240, "h": 160 },
+  "colors": 32,
+  "layers": [
+    { "id": "sky", "role": "background",
+      "note": "no src — empty group for dynamic sky bands / stars" },
+    { "id": "view", "role": "movable", "src": "part-view.png", "at": [0, 0],
+      "motion": "scroll-x: loops left, pattern repeats every 240px" },
+    { "id": "door", "role": "movable", "src": "base.png", "mask": "mask-door.png",
+      "motion": "slide-x: opens left, up to Npx" },
+    { "id": "room", "role": "static", "src": "base.png",
+      "note": "masked regions of base.png are cut out automatically" },
+    { "id": "strap", "role": "movable", "src": "part-strap.png", "at": [100, 20], "pivot": [105, 21],
+      "motion": "swing: rotate around pivot, small angle" },
+    { "id": "pillar", "role": "occluder", "src": "part-pillar.png", "at": [180, 40],
+      "note": "foreground — everything before this line paints behind it" }
+  ]
+}
