@@ -64,6 +64,13 @@ svg rect{shape-rendering:crispEdges}
    dynamic bands behind the terrain. If your image has an opaque sky,
    either erase it to transparency before converting, or skip those
    palette indices when blitting.
+
+   PART ANIMATION (a door that opens, a strap that swings, scenery
+   behind a window…): do NOT carve regions out of this single image by
+   coordinates. Define refs/<scene>/layers.json and convert with
+     node tools/png2pixel.mjs --manifest refs/<scene>/layers.json
+   then render with PixelBuffer.sceneToSVG() — working example:
+   templates/layered-demo.html + refs/_fixture-train/.
    =========================================================== */
 const SCENE_IMG = {
   w: 240, h: 160,

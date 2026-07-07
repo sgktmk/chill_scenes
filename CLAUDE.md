@@ -31,10 +31,12 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
 - `shared/cycle.js` — Day-night cycle keyframe interpolation engine (`createCycle()`)
 - `shared/audio-kit.js` — Procedural Web Audio boilerplate (`createAudioEngine()`)
-- `tools/png2pixel.mjs` — PNG → PixelBuffer data converter (zero-dependency Node script)
+- `tools/png2pixel.mjs` — PNG → PixelBuffer data converter (zero-dependency Node script); `--manifest` converts a layers.json layer set with one shared palette
+- `tools/validate-refs.mjs` — Pre-port validation of `refs/<scene>/` (manifest schema, PNG dims, mask/src size match, pivot bounds)
 - `tools/screenshot.sh` — Headless Chromium scene capture for visual verification
 - `templates/scene-template.html` — Runnable boilerplate for new pixel-art scenes
-- `refs/` — Per-scene reference material (`<scene>/base.png` + `spec.md`); `refs/_template/spec.md` is the blank spec form
+- `templates/layered-demo.html` — Working demo of the layered pipeline (window scroll, sliding door, swinging strap) rendered from `refs/_fixture-train/`
+- `refs/` — Per-scene reference material (`<scene>/base.png` + `spec.md`, plus `layers.json` + `mask-*.png` / `part-*.png` for partial animation); `refs/_template/` holds the blank spec and manifest forms; `refs/_fixture-train/` is the pipeline test fixture
 - `docs/scene-workflow.md` — Image-to-scene workflow manual (Japanese, for the repo owner)
 - `.claude/skills/port-scene/` — Claude Code skill: checklist for porting a reference image into a scene
 - `vercel.json` — Vercel routing config
@@ -170,8 +172,15 @@ palette-indexed pixel data; motion and audio are specified in
 (`.claude/skills/port-scene/SKILL.md`) when asked to build a scene from refs.
 
 ```bash
+# validate refs material before any porting work
+node tools/validate-refs.mjs refs/<scene>
+
 # image → JS data ({ w, h, palette, data }, ≤32 colours, RLE-encoded)
 node tools/png2pixel.mjs refs/<scene>/base.png -w 240 -h 160
+
+# layered scene (partial animation): layers.json → { w, h, palette, layers }
+# with ONE shared palette; render via PixelBuffer.sceneToSVG()
+node tools/png2pixel.mjs --manifest refs/<scene>/layers.json
 
 # verify a scene at a frozen day-night phase (?t=) — local files are served
 # via a temporary http server (root-absolute /shared/ paths break file://)
@@ -182,11 +191,19 @@ Key invariants:
 
 - The reference image is the source of truth for composition; procedural
   drawing is only for dynamic elements (sun/moon, sprites, particles).
-- Converted data loads via `PixelBuffer.fromImage()` / `pb.blit()`; palette
-  entry `'none'` (index 0 when the source has transparency) marks
-  transparent sky for dynamic sky bands.
+- Anything that moves *independently within* the image (a door, a strap,
+  scenery behind a window or foreground object) must be declared as a layer
+  in `refs/<scene>/layers.json` (mask cutout or part sprite). Never identify
+  movable regions by eyeballing coordinates or classifying pixels by colour;
+  if the material is missing, ask for it. Occlusion comes from manifest
+  paint order + automatic cutout holes — see `templates/layered-demo.html`
+  and `refs/_fixture-train/`.
+- Converted data loads via `PixelBuffer.fromImage()` / `pb.blit()` /
+  `PixelBuffer.sceneToSVG()`; palette entry `'none'` (index 0 when the
+  source has transparency) marks transparent sky for dynamic sky bands.
 - Every scene supports `?t=<0-1>` to freeze the cycle phase (built into
-  `createCycle()`), enabling reproducible screenshot verification.
+  `createCycle()`), enabling reproducible screenshot verification; scenes
+  with part animation also support `?pose=<0-1>` to freeze movable layers.
 
 ## Maintenance Notes
 
@@ -226,6 +243,11 @@ pb.toSVG(svgEl, {       // flush with named layers
 PixelBuffer.fromImage(img);      // new buffer pre-loaded with the image
 pb.blit(img, dx, dy, opts);      // paste ('none' entries skipped; opts.map remaps indices)
 PixelBuffer.decodeRLE(img.data); // raw Uint8Array of palette indices (e.g. masks)
+
+// Layered scenes (tools/png2pixel.mjs --manifest output)
+const els = PixelBuffer.sceneToSVG(svgEl, SCENE); // <g id="L-<id>"> per layer, paint order
+els.door.setAttribute('transform', 'translate(-26 0)');   // slide a part
+els.strap.setAttribute('transform', 'rotate(8 60 9)');    // swing around manifest pivot
 ```
 
 #### Cycle API (`shared/cycle.js`)
