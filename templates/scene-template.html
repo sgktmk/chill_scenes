@@ -43,7 +43,8 @@ svg rect{shape-rendering:crispEdges}
     <g id="skyB"></g>
     <g id="starsG" opacity="0"></g>
     <g id="terrainG"></g>
-    <!-- Add more layers as the spec needs: waterG, cloudG, spriteG, ... -->
+    <g id="partsG"></g>
+    <!-- Add more layers as the spec needs: waterG, cloudG, ... -->
   </svg>
 </div>
 <div class="ap">
@@ -55,10 +56,20 @@ svg rect{shape-rendering:crispEdges}
 <script src="/shared/pixel.js"></script>
 <script src="/shared/cycle.js"></script>
 <script src="/shared/audio-kit.js"></script>
+<script src="/shared/sprite.js"></script>
 <script>
 /* ===========================================================
-   IMAGE — paste the output of tools/png2pixel.mjs here:
+   IMAGE — paste the output of the conversion tool here.
+
+   Scene with moving parts (recommended — refs/<scene>/parts/ provided):
+     node tools/cutout.mjs refs/<scene> -w 240 -h 160 --preview /tmp/cut
+   → paste <NAME>_PALETTE + <NAME>_BG + <NAME>_PARTS, load the bg into
+     #terrainG below, and instantiate parts with createSprites() —
+     see the MOVING PARTS block.
+
+   Scene with no moving parts:
      node tools/png2pixel.mjs refs/<scene>/base.png -w 240 -h 160
+
    The placeholder below is a flat horizon so the template runs as-is.
    Sky pixels should be 'none' (transparent) — the sky is drawn as
    dynamic bands behind the terrain. If your image has an opaque sky,
@@ -80,6 +91,19 @@ const pb = PixelBuffer.fromImage(SCENE_IMG);
 pb.toSVG(document.getElementById('terrainG'));
 // For independently animatable pixel groups (e.g. water reflection),
 // use pb.toSVG(el, { layers, classify }) — see rice-terrace.html.
+
+/* ===========================================================
+   MOVING PARTS — structural motion via shared/sprite.js.
+   Everything that moves, appears, or changes shape must be a cutout
+   part (its own layer with real background behind it) — NEVER animate
+   by nudging/blurring pixels of the flat terrain image.
+   =========================================================== */
+// const sprites = createSprites(document.getElementById('partsG'), SCENE_PARTS);
+// sprites.door.setState('open');       // swap frames (closed → open)
+// sprites.boat.moveBy(0.3, 0);         // drift in scene coordinates
+// sprites.bird.setFlip(true).hide();   // mirror / hide
+// Add a debug URL param per pose so states can be screenshot-verified:
+// if (new URLSearchParams(location.search).get('pose') === 'open') ...
 
 /* ===========================================================
    DAY-NIGHT CYCLE — tune keyframes to the scene's mood
