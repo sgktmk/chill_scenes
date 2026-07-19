@@ -224,6 +224,13 @@ export function medianCut(pixels, maxColors) {
   // pixels: array of packed 0xRRGGBB ints (opaque pixels only)
   if (pixels.length === 0) return [];
 
+  // Hand-made pixel art usually has few exact colours — keep them verbatim
+  // instead of approximating (first-seen order).
+  const distinct = new Set(pixels);
+  if (distinct.size <= maxColors) {
+    return [...distinct].map((p) => [p >> 16, (p >> 8) & 0xff, p & 0xff]);
+  }
+
   const boxes = [pixels];
   while (boxes.length < maxColors) {
     // Pick the box with the largest channel range
@@ -246,18 +253,31 @@ export function medianCut(pixels, maxColors) {
 
     const box = boxes[bestBox];
     const shift = bestCh === 0 ? 16 : bestCh === 1 ? 8 : 0;
-    box.sort((a, b) => ((a >> shift) & 0xff) - ((b >> shift) & 0xff));
-    const mid = box.length >> 1;
+    // Secondary sort by packed value keeps identical colours contiguous so
+    // the split point can avoid landing inside a single-colour run (which
+    // would create duplicate palette entries).
+    box.sort((a, b) => ((a >> shift) & 0xff) - ((b >> shift) & 0xff) || a - b);
+    let mid = box.length >> 1;
+    let lo = mid, hi = mid;
+    while (lo > 0 && box[lo - 1] === box[lo]) lo--;
+    while (hi < box.length && box[hi - 1] === box[hi]) hi++;
+    mid = lo === 0 ? hi : hi === box.length ? lo : mid - lo <= hi - mid ? lo : hi;
     boxes.splice(bestBox, 1, box.slice(0, mid), box.slice(mid));
   }
 
-  // Average colour of each box
-  return boxes.map((box) => {
+  // Average colour of each box, deduped (different boxes can round to the
+  // same average)
+  const seen = new Set();
+  const out = [];
+  for (const box of boxes) {
     let r = 0, g = 0, b = 0;
     for (const p of box) { r += p >> 16; g += (p >> 8) & 0xff; b += p & 0xff; }
     const n = box.length;
-    return [Math.round(r / n), Math.round(g / n), Math.round(b / n)];
-  });
+    const c = [Math.round(r / n), Math.round(g / n), Math.round(b / n)];
+    const key = (c[0] << 16) | (c[1] << 8) | c[2];
+    if (!seen.has(key)) { seen.add(key); out.push(c); }
+  }
+  return out;
 }
 
 export function nearestIndex(r, g, b, palette) {
