@@ -432,4 +432,9 @@ function main() {
   for (const w of warnings) console.error('WARNING: ' + w);
 }
 
-main();
+try {
+  main();
+} catch (e) {
+  console.error('error: ' + e.message);
+  process.exit(1);
+}
