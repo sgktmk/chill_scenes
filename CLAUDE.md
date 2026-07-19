@@ -31,7 +31,11 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
 - `shared/cycle.js` — Day-night cycle keyframe interpolation engine (`createCycle()`)
 - `shared/audio-kit.js` — Procedural Web Audio boilerplate (`createAudioEngine()`)
+- `shared/sprite.js` — Sprite runtime for cutout parts (`createSprite()`/`createSprites()`: move, state swap, flip, hide)
 - `tools/png2pixel.mjs` — PNG → PixelBuffer data converter (zero-dependency Node script)
+- `tools/cutout.mjs` — Splits refs material into background + moving-part sprites sharing one palette
+- `tools/lib/png.mjs` — Shared PNG decode/encode, quantization, and RLE library for the tools
+- `tools/selftest.mjs` — Zero-dependency smoke test for the conversion tooling (`node tools/selftest.mjs`)
 - `tools/screenshot.sh` — Headless Chromium scene capture for visual verification
 - `templates/scene-template.html` — Runnable boilerplate for new pixel-art scenes
 - `refs/` — Per-scene reference material (`<scene>/base.png` + `spec.md`); `refs/_template/spec.md` is the blank spec form
@@ -162,31 +166,49 @@ Single self-contained HTML file rendered at the GBA native resolution (240×160 
 
 ## Creating New Scenes (image-to-scene pipeline)
 
-New pixel-art scenes are built from a reference image, not drawn procedurally
-by hand. The composition comes from `refs/<scene>/base.png`, converted to
-palette-indexed pixel data; motion and audio are specified in
-`refs/<scene>/spec.md` and implemented on top. Full manual:
-`docs/scene-workflow.md`. Claude Code should follow the `port-scene` skill
-(`.claude/skills/port-scene/SKILL.md`) when asked to build a scene from refs.
+New pixel-art scenes are built from reference images, not drawn procedurally
+by hand. The composition comes from `refs/<scene>/base.png`; each moving
+object is provided as its own full-canvas transparent PNG in
+`refs/<scene>/parts/NN-name[@state].png` (NN = z-order, `@state` = extra
+frames like a door's open state), optionally with `bg.png` (background
+behind the parts). Motion and audio are specified in `refs/<scene>/spec.md`
+and implemented on top. Full manual: `docs/scene-workflow.md`. Claude Code
+should follow the `port-scene` skill (`.claude/skills/port-scene/SKILL.md`)
+when asked to build a scene from refs.
 
 ```bash
-# image → JS data ({ w, h, palette, data }, ≤32 colours, RLE-encoded)
+# refs → background + part sprites on ONE unified palette, with
+# verification previews (Read them to check the split quality)
+node tools/cutout.mjs refs/<scene> -w 240 -h 160 -o /tmp/img.js --preview /tmp/prev
+
+# single flat image (scene with no moving parts)
 node tools/png2pixel.mjs refs/<scene>/base.png -w 240 -h 160
 
 # verify a scene at a frozen day-night phase (?t=) — local files are served
 # via a temporary http server (root-absolute /shared/ paths break file://)
 tools/screenshot.sh "<scene>.html?t=0.3" /tmp/day.png
+
+# smoke-test the tooling after touching tools/ or shared/
+node tools/selftest.mjs
 ```
 
 Key invariants:
 
 - The reference image is the source of truth for composition; procedural
-  drawing is only for dynamic elements (sun/moon, sprites, particles).
+  drawing is only for dynamic elements (sun/moon, particles, touch-ups).
+- **Motion is structural, never faked**: anything that moves, appears, or
+  changes shape is a cutout part rendered via `createSprites()`
+  (shared/sprite.js) with real background behind it — never implemented by
+  nudging/blurring pixels of the flat background image. If a part image is
+  missing from refs, ask the user instead of improvising.
 - Converted data loads via `PixelBuffer.fromImage()` / `pb.blit()`; palette
   entry `'none'` (index 0 when the source has transparency) marks
-  transparent sky for dynamic sky bands.
+  transparent sky for dynamic sky bands. cutout output (`<NAME>_BG` /
+  `<NAME>_PARTS`) shares a single palette, and every part state carries its
+  scene position (`ox`, `oy`).
 - Every scene supports `?t=<0-1>` to freeze the cycle phase (built into
-  `createCycle()`), enabling reproducible screenshot verification.
+  `createCycle()`), plus a debug URL param per part pose / rare event,
+  enabling reproducible screenshot verification of every state.
 
 ## Maintenance Notes
 
@@ -228,6 +250,21 @@ pb.blit(img, dx, dy, opts);      // paste ('none' entries skipped; opts.map rema
 PixelBuffer.decodeRLE(img.data); // raw Uint8Array of palette indices (e.g. masks)
 ```
 
+#### Sprite API (`shared/sprite.js`)
+
+Structural motion for `tools/cutout.mjs` parts (requires `shared/pixel.js`).
+Each sprite is an SVG group; a sprite's `(x, y)` is the scene position of its
+default state's top-left corner, and other states keep their authored offset,
+so swapping frames never needs re-positioning.
+
+```javascript
+const sprites = createSprites(parentG, SCENE_PARTS); // all parts, z-sorted
+sprites.door.setState('open');   // frame swap — background shows behind
+sprites.boat.moveTo(x, y);       // scene coordinates (moveBy, moveHome too)
+sprites.bird.setFlip(true).hide();
+const s = createSprite(parentG, imgOrStates, { initial, x, y }); // single
+```
+
 #### Cycle API (`shared/cycle.js`)
 
 `createCycle({ cycle, startOffset, keyframes })` returns `{ phase, sample, mixRgb, ... }`.
@@ -264,7 +301,10 @@ image-based scenes follow `docs/scene-workflow.md` / the `port-scene` skill):
 
 - [ ] Set `lang="en"` and title format `<Name> — Chill Scenes`
 - [ ] Include back button and audio panel HTML, load `shared/scene-ui.css` and `shared/scene-ui.js`, call `initSceneAudio()`
+- [ ] Convert with `tools/cutout.mjs` when anything moves; verify the `--preview` PNGs (clean bg, complete parts)
+- [ ] Implement all moving objects as `createSprites()` sprites — never by nudging pixels of the flat image
 - [ ] Support `?t=` phase freeze and verify day/dusk/night with `tools/screenshot.sh`
+- [ ] Add a debug URL param per part pose / rare event and screenshot-verify each state
 - [ ] Add card with preview SVG to `index.html` grid
 - [ ] Add OGP meta tags in `<head>` (once implemented)
 - [ ] Update this file's Files list and Architecture section
