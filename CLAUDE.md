@@ -26,6 +26,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
 - `snowy-forest.html` — "Snowy Forest" scene (moonlit winter forest at night)
 - `rice-terrace.html` — "Rice Terraces" scene (GBA-style terraced paddies below Mt. Fuji with a day-night cycle)
+- `chill-mart.html` — "Chill Mart" scene (late-night convenience store with sliding doors and customers)
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
@@ -163,6 +164,36 @@ Single self-contained HTML file rendered at the GBA native resolution (240×160 
 - Insects: cricket bursts and detuned bell-cricket rings, louder at night (reads `curNight` from the visual loop)
 - Black kite (トンビ) "pee-hyororo" call: sine glide 1480→1580→920 Hz with 11 Hz vibrato onset, daytime only, occasional distant reply
 - Faint frog chorus at night (sawtooth through bandpass)
+
+### Chill Mart Scene (`chill-mart.html`)
+
+Single self-contained HTML file, 256×192 (4:3) fixed night scene built from
+`refs/chill-mart/` with the layered cutout pipeline (first scene to use it).
+
+#### Visual Elements
+
+- Background from `base.png` via `tools/cutout.mjs`; 32-colour unified palette
+- Sliding automatic doors: two mask-cutout sprites (`mask-10-door_l` /
+  `mask-20-door_r`) inside an SVG clipPath over the doorway, so opening
+  panels retract into the walls. No parts/bg images were provided (mask
+  fallback experiment): the doorway interior behind the doors is rebuilt at
+  load time by blitting the glass-door sprites back into the background and
+  erasing their stiles/handles with neighbouring glass columns
+- Procedural pixel customers (8×20, 2 walk frames, 3 outfits) arrive every
+  1-3 minutes: walk in, chime, doors part, step inside; they leave again
+  after 15-45 s. Rare passers-by cross the lot without entering
+- Pole sign bulb chase (two alternating CSS phase groups) + occasional
+  fluorescent stutter of the whole sign; stars twinkle in three phase groups
+- Debug URL params: `?pose=open` holds the doors open, `?walk=1` places a
+  customer at the door, `?visit=1` triggers the first visit after 2 s
+
+#### Audio System
+
+- Procedural Web Audio API (no audio files)
+- Soft bandpassed night wind with slow gusts; 118/236 Hz sine hum
+  (signage / vending machines); cricket bursts every few seconds
+- Distant car pass-bys (brown noise through a sweeping lowpass, 30-90 s)
+- Two-tone entrance chime tied to the door events
 
 ## Creating New Scenes (image-to-scene pipeline)
 
