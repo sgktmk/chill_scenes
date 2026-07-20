@@ -14,7 +14,7 @@ h1{font-size:2.4rem;font-weight:300;letter-spacing:.15em;margin-bottom:.3em;colo
 .card{display:block;text-decoration:none;color:inherit;background:rgba(255,150,50,.04);border:2px solid rgba(255,150,50,.18);border-radius:12px;overflow:hidden;transition:border-color .3s,background .3s,transform .3s}
 .card:hover{border-color:rgba(255,150,50,.45);background:rgba(255,150,50,.08);transform:translateY(-2px)}
 .card-visual{height:140px;display:flex;align-items:center;justify-content:center;background:rgba(10,10,18,.5);overflow:hidden}
-.card-visual svg{width:100%;height:100%;display:block}
+.card-visual img{width:100%;height:100%;display:block;object-fit:cover;image-rendering:pixelated}
 .card-body{padding:16px 20px}
 .card-title{font-size:1.15rem;font-weight:500;color:#ffcc88;margin-bottom:4px}
 .card-desc{font-size:.82rem;color:rgba(255,180,120,.5);line-height:1.4}
@@ -27,323 +27,38 @@ h1{font-size:2.4rem;font-weight:300;letter-spacing:.15em;margin-bottom:.3em;colo
 
 <div class="grid">
   <a class="card" href="seascape.html">
-    <div class="card-visual">
-      <svg viewBox="0 0 320 140" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
-        <!-- Sky gradient -->
-        <defs>
-          <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#1a0830"/>
-            <stop offset="40%" stop-color="#993050"/>
-            <stop offset="70%" stop-color="#e88020"/>
-            <stop offset="100%" stop-color="#ffee55"/>
-          </linearGradient>
-          <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#cc6622"/>
-            <stop offset="40%" stop-color="#774422"/>
-            <stop offset="100%" stop-color="#1a1433"/>
-          </linearGradient>
-          <radialGradient id="sg" cx=".25" cy=".55" r=".35">
-            <stop offset="0%" stop-color="#ffffee" stop-opacity=".9"/>
-            <stop offset="40%" stop-color="#ffaa33" stop-opacity=".3"/>
-            <stop offset="100%" stop-color="#ff6600" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <!-- Sky -->
-        <rect x="0" y="0" width="320" height="75" fill="url(#g1)"/>
-        <!-- Sun glow -->
-        <circle cx="80" cy="72" r="40" fill="url(#sg)"/>
-        <!-- Sun -->
-        <rect x="68" y="60" width="24" height="22" fill="#ffee66"/>
-        <rect x="70" y="58" width="20" height="2" fill="#ffee66"/>
-        <rect x="70" y="80" width="20" height="2" fill="#ffdd44"/>
-        <rect x="66" y="62" width="2" height="18" fill="#ffee66"/>
-        <rect x="92" y="62" width="2" height="18" fill="#ffdd44"/>
-        <!-- Horizon -->
-        <rect x="0" y="73" width="320" height="1" fill="#cc6622"/>
-        <!-- Sea -->
-        <rect x="0" y="74" width="320" height="66" fill="url(#g2)"/>
-        <!-- Waves -->
-        <rect x="0" y="80" width="55" height="2" fill="#bb7733" opacity=".18"/>
-        <rect x="80" y="78" width="40" height="2" fill="#bb7733" opacity=".15"/>
-        <rect x="200" y="80" width="50" height="2" fill="#bb7733" opacity=".16"/>
-        <rect x="10" y="90" width="65" height="2" fill="#bb7733" opacity=".2"/>
-        <rect x="110" y="92" width="45" height="2" fill="#bb7733" opacity=".18"/>
-        <rect x="200" y="89" width="60" height="2" fill="#bb7733" opacity=".19"/>
-        <rect x="0" y="105" width="85" height="3" fill="#bb7733" opacity=".25"/>
-        <rect x="125" y="107" width="65" height="3" fill="#bb7733" opacity=".22"/>
-        <rect x="225" y="104" width="95" height="3" fill="#bb7733" opacity=".22"/>
-        <rect x="0" y="120" width="125" height="4" fill="#bb7733" opacity=".3"/>
-        <rect x="165" y="123" width="90" height="4" fill="#bb7733" opacity=".28"/>
-        <!-- Sun road on water -->
-        <rect x="68" y="74" width="24" height="50" fill="#ffbb33" opacity=".12"/>
-        <rect x="72" y="74" width="16" height="30" fill="#ffcc55" opacity=".1"/>
-        <!-- Stars -->
-        <rect x="12" y="5" width="1" height="1" fill="#fff" opacity=".4"/>
-        <rect x="45" y="12" width="1" height="1" fill="#fff" opacity=".3"/>
-        <rect x="280" y="8" width="1" height="1" fill="#fff" opacity=".35"/>
-        <rect x="260" y="4" width="1" height="1" fill="#fff" opacity=".3"/>
-        <rect x="310" y="2" width="1" height="1" fill="#fff" opacity=".25"/>
-      </svg>
-    </div>
+    <div class="card-visual"><img src="assets/thumbs/seascape.png" alt="" loading="lazy"></div>
     <div class="card-body">
       <div class="card-title">Seascape</div>
       <div class="card-desc">A full day-night cycle over the sea with procedural audio, ships, and pixel-art waves.</div>
     </div>
   </a>
   <a class="card" href="campfire.html">
-    <div class="card-visual">
-      <svg viewBox="0 0 320 140" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
-        <defs>
-          <radialGradient id="fg" cx="50%" cy="75%" r="45%">
-            <stop offset="0%" stop-color="#ff6600" stop-opacity="0.35"/>
-            <stop offset="60%" stop-color="#ff3300" stop-opacity="0.1"/>
-            <stop offset="100%" stop-color="#000" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <!-- Night sky -->
-        <rect width="320" height="140" fill="#070714"/>
-        <rect y="0" width="320" height="70" fill="#0d0d22" opacity="0.5"/>
-        <!-- Stars -->
-        <rect x="20" y="8" width="1" height="1" fill="#eeeeff" opacity="0.5"/>
-        <rect x="55" y="15" width="2" height="2" fill="#ffffff" opacity="0.4"/>
-        <rect x="100" y="5" width="1" height="1" fill="#ddddef" opacity="0.6"/>
-        <rect x="150" y="20" width="1" height="1" fill="#ccccee" opacity="0.3"/>
-        <rect x="210" y="8" width="1" height="1" fill="#eeeeff" opacity="0.5"/>
-        <rect x="260" y="18" width="2" height="2" fill="#ffffff" opacity="0.35"/>
-        <rect x="295" y="6" width="1" height="1" fill="#ddddef" opacity="0.45"/>
-        <!-- Distant trees -->
-        <g fill="#080815" opacity="0.7">
-          <polygon points="10,95 18,60 26,95"/>
-          <polygon points="22,95 30,55 38,95"/>
-          <polygon points="40,95 47,65 54,95"/>
-          <polygon points="265,95 272,58 279,95"/>
-          <polygon points="280,95 288,50 296,95"/>
-          <polygon points="295,95 302,60 309,95"/>
-        </g>
-        <!-- Ground -->
-        <rect x="0" y="118" width="320" height="22" fill="#1a1510"/>
-        <!-- Fire glow -->
-        <ellipse cx="160" cy="105" rx="45" ry="30" fill="url(#fg)"/>
-        <!-- Stones -->
-        <g>
-          <rect x="132" y="114" width="6" height="4" rx="1" fill="#4a4540"/>
-          <rect x="140" y="115" width="5" height="3" rx="1" fill="#555045"/>
-          <rect x="175" y="114" width="6" height="4" rx="1" fill="#504b44"/>
-          <rect x="183" y="115" width="5" height="3" rx="1" fill="#484340"/>
-        </g>
-        <!-- Logs -->
-        <rect x="145" y="112" width="16" height="4" fill="#4a2810" transform="rotate(-8, 153, 114)"/>
-        <rect x="157" y="112" width="16" height="4" fill="#4d2b12" transform="rotate(8, 165, 114)"/>
-        <!-- Flame -->
-        <g>
-          <rect x="153" y="100" width="14" height="4" fill="#aa2200"/>
-          <rect x="155" y="96" width="10" height="4" fill="#ee5500"/>
-          <rect x="157" y="92" width="6" height="4" fill="#ff8800"/>
-          <rect x="158" y="88" width="4" height="4" fill="#ffcc33"/>
-          <rect x="159" y="86" width="2" height="2" fill="#ffdd66"/>
-        </g>
-        <!-- Sparks -->
-        <rect x="160" y="82" width="1" height="1" fill="#ffcc00" opacity="0.8"/>
-        <rect x="157" y="78" width="1" height="1" fill="#ffaa00" opacity="0.6"/>
-        <rect x="163" y="80" width="1" height="1" fill="#ffee44" opacity="0.7"/>
-      </svg>
-    </div>
+    <div class="card-visual"><img src="assets/thumbs/campfire.png" alt="" loading="lazy"></div>
     <div class="card-body">
       <div class="card-title">Campfire</div>
       <div class="card-desc">A pixel-art campfire under the stars with crackling sounds, sparks, and shooting stars.</div>
     </div>
   </a>
   <a class="card" href="snowy-forest.html">
-    <div class="card-visual">
-      <svg viewBox="0 0 320 140" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
-        <defs>
-          <linearGradient id="sf-sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#060610"/>
-            <stop offset="12%"  stop-color="#0a0e1c"/>
-            <stop offset="28%"  stop-color="#101828"/>
-            <stop offset="50%"  stop-color="#162038"/>
-            <stop offset="72%"  stop-color="#1c3050"/>
-            <stop offset="100%" stop-color="#264068"/>
-          </linearGradient>
-          <radialGradient id="sf-moon-glow" cx="68.75%" cy="17.86%" r="22%">
-            <stop offset="0%"   stop-color="#f0eccc" stop-opacity="0.45"/>
-            <stop offset="40%"  stop-color="#d0c898" stop-opacity="0.18"/>
-            <stop offset="100%" stop-color="#264068" stop-opacity="0"/>
-          </radialGradient>
-          <linearGradient id="sf-snow" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#e0ecf0"/>
-            <stop offset="18%"  stop-color="#c8dce8"/>
-            <stop offset="55%"  stop-color="#98b8d0"/>
-            <stop offset="100%" stop-color="#5878a0"/>
-          </linearGradient>
-        </defs>
-
-        <!-- SKY -->
-        <rect width="320" height="140" fill="url(#sf-sky)"/>
-        <rect width="320" height="140" fill="url(#sf-moon-glow)"/>
-
-        <!-- MOON -->
-        <ellipse cx="220" cy="25" rx="11" ry="11" fill="#d0c898"/>
-        <ellipse cx="220" cy="25" rx="9"  ry="9"  fill="#e0d8b0"/>
-        <ellipse cx="220" cy="25" rx="7"  ry="7"  fill="#f0eccc"/>
-        <ellipse cx="220" cy="25" rx="4"  ry="4"  fill="#f8f4e0"/>
-
-        <!-- STARS -->
-        <rect x="15"  y="5"  width="1" height="1" fill="#e0ecf0" opacity="0.8"/>
-        <rect x="42"  y="12" width="1" height="1" fill="#f0f4f0" opacity="0.65"/>
-        <rect x="73"  y="7"  width="1" height="1" fill="#c8dce8" opacity="0.7"/>
-        <rect x="95"  y="18" width="2" height="2" fill="#f0f4f0" opacity="0.5"/>
-        <rect x="118" y="8"  width="1" height="1" fill="#e0ecf0" opacity="0.65"/>
-        <rect x="148" y="14" width="1" height="1" fill="#f0f4f0" opacity="0.55"/>
-        <rect x="165" y="5"  width="1" height="1" fill="#c8dce8" opacity="0.6"/>
-        <rect x="190" y="11" width="1" height="1" fill="#b0cce0" opacity="0.5"/>
-        <rect x="248" y="9"  width="1" height="1" fill="#e0ecf0" opacity="0.6"/>
-        <rect x="272" y="16" width="1" height="1" fill="#f0f4f0" opacity="0.5"/>
-        <rect x="295" y="6"  width="1" height="1" fill="#c8dce8" opacity="0.65"/>
-        <rect x="308" y="22" width="1" height="1" fill="#b0cce0" opacity="0.5"/>
-        <rect x="58"  y="28" width="1" height="1" fill="#98b8d0" opacity="0.4"/>
-        <rect x="130" y="30" width="1" height="1" fill="#98b8d0" opacity="0.4"/>
-        <rect x="200" y="35" width="1" height="1" fill="#7898b8" opacity="0.35"/>
-
-        <!-- DISTANT MOUNTAINS -->
-        <polygon points="0,70 30,56 60,68 90,51 125,64 158,48 188,61 215,46 248,60 278,44 308,57 320,52 320,84 0,84" fill="#162038"/>
-        <g fill="#384858" opacity="0.5">
-          <polygon points="22,60 30,56 38,61"/>
-          <polygon points="82,55 90,51 98,56"/>
-          <polygon points="150,52 158,48 166,53"/>
-          <polygon points="207,50 215,46 223,51"/>
-          <polygon points="270,48 278,44 286,49"/>
-        </g>
-
-        <!-- FAR TREES — tiny silhouettes at horizon (drawn before snow ground) -->
-        <g fill="#1c3050">
-          <polygon points="82,83  87,69  92,83"/>
-          <polygon points="108,83 115,66 122,83"/>
-          <polygon points="165,83 170,68 175,83"/>
-          <polygon points="198,83 204,65 210,83"/>
-          <polygon points="238,83 244,68 250,83"/>
-          <polygon points="260,83 265,68 270,83"/>
-        </g>
-
-        <!-- SNOW GROUND -->
-        <rect x="0" y="84" width="320" height="56" fill="url(#sf-snow)"/>
-        <rect x="0" y="84" width="320" height="1"  fill="#e0ecf0" opacity="0.8"/>
-
-        <!-- MID TREES — dark silhouettes, 3 tiers each -->
-        <!-- M0 cx=100 -->
-        <polygon points="100,60 93,70 107,70" fill="#0e1c22"/>
-        <polygon points="100,70 91,80 109,80" fill="#0e1c22"/>
-        <polygon points="100,80 90,90 110,90" fill="#0e1c22"/>
-        <!-- M1 cx=120 -->
-        <polygon points="120,55 113,66 127,66" fill="#0e1c22"/>
-        <polygon points="120,66 111,77 129,77" fill="#0e1c22"/>
-        <polygon points="120,77 109,88 131,88" fill="#0e1c22"/>
-        <!-- M2 cx=160 -->
-        <polygon points="160,50 151,63 169,63" fill="#0e1c22"/>
-        <polygon points="160,63 149,76 171,76" fill="#0e1c22"/>
-        <polygon points="160,76 147,88 173,88" fill="#0e1c22"/>
-        <!-- M3 cx=202 -->
-        <polygon points="202,55 195,66 209,66" fill="#0e1c22"/>
-        <polygon points="202,66 193,77 211,77" fill="#0e1c22"/>
-        <polygon points="202,77 191,88 213,88" fill="#0e1c22"/>
-        <!-- M4 cx=220 -->
-        <polygon points="220,60 213,70 227,70" fill="#0e1c22"/>
-        <polygon points="220,70 211,80 229,80" fill="#0e1c22"/>
-        <polygon points="220,80 210,90 230,90" fill="#0e1c22"/>
-
-        <!-- SNOW PARTICLES -->
-        <g fill="#f0f4f0" opacity="0.4">
-          <rect x="103" y="40" width="1" height="1"/>
-          <rect x="140" y="52" width="1" height="1"/>
-          <rect x="172" y="36" width="1" height="1"/>
-          <rect x="256" y="44" width="1" height="1"/>
-          <rect x="185" y="60" width="2" height="2" opacity="0.3"/>
-        </g>
-      </svg>
-    </div>
+    <div class="card-visual"><img src="assets/thumbs/snowy-forest.png" alt="" loading="lazy"></div>
     <div class="card-body">
       <div class="card-title">Snowy Forest</div>
       <div class="card-desc">A moonlit winter forest at night with snow-laden conifers, twinkling stars, and wind ambience.</div>
     </div>
   </a>
   <a class="card" href="rice-terrace.html">
-    <div class="card-visual">
-      <svg viewBox="0 0 320 140" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
-        <defs>
-          <linearGradient id="rt-sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#3f83dc"/>
-            <stop offset="60%"  stop-color="#84b8ee"/>
-            <stop offset="100%" stop-color="#c8e4f6"/>
-          </linearGradient>
-          <radialGradient id="rt-sun-glow" cx="21.9%" cy="21.4%" r="18%">
-            <stop offset="0%"   stop-color="#ffd890" stop-opacity="0.55"/>
-            <stop offset="100%" stop-color="#ffd890" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-
-        <!-- SKY -->
-        <rect width="320" height="80" fill="url(#rt-sky)"/>
-        <rect width="320" height="80" fill="url(#rt-sun-glow)"/>
-
-        <!-- SUN -->
-        <rect x="66" y="26" width="8" height="8" fill="#ffe9a0"/>
-        <rect x="68" y="24" width="4" height="2" fill="#ffe9a0"/>
-        <rect x="68" y="34" width="4" height="2" fill="#ffe9a0"/>
-        <rect x="64" y="28" width="2" height="4" fill="#ffe9a0"/>
-        <rect x="74" y="28" width="2" height="4" fill="#ffe9a0"/>
-        <rect x="68" y="28" width="4" height="4" fill="#fff8d0"/>
-
-        <!-- BLACK KITE -->
-        <rect x="118" y="42" width="3" height="1" fill="#33405c"/>
-        <rect x="123" y="42" width="3" height="1" fill="#33405c"/>
-        <rect x="120" y="41" width="4" height="1" fill="#33405c"/>
-
-        <!-- MT. FUJI (upper right) -->
-        <polygon points="232,16 248,16 254,28 262,40 274,52 292,64 320,74 320,80 150,80 158,74 176,62 192,50 204,40 214,28" fill="#6e7aae"/>
-        <polygon points="232,16 240,16 236,40 224,56 204,70 166,76 158,74 176,62 192,50 204,40 214,28" fill="#8a94c4"/>
-        <polygon points="228,16 252,16 256,30 249,27 244,33 238,27 232,33 226,27 220,31 224,26" fill="#f4f7fa"/>
-
-        <!-- FAR HILLS -->
-        <polygon points="0,64 30,56 70,60 110,54 150,62 185,58 205,66 205,80 0,80" fill="#7e96b8"/>
-
-        <!-- VALLEY FIELDS -->
-        <rect x="0" y="78" width="320" height="5" fill="#9db88e"/>
-
-        <!-- TERRACES: water / grass lip / dirt wall bands -->
-        <rect x="0" y="83"  width="320" height="7" fill="#9cc0dc"/>
-        <rect x="0" y="90"  width="320" height="2" fill="#63aa50"/>
-        <rect x="0" y="92"  width="320" height="2" fill="#7c5c40"/>
-        <rect x="0" y="94"  width="320" height="8" fill="#a2c4de"/>
-        <rect x="0" y="102" width="320" height="2" fill="#5aa04c"/>
-        <rect x="0" y="104" width="320" height="3" fill="#7c5c40"/>
-        <rect x="0" y="107" width="320" height="9" fill="#9cc0dc"/>
-        <rect x="0" y="116" width="320" height="2" fill="#63aa50"/>
-        <rect x="0" y="118" width="320" height="3" fill="#6e5038"/>
-        <rect x="0" y="121" width="320" height="10" fill="#a2c4de"/>
-        <rect x="0" y="131" width="320" height="2" fill="#5aa04c"/>
-        <rect x="0" y="133" width="320" height="4" fill="#7c5c40"/>
-        <rect x="0" y="137" width="320" height="3" fill="#9cc0dc"/>
-
-        <!-- RICE SEEDLING ROWS -->
-        <g fill="#5cb45c">
-          <rect x="12" y="85" width="1" height="2"/><rect x="40" y="86" width="1" height="2"/><rect x="72" y="85" width="1" height="2"/><rect x="104" y="86" width="1" height="2"/><rect x="150" y="85" width="1" height="2"/><rect x="200" y="86" width="1" height="2"/><rect x="250" y="85" width="1" height="2"/><rect x="290" y="86" width="1" height="2"/>
-          <rect x="24" y="96" width="1" height="2"/><rect x="60" y="97" width="1" height="2"/><rect x="96" y="96" width="1" height="2"/><rect x="132" y="97" width="1" height="2"/><rect x="180" y="96" width="1" height="2"/><rect x="230" y="97" width="1" height="2"/><rect x="272" y="96" width="1" height="2"/><rect x="306" y="97" width="1" height="2"/>
-          <rect x="16" y="110" width="2" height="2"/><rect x="52" y="111" width="2" height="2"/><rect x="88" y="110" width="2" height="2"/><rect x="160" y="111" width="2" height="2"/><rect x="210" y="110" width="2" height="2"/><rect x="260" y="111" width="2" height="2"/><rect x="300" y="110" width="2" height="2"/>
-          <rect x="30" y="124" width="2" height="3"/><rect x="70" y="125" width="2" height="3"/><rect x="120" y="124" width="2" height="3"/><rect x="182" y="125" width="2" height="3"/><rect x="240" y="124" width="2" height="3"/><rect x="286" y="125" width="2" height="3"/>
-        </g>
-
-        <!-- EGRET -->
-        <rect x="138" y="108" width="5" height="2" fill="#f6f8fa"/>
-        <rect x="138" y="107" width="1" height="1" fill="#f6f8fa"/>
-        <rect x="136" y="105" width="2" height="2" fill="#f6f8fa"/>
-        <rect x="135" y="106" width="1" height="1" fill="#eec84e"/>
-        <rect x="139" y="110" width="1" height="2" fill="#262a32"/>
-        <rect x="141" y="110" width="1" height="2" fill="#262a32"/>
-      </svg>
-    </div>
+    <div class="card-visual"><img src="assets/thumbs/rice-terrace.png" alt="" loading="lazy"></div>
     <div class="card-body">
       <div class="card-title">Rice Terraces</div>
       <div class="card-desc">GBA-style terraced rice paddies below Mt. Fuji, cycling from dawn to night with kites, insects, and a rare egret visitor.</div>
+    </div>
+  </a>
+  <a class="card" href="chill-mart.html">
+    <div class="card-visual"><img src="assets/thumbs/chill-mart.png" alt="" loading="lazy"></div>
+    <div class="card-body">
+      <div class="card-title">Chill Mart</div>
+      <div class="card-desc">A late-night convenience store with blinking signage, chime-and-slide doors, and the occasional customer dropping by.</div>
     </div>
   </a>
 

@@ -26,13 +26,20 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
 - `snowy-forest.html` — "Snowy Forest" scene (moonlit winter forest at night)
 - `rice-terrace.html` — "Rice Terraces" scene (GBA-style terraced paddies below Mt. Fuji with a day-night cycle)
+- `chill-mart.html` — "Chill Mart" scene (late-night convenience store with sliding doors and customers)
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
 - `shared/cycle.js` — Day-night cycle keyframe interpolation engine (`createCycle()`)
 - `shared/audio-kit.js` — Procedural Web Audio boilerplate (`createAudioEngine()`)
+- `shared/sprite.js` — Sprite runtime for cutout parts (`createSprite()`/`createSprites()`: move, state swap, flip, hide)
 - `tools/png2pixel.mjs` — PNG → PixelBuffer data converter (zero-dependency Node script)
+- `tools/cutout.mjs` — Splits refs material into background + moving-part sprites sharing one palette
+- `tools/lib/png.mjs` — Shared PNG decode/encode, quantization, and RLE library for the tools
+- `tools/selftest.mjs` — Zero-dependency smoke test for the conversion tooling (`node tools/selftest.mjs`)
 - `tools/screenshot.sh` — Headless Chromium scene capture for visual verification
+- `tools/thumbs.sh` — Regenerates landing-page thumbnails from real scene captures
+- `assets/thumbs/` — Generated scene thumbnails shown on the landing page
 - `templates/scene-template.html` — Runnable boilerplate for new pixel-art scenes
 - `refs/` — Per-scene reference material (`<scene>/base.png` + `spec.md`); `refs/_template/spec.md` is the blank spec form
 - `docs/scene-workflow.md` — Image-to-scene workflow manual (Japanese, for the repo owner)
@@ -43,7 +50,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 
 ### Landing Page (`index.html`)
 
-A simple static hub page with card links to each scene. No JavaScript. Dark theme with warm orange accents matching the scene UI.
+A simple static hub page with card links to each scene. No JavaScript. Dark theme with warm orange accents matching the scene UI. Card thumbnails are real captures of the scenes (`assets/thumbs/<scene>.png`, regenerated with `tools/thumbs.sh`) shown with `object-fit: cover` — never hand-redrawn previews.
 
 ### Seascape Scene (`seascape.html`)
 
@@ -160,33 +167,84 @@ Single self-contained HTML file rendered at the GBA native resolution (240×160 
 - Black kite (トンビ) "pee-hyororo" call: sine glide 1480→1580→920 Hz with 11 Hz vibrato onset, daytime only, occasional distant reply
 - Faint frog chorus at night (sawtooth through bandpass)
 
+### Chill Mart Scene (`chill-mart.html`)
+
+Single self-contained HTML file, 256×192 (4:3) fixed night scene built from
+`refs/chill-mart/` with the layered cutout pipeline (first scene to use it).
+
+#### Visual Elements
+
+- Background from `base.png` via `tools/cutout.mjs`; 32-colour unified palette
+- Sliding automatic doors: two mask-cutout sprites (`mask-10-door_l` /
+  `mask-20-door_r`) inside an SVG clipPath over the doorway, so opening
+  panels retract into the walls. No parts/bg images were provided (mask
+  fallback experiment): the doorway interior behind the doors is rebuilt at
+  load time by blitting the glass-door sprites back into the background and
+  erasing their stiles/handles with neighbouring glass columns
+- Procedural pixel customers (10×22, front/back/side views × 2 walk frames,
+  3 outfits, drop shadow) arrive every 1-3 minutes. Movement follows the
+  terrain: along the road at the bottom, straight up the parking-lot aisle
+  (back view) to the door, chime, step inside; on leaving they walk straight
+  down (front view) then turn left/right along the road. Rare passers-by
+  cross along the road without entering
+- Pole sign bulb chase (two alternating CSS phase groups) + occasional
+  fluorescent stutter of the whole sign; stars twinkle in three phase groups
+- Debug URL params: `?pose=open` holds the doors open, `?walk=1` places a
+  customer at the door, `?visit=1` triggers the first visit after 2 s
+
+#### Audio System
+
+- Procedural Web Audio API (no audio files)
+- Soft bandpassed night wind with slow gusts; 118/236 Hz sine hum
+  (signage / vending machines); cricket bursts every few seconds
+- Distant car pass-bys (brown noise through a sweeping lowpass, 30-90 s)
+- Two-tone entrance chime tied to the door events
+
 ## Creating New Scenes (image-to-scene pipeline)
 
-New pixel-art scenes are built from a reference image, not drawn procedurally
-by hand. The composition comes from `refs/<scene>/base.png`, converted to
-palette-indexed pixel data; motion and audio are specified in
-`refs/<scene>/spec.md` and implemented on top. Full manual:
-`docs/scene-workflow.md`. Claude Code should follow the `port-scene` skill
-(`.claude/skills/port-scene/SKILL.md`) when asked to build a scene from refs.
+New pixel-art scenes are built from reference images, not drawn procedurally
+by hand. The composition comes from `refs/<scene>/base.png`; each moving
+object is provided as its own full-canvas transparent PNG in
+`refs/<scene>/parts/NN-name[@state].png` (NN = z-order, `@state` = extra
+frames like a door's open state), optionally with `bg.png` (background
+behind the parts). Motion and audio are specified in `refs/<scene>/spec.md`
+and implemented on top. Full manual: `docs/scene-workflow.md`. Claude Code
+should follow the `port-scene` skill (`.claude/skills/port-scene/SKILL.md`)
+when asked to build a scene from refs.
 
 ```bash
-# image → JS data ({ w, h, palette, data }, ≤32 colours, RLE-encoded)
+# refs → background + part sprites on ONE unified palette, with
+# verification previews (Read them to check the split quality)
+node tools/cutout.mjs refs/<scene> -w 240 -h 160 -o /tmp/img.js --preview /tmp/prev
+
+# single flat image (scene with no moving parts)
 node tools/png2pixel.mjs refs/<scene>/base.png -w 240 -h 160
 
 # verify a scene at a frozen day-night phase (?t=) — local files are served
 # via a temporary http server (root-absolute /shared/ paths break file://)
 tools/screenshot.sh "<scene>.html?t=0.3" /tmp/day.png
+
+# smoke-test the tooling after touching tools/ or shared/
+node tools/selftest.mjs
 ```
 
 Key invariants:
 
 - The reference image is the source of truth for composition; procedural
-  drawing is only for dynamic elements (sun/moon, sprites, particles).
+  drawing is only for dynamic elements (sun/moon, particles, touch-ups).
+- **Motion is structural, never faked**: anything that moves, appears, or
+  changes shape is a cutout part rendered via `createSprites()`
+  (shared/sprite.js) with real background behind it — never implemented by
+  nudging/blurring pixels of the flat background image. If a part image is
+  missing from refs, ask the user instead of improvising.
 - Converted data loads via `PixelBuffer.fromImage()` / `pb.blit()`; palette
   entry `'none'` (index 0 when the source has transparency) marks
-  transparent sky for dynamic sky bands.
+  transparent sky for dynamic sky bands. cutout output (`<NAME>_BG` /
+  `<NAME>_PARTS`) shares a single palette, and every part state carries its
+  scene position (`ox`, `oy`).
 - Every scene supports `?t=<0-1>` to freeze the cycle phase (built into
-  `createCycle()`), enabling reproducible screenshot verification.
+  `createCycle()`), plus a debug URL param per part pose / rare event,
+  enabling reproducible screenshot verification of every state.
 
 ## Maintenance Notes
 
@@ -228,6 +286,21 @@ pb.blit(img, dx, dy, opts);      // paste ('none' entries skipped; opts.map rema
 PixelBuffer.decodeRLE(img.data); // raw Uint8Array of palette indices (e.g. masks)
 ```
 
+#### Sprite API (`shared/sprite.js`)
+
+Structural motion for `tools/cutout.mjs` parts (requires `shared/pixel.js`).
+Each sprite is an SVG group; a sprite's `(x, y)` is the scene position of its
+default state's top-left corner, and other states keep their authored offset,
+so swapping frames never needs re-positioning.
+
+```javascript
+const sprites = createSprites(parentG, SCENE_PARTS); // all parts, z-sorted
+sprites.door.setState('open');   // frame swap — background shows behind
+sprites.boat.moveTo(x, y);       // scene coordinates (moveBy, moveHome too)
+sprites.bird.setFlip(true).hide();
+const s = createSprite(parentG, imgOrStates, { initial, x, y }); // single
+```
+
 #### Cycle API (`shared/cycle.js`)
 
 `createCycle({ cycle, startOffset, keyframes })` returns `{ phase, sample, mixRgb, ... }`.
@@ -264,8 +337,11 @@ image-based scenes follow `docs/scene-workflow.md` / the `port-scene` skill):
 
 - [ ] Set `lang="en"` and title format `<Name> — Chill Scenes`
 - [ ] Include back button and audio panel HTML, load `shared/scene-ui.css` and `shared/scene-ui.js`, call `initSceneAudio()`
+- [ ] Convert with `tools/cutout.mjs` when anything moves; verify the `--preview` PNGs (clean bg, complete parts)
+- [ ] Implement all moving objects as `createSprites()` sprites — never by nudging pixels of the flat image
 - [ ] Support `?t=` phase freeze and verify day/dusk/night with `tools/screenshot.sh`
-- [ ] Add card with preview SVG to `index.html` grid
+- [ ] Add a debug URL param per part pose / rare event and screenshot-verify each state
+- [ ] Add the scene to `tools/thumbs.sh`, run it, and add a card with the generated `assets/thumbs/<scene>.png` to `index.html`
 - [ ] Add OGP meta tags in `<head>` (once implemented)
 - [ ] Update this file's Files list and Architecture section
 - [ ] No `vercel.json` change needed (`cleanUrls` is global)

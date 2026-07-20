@@ -9,7 +9,15 @@
  *     onStop()           — called when user clicks stop
  *     onVolumeChange(v)  — called with slider value 0-100
  *   });
+ *
+ * URL param ?ui=0 hides the back button and audio panel — used for
+ * clean captures (thumbnails via tools/thumbs.sh, screenshots).
  */
+if (new URLSearchParams(location.search).get('ui') === '0') {
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.back, .ap').forEach((el) => { el.style.display = 'none'; });
+  });
+}
 function initSceneAudio({ onStart, onStop, onVolumeChange }) {
   const btn = document.getElementById('aBtn');
   const slider = document.getElementById('vSl');
