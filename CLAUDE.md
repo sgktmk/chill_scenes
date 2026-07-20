@@ -38,6 +38,8 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `tools/lib/png.mjs` — Shared PNG decode/encode, quantization, and RLE library for the tools
 - `tools/selftest.mjs` — Zero-dependency smoke test for the conversion tooling (`node tools/selftest.mjs`)
 - `tools/screenshot.sh` — Headless Chromium scene capture for visual verification
+- `tools/thumbs.sh` — Regenerates landing-page thumbnails from real scene captures
+- `assets/thumbs/` — Generated scene thumbnails shown on the landing page
 - `templates/scene-template.html` — Runnable boilerplate for new pixel-art scenes
 - `refs/` — Per-scene reference material (`<scene>/base.png` + `spec.md`); `refs/_template/spec.md` is the blank spec form
 - `docs/scene-workflow.md` — Image-to-scene workflow manual (Japanese, for the repo owner)
@@ -48,7 +50,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 
 ### Landing Page (`index.html`)
 
-A simple static hub page with card links to each scene. No JavaScript. Dark theme with warm orange accents matching the scene UI.
+A simple static hub page with card links to each scene. No JavaScript. Dark theme with warm orange accents matching the scene UI. Card thumbnails are real captures of the scenes (`assets/thumbs/<scene>.png`, regenerated with `tools/thumbs.sh`) shown with `object-fit: cover` — never hand-redrawn previews.
 
 ### Seascape Scene (`seascape.html`)
 
@@ -339,7 +341,7 @@ image-based scenes follow `docs/scene-workflow.md` / the `port-scene` skill):
 - [ ] Implement all moving objects as `createSprites()` sprites — never by nudging pixels of the flat image
 - [ ] Support `?t=` phase freeze and verify day/dusk/night with `tools/screenshot.sh`
 - [ ] Add a debug URL param per part pose / rare event and screenshot-verify each state
-- [ ] Add card with preview SVG to `index.html` grid
+- [ ] Add the scene to `tools/thumbs.sh`, run it, and add a card with the generated `assets/thumbs/<scene>.png` to `index.html`
 - [ ] Add OGP meta tags in `<head>` (once implemented)
 - [ ] Update this file's Files list and Architecture section
 - [ ] No `vercel.json` change needed (`cleanUrls` is global)

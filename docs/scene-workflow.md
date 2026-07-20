@@ -198,4 +198,4 @@ snowy-forest（フクロウ）、seascape（海鳥・コオロギ）。
 - [ ] spec.md の動き・音がすべて実装されている
 - [ ] `?t=` デバッグパラメータが効く
 - [ ] `prefers-reduced-motion` でCSSアニメーションが止まる
-- [ ] index.html にカード追加、CLAUDE.md 更新（vercel.json は `cleanUrls` が全体設定のため変更不要）
+- [ ] `tools/thumbs.sh` にシーンを追記して実行し、生成された実シーンのサムネで index.html にカード追加、CLAUDE.md 更新（vercel.json は `cleanUrls` が全体設定のため変更不要）

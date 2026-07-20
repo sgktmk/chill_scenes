@@ -108,7 +108,10 @@ previews:
 
 ### 5. Integrate
 
-- Add a card with preview SVG to `index.html` (copy an existing card).
+- Add the scene to the SCENES list in `tools/thumbs.sh` (pick a good `?t=`
+  phase) and run it, then add a card to `index.html` (copy an existing
+  card) pointing at the generated `assets/thumbs/<scene>.png` — thumbnails
+  are real captures, never hand-drawn preview SVGs.
 - Update `CLAUDE.md`: Files list + Architecture section for the new scene.
 - `vercel.json` needs no change (`cleanUrls` is global).
 - Run through the checklist at the bottom of `docs/scene-workflow.md` —
