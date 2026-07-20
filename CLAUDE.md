@@ -179,9 +179,12 @@ Single self-contained HTML file, 256×192 (4:3) fixed night scene built from
   fallback experiment): the doorway interior behind the doors is rebuilt at
   load time by blitting the glass-door sprites back into the background and
   erasing their stiles/handles with neighbouring glass columns
-- Procedural pixel customers (8×20, 2 walk frames, 3 outfits) arrive every
-  1-3 minutes: walk in, chime, doors part, step inside; they leave again
-  after 15-45 s. Rare passers-by cross the lot without entering
+- Procedural pixel customers (10×22, front/back/side views × 2 walk frames,
+  3 outfits, drop shadow) arrive every 1-3 minutes. Movement follows the
+  terrain: along the road at the bottom, straight up the parking-lot aisle
+  (back view) to the door, chime, step inside; on leaving they walk straight
+  down (front view) then turn left/right along the road. Rare passers-by
+  cross along the road without entering
 - Pole sign bulb chase (two alternating CSS phase groups) + occasional
   fluorescent stutter of the whole sign; stars twinkle in three phase groups
 - Debug URL params: `?pose=open` holds the doors open, `?walk=1` places a
