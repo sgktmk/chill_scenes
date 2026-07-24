@@ -27,6 +27,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `snowy-forest.html` — "Snowy Forest" scene (moonlit winter forest at night)
 - `rice-terrace.html` — "Rice Terraces" scene (GBA-style terraced paddies below Mt. Fuji with a day-night cycle)
 - `chill-mart.html` — "Chill Mart" scene (late-night convenience store with sliding doors and customers)
+- `orchestra.html` — "Orchestra" scene (concert hall tuning up: 28 cutout musicians, moving bows, open-string audio)
 - `shared/scene-ui.css` — Shared audio panel & back button styles
 - `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
@@ -42,6 +43,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `assets/thumbs/` — Generated scene thumbnails shown on the landing page
 - `templates/scene-template.html` — Runnable boilerplate for new pixel-art scenes
 - `refs/` — Per-scene reference material (`<scene>/base.png` + `spec.md`); `refs/_template/spec.md` is the blank spec form
+- `refs/orchestra/split.mjs` — One-off refs builder for the Orchestra scene (source render → 160×144 `base.png` + `bg.png` + one part PNG per musician/bow)
 - `docs/scene-workflow.md` — Image-to-scene workflow manual (Japanese, for the repo owner)
 - `.claude/skills/port-scene/` — Claude Code skill: checklist for porting a reference image into a scene
 - `vercel.json` — Vercel routing config
@@ -199,6 +201,52 @@ Single self-contained HTML file, 256×192 (4:3) fixed night scene built from
   (signage / vending machines); cricket bursts every few seconds
 - Distant car pass-bys (brown noise through a sweeping lowpass, 30-90 s)
 - Two-tone entrance chime tied to the door events
+
+### Orchestra Scene (`orchestra.html`)
+
+Single self-contained HTML file, 160×144 (Game Boy, 10:9), a fixed indoor
+scene built from `refs/orchestra/` with the cutout pipeline.
+The reference render was an 8.26×-upscaled 160×144 artwork, so `base.png`
+is the artwork restored to its native resolution (16 colours).
+
+#### Visual Elements
+
+- Background from `bg.png` — the empty stage, with the stationary props
+  (harp, timpani, bass drum, music stand, organ façade) left in place
+- **28 musicians, each its own cutout sprite**, plus **11 separate bow
+  sprites** for the string players. `refs/orchestra/split.mjs` builds the
+  parts from `base.png`: faces (bright ovals) seed a geodesic split of the
+  figure mask, so each player gets a tight silhouette; bows are detected as
+  the long thin bright streak inside a player and erased from the body
+  image, so a moving bow reveals the torso underneath
+- Motion is all sprite translation in whole pixels: every player breathes /
+  leans ±1px on their own 2.7–8 s period, and a playing string player's bow
+  slides ±1–2px **along its own principal axis** (computed at load time from
+  the bow sprite's pixels)
+- One state machine drives both the sprites and the audio: a player is
+  "playing" ⇔ their bow is moving ⇔ a note is sounding. ~4–8 players sound
+  at once, swelling to ~20 when the oboe's reference A goes out
+- Debug URL params: `?at=<seconds>` fast-forwards the tuning session and
+  holds that frame, `?pose=bow` freezes bows at full stroke, `?pose=lift`
+  shifts every musician up-left to expose the background behind them,
+  `?pose=home` stands everyone still, `?a=1` sounds the reference A at once
+- `prefers-reduced-motion` holds the whole stage at its reference pose
+
+#### Audio System
+
+- Procedural Web Audio API (no audio files). All voices run through a
+  procedurally generated hall reverb (noise-burst impulse response) and a
+  soft limiter, and are panned by the player's x position on stage
+- Bowed open strings: two detuned sawtooths + a sine body through a
+  lowpass, soft attack, bow-pressure waver, **no vibrato** (open strings).
+  ±13 cents of detune per note gives the beating of a real tuning
+- Pitches are the instruments' open strings — violin G3/D4/A4/E5, viola
+  C3/G3/D4/A4, cello C2/G2/D3/A3, bass E1/A1/D2/G2, winds around A4 — with
+  **A weighted heaviest**, and occasional open-fifth double stops
+- The oboe's reference A4 (bandpassed reed timbre, longer and louder) every
+  ~40–75 s, answered by the rest of the stage
+- Harp plucks, soft timpani taps, and room sounds (chair creaks, page
+  turns, a distant cough) over a quiet hall-air bed
 
 ## Creating New Scenes (image-to-scene pipeline)
 
