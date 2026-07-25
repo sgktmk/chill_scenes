@@ -39,15 +39,19 @@ const L = (o) => lumOf[base[o]];
  * background and stop the flood from leaking into the next player.
  *
  * `subs` splits a limb out of the figure into its own part so it can move
- * on its own: { name, rects, nondark, extend, axis }
- *   nondark  take only the non-outline (mid/bright) pixels in the rects —
- *            used for a trombone slide, whose tube is mid-toned while its
- *            casing outline stays with the body
- *   extend   refill the vacated pixels by copying along -axis instead of
- *            from the surrounding body, so a slide pulled out along `axis`
- *            reveals more tube behind it rather than a hole */
+ * on its own: { name, rects | pixels, nondark, extend, axis }
+ *   rects    x0,y0,x1,y1 boxes; `nondark` narrows them to the non-outline
+ *            (mid/bright) pixels inside
+ *   pixels   an explicit [x, y] list, for a part too tangled with the
+ *            figure to box off — the trombone slides sit right against the
+ *            player's chin and hands
+ *   extend   refill the vacated pixels by copying along -axis rather than
+ *            from the surrounding body (only worth it where the tube really
+ *            does continue straight behind the part) */
 const M = (name, sx, sy, x0, y0, x1, y1, o = {}) => ({ name, sx, sy, box: [x0, y0, x1, y1], ...o });
-const SLIDE = (rects) => [{ name: 'slide', rects, nondark: 1, extend: 1, axis: [1, -1] }];
+// The slide is the U-bend nearest the audience (the bell tube runs up-right
+// behind it and stays put); pulling it out means moving it down-left.
+const SLIDE = (pixels) => [{ name: 'slide', pixels, axis: [-1, 1] }];
 const MUSICIANS = [
   // back row --------------------------------------------------------
   M('harpist',    27, 44,  20, 36,  33,  56,
@@ -62,10 +66,15 @@ const MUSICIANS = [
   M('wind2',      55, 55,  49, 45,  65,  70),
   M('wind3',      71, 56,  65, 46,  79,  70),
   M('wind4',      86, 56,  79, 46,  95,  70),
-  // wind5 / wind6 are trombones — the slide is the outer half of the
-  // two-pixel-wide diagonal tube in front of them
-  M('wind5',     103, 55,  95, 44, 112,  70, { subs: SLIDE([[106, 53, 113, 59]]) }),
-  M('wind6',     118, 55, 112, 44, 130,  70, { subs: SLIDE([[123, 53, 131, 60]]) }),
+  // wind5 / wind6 are trombones. The slide is the U-bend on the near side,
+  // between the player and the audience; the bell tube runs up-right behind
+  // it and stays put. Pushing the slide out moves it down-left.
+  M('wind5',     103, 55,  95, 44, 112,  70, { subs: SLIDE([
+    [106, 58], [107, 59], [108, 59], [106, 60], [106, 61],
+    [103, 61], [103, 62], [104, 62], [105, 62]]) }),
+  M('wind6',     118, 55, 112, 44, 130,  70, { subs: SLIDE([
+    [124, 58], [122, 59], [123, 59], [124, 60], [124, 61],
+    [120, 60], [120, 61], [121, 61], [120, 62], [121, 62], [122, 62], [123, 62]]) }),
   // middle row ------------------------------------------------------
   M('mid1',       36, 76,  27, 66,  45,  90),
   M('mid2',       52, 76,  45, 66,  61,  90),
@@ -233,7 +242,7 @@ const overlays = [];
 MUSICIANS.forEach((m, i) => {
   for (const sub of m.subs || []) {
     const pixels = new Set();
-    for (const [x0, y0, x1, y1] of sub.rects) {
+    for (const [x0, y0, x1, y1] of sub.rects || []) {
       for (let y = y0; y <= y1; y++) {
         for (let x = x0; x <= x1; x++) {
           const o = y * TW + x;
@@ -242,6 +251,14 @@ MUSICIANS.forEach((m, i) => {
           pixels.add(o);
         }
       }
+    }
+    for (const [x, y] of sub.pixels || []) {
+      const o = y * TW + x;
+      if (lab[o] !== i) {
+        throw new Error(m.name + ' subpart "' + sub.name + '": pixel ' + x + ',' + y
+          + ' is not part of that figure');
+      }
+      pixels.add(o);
     }
     if (!pixels.size) throw new Error(m.name + ' subpart "' + sub.name + '" selects nothing');
     overlays.push({ owner: i, name: m.name + '_' + sub.name, pixels, extend: sub.extend, axis: sub.axis });

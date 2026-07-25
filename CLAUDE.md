@@ -221,17 +221,17 @@ is the artwork restored to its native resolution (16 colours).
   tight silhouette; bows are detected as the long thin bright streak inside
   a player; limbs are cut by hand-placed rects (`subs`). Everything split
   out is erased from the body image underneath, so a moving bow reveals the
-  torso behind it. A trombone slide takes only the tube's mid-toned pixels
-  (`nondark`, leaving the dark casing with the body) and its backing is
-  filled by copying the tube along its own axis (`extend`), so pulling the
-  slide out reveals more tube instead of a hole
+  torso behind it. A trombone slide is the U-bend on the near (audience)
+  side — the bell tube behind it stays put — and is listed pixel by pixel
+  (`subs.pixels`) because it touches the player's chin and hands
 - **The figures themselves never move.** Translating a whole figure reads as
   the chair sliding with it, so the musicians stay exactly where the
   reference put them and only the split-out parts move:
   - bow: up to ±2px **along its own principal axis** (computed at load time
     from the bow sprite's pixels) at a roughly constant bow speed, so a
     longer stroke is a slower one
-  - trombone slide: creeps 0–2px out and back while the note is held
+  - trombone slide: the near U-bend pushes 0–2px out (down-left, away
+    from the bell) and back while the note is held
   - mallets / beater: lift, land, rebound — the drum sounds on the landing
   - harp hand: flicks 1px off the string on each pluck
 - One state machine drives both the sprites and the audio: a player is
