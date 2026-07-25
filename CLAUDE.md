@@ -219,18 +219,20 @@ is the artwork restored to its native resolution (16 colours).
   figure mask, so each player gets a tight silhouette; bows are detected as
   the long thin bright streak inside a player and erased from the body
   image, so a moving bow reveals the torso underneath
-- Motion is all sprite translation in whole pixels: every player breathes /
-  leans ±1px on their own 2.7–8 s period, and a playing string player's bow
-  slides ±1–2px **along its own principal axis** (computed at load time from
-  the bow sprite's pixels)
+- **Only the bows move.** Translating a whole figure reads as the chair
+  sliding with it, so the musicians stay exactly where the reference put
+  them; a playing string player's bow slides up to ±2px **along its own
+  principal axis** (computed at load time from the bow sprite's pixels) at
+  a roughly constant bow speed, so a longer stroke is a slower one
 - One state machine drives both the sprites and the audio: a player is
-  "playing" ⇔ their bow is moving ⇔ a note is sounding. ~4–8 players sound
-  at once, swelling to ~20 when the oboe's reference A goes out
+  "playing" ⇔ their bow is moving ⇔ a note is sounding. String players rest
+  only briefly, so 4–8 of the 11 bows are in motion at any moment; ~6–9
+  players sound at once, swelling to ~15–20 when the reference A goes out
 - Debug URL params: `?at=<seconds>` fast-forwards the tuning session and
   holds that frame, `?pose=bow` freezes bows at full stroke, `?pose=lift`
   shifts every musician up-left to expose the background behind them,
   `?pose=home` stands everyone still, `?a=1` sounds the reference A at once
-- `prefers-reduced-motion` holds the whole stage at its reference pose
+- `prefers-reduced-motion` holds every bow at its reference position
 
 #### Audio System
 

@@ -334,10 +334,10 @@ const sprites = createSprites(document.getElementById('partsG'), ORCHESTRA_PARTS
 // A = its A, w = how many extra times A goes into the pool (the whole hall
 // is chasing the same A), str = bows an actual string, so it can double-stop
 const NOTES = {
-  violin: { p: [196.00, 293.66, 440.00, 659.25], A: 440.00, w: 3, g: 0.030, bright: 6.0, str: 1 },
-  viola:  { p: [130.81, 196.00, 293.66, 440.00], A: 440.00, w: 3, g: 0.030, bright: 5.5, str: 1 },
-  cello:  { p: [65.41, 98.00, 146.83, 220.00],   A: 220.00, w: 3, g: 0.034, bright: 7.0, str: 1 },
-  bass:   { p: [41.20, 55.00, 73.42, 98.00],     A: 55.00,  w: 2, g: 0.036, bright: 8.0, str: 1 },
+  violin: { p: [196.00, 293.66, 440.00, 659.25], A: 440.00, w: 3, g: 0.026, bright: 6.0, str: 1 },
+  viola:  { p: [130.81, 196.00, 293.66, 440.00], A: 440.00, w: 3, g: 0.026, bright: 5.5, str: 1 },
+  cello:  { p: [65.41, 98.00, 146.83, 220.00],   A: 220.00, w: 3, g: 0.030, bright: 7.0, str: 1 },
+  bass:   { p: [41.20, 55.00, 73.42, 98.00],     A: 55.00,  w: 2, g: 0.032, bright: 8.0, str: 1 },
   wind:   { p: [293.66, 440.00, 587.33],         A: 440.00, w: 4, g: 0.022, bright: 4.0 },
   brass:  { p: [55.00, 73.42, 110.00],           A: 110.00, w: 2, g: 0.026, bright: 5.0 },
   harp:   { p: [261.63, 293.66, 329.63, 392.00, 523.25], A: 440.00, w: 3, g: 0.030 },
@@ -401,13 +401,10 @@ const PLAYERS = ROSTER.map(([id, fam]) => {
     axis: bow ? bowAxis(ORCHESTRA_PARTS[id + '_bow'].states.base) : [1, 0],
     // stage position → stereo image (the hall seen from the audience)
     pan: Math.max(-0.8, Math.min(0.8, ((st.ox + st.w / 2) / 160 - 0.5) * 1.7)),
-    // idle sway: everyone breathes at their own rate
-    w1: 1.2 + rand() * 1.1, p1: rand() * 6.28,
-    w2: 0.8 + rand() * 0.9, p2: rand() * 6.28,
     // how often this one reaches for their strings — keeps the murmur
     // from falling into lockstep after a tutti
     eager: 0.5 + rand() * 1.2,
-    playing: false, next: rand() * 22, bowHz: 1, bowPh: 0,
+    playing: false, next: rand() * 22, bowHz: 1, bowPh: 0, bowAmp: 2,
   };
 });
 
@@ -419,14 +416,22 @@ const PLAYERS = ROSTER.map(([id, fam]) => {
 let tuttiUntil = 0, nextTutti = 55 + Math.random() * 70;
 let nextRefA = 3;
 
+// The bows are what the eye follows, so the string players keep coming
+// back to them; the winds sit out longer between notes.
 function restLen(pl) {
-  const base = pl.fam === 'timp' ? 25 : pl.fam === 'harp' ? 12 : 3.5;
-  return (base + Math.random() * (base + 16)) * pl.eager;
+  if (pl.fam === 'timp') return 25 + Math.random() * 41;
+  if (pl.fam === 'harp') return 12 + Math.random() * 24;
+  if (NOTES[pl.fam].str) return (2 + Math.random() * 7) * pl.eager;
+  return (8 + Math.random() * 26) * pl.eager;
 }
 
 function startNote(pl, t) {
   pl.playing = true;
-  pl.bowHz = 0.75 + Math.random() * 0.9;
+  // a tuning stroke uses most of the bow — up to ±2px of travel on a 5-8px
+  // bow, past which the bow leaves the player's arm behind — and the bow
+  // speed stays roughly constant, so a longer stroke is a slower one
+  pl.bowAmp = 1.5 + Math.random() * 0.85;
+  pl.bowHz = (7 + Math.random() * 6) / (6.283 * pl.bowAmp);
   pl.bowPh = Math.random() * 6.28;
   const N = NOTES[pl.fam];
   const dur = pl.fam === 'timp' ? 1.2
@@ -464,18 +469,15 @@ function step(t) {
     }
   }
 
+  // Only the bows move. Translating a whole figure reads as the chair
+  // sliding too, so the musicians stay exactly where the reference put
+  // them and the bowing carries the scene.
   for (const pl of PLAYERS) {
-    // amplitudes sit just above 0.5 so rounding yields an occasional 1px
-    // lean rather than a constant jitter; playing leans a little more
-    const amp = pl.playing ? 1 : 0.85;
-    const dx = Math.round(amp * 0.62 * Math.sin(t * pl.w2 + pl.p2));
-    const dy = Math.round(amp * 0.72 * Math.sin(t * pl.w1 + pl.p1));
-    pl.s.moveTo(pl.hx + dx, pl.hy + dy);
-    if (pl.bow) {
-      let s = 0;
-      if (pl.playing) s = Math.round(1.6 * Math.sin(t * 6.283 * pl.bowHz + pl.bowPh));
-      pl.bow.moveTo(pl.bhx + dx + s * pl.axis[0], pl.bhy + dy + s * pl.axis[1]);
-    }
+    if (!pl.bow) continue;
+    const s = pl.playing
+      ? Math.round(pl.bowAmp * Math.sin(t * 6.283 * pl.bowHz + pl.bowPh))
+      : 0;
+    pl.bow.moveTo(pl.bhx + s * pl.axis[0], pl.bhy + s * pl.axis[1]);
   }
 }
 
@@ -488,8 +490,7 @@ function pose(kind) {
       pl.s.moveTo(pl.hx - 5, pl.hy - 12);
       if (pl.bow) pl.bow.moveTo(pl.bhx - 5, pl.bhy - 12);
     } else if (kind === 'bow') {
-      pl.s.moveTo(pl.hx, pl.hy + 1);
-      if (pl.bow) pl.bow.moveTo(pl.bhx + 2 * pl.axis[0], pl.bhy + 1 + 2 * pl.axis[1]);
+      if (pl.bow) pl.bow.moveTo(pl.bhx + 2 * pl.axis[0], pl.bhy + 2 * pl.axis[1]);
     } else {
       pl.s.moveHome();
       if (pl.bow) pl.bow.moveHome();
