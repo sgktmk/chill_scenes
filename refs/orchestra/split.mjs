@@ -36,21 +36,36 @@ const L = (o) => lumOf[base[o]];
 /* ---------- 2. musicians: seed (face centre) + clip box ----------
  * name, seed x, y, and the box the figure may occupy (x0,y0,x1,y1).
  * Boxes keep big stationary props (timpani, bass drum, harp) in the
- * background and stop the flood from leaking into the next player. */
+ * background and stop the flood from leaking into the next player.
+ *
+ * `subs` splits a limb out of the figure into its own part so it can move
+ * on its own: { name, rects, nondark, extend, axis }
+ *   nondark  take only the non-outline (mid/bright) pixels in the rects —
+ *            used for a trombone slide, whose tube is mid-toned while its
+ *            casing outline stays with the body
+ *   extend   refill the vacated pixels by copying along -axis instead of
+ *            from the surrounding body, so a slide pulled out along `axis`
+ *            reveals more tube behind it rather than a hole */
 const M = (name, sx, sy, x0, y0, x1, y1, o = {}) => ({ name, sx, sy, box: [x0, y0, x1, y1], ...o });
+const SLIDE = (rects) => [{ name: 'slide', rects, nondark: 1, extend: 1, axis: [1, -1] }];
 const MUSICIANS = [
   // back row --------------------------------------------------------
-  M('harpist',    27, 44,  20, 36,  33,  56),
-  M('timpanist',  78, 29,  70, 20,  87,  36),
-  M('bassdrum',  103, 30,  95, 20, 112,  40),
+  M('harpist',    27, 44,  20, 36,  33,  56,
+    { subs: [{ name: 'hand', rects: [[19, 44, 22, 50]] }] }),
+  M('timpanist',  78, 29,  70, 24,  87,  36,
+    { subs: [{ name: 'mallets', rects: [[69, 27, 73, 33]] }] }),
+  M('bassdrum',  103, 30,  95, 24, 112,  40,
+    { subs: [{ name: 'beater', rects: [[98, 28, 102, 35]] }] }),
   M('tubist',    136, 37, 126, 27, 150,  56),
   // woodwinds / brass row -------------------------------------------
   M('wind1',      41, 55,  33, 45,  49,  70),
   M('wind2',      55, 55,  49, 45,  65,  70),
   M('wind3',      71, 56,  65, 46,  79,  70),
   M('wind4',      86, 56,  79, 46,  95,  70),
-  M('wind5',     103, 55,  95, 44, 112,  70),
-  M('wind6',     118, 55, 112, 44, 130,  70),
+  // wind5 / wind6 are trombones — the slide is the outer half of the
+  // two-pixel-wide diagonal tube in front of them
+  M('wind5',     103, 55,  95, 44, 112,  70, { subs: SLIDE([[106, 53, 113, 59]]) }),
+  M('wind6',     118, 55, 112, 44, 130,  70, { subs: SLIDE([[123, 53, 131, 60]]) }),
   // middle row ------------------------------------------------------
   M('mid1',       36, 76,  27, 66,  45,  90),
   M('mid2',       52, 76,  45, 66,  61,  90),
@@ -211,6 +226,28 @@ MUSICIANS.forEach((m, i) => {
   if (bestComp) for (const o of bestComp) bowLab[o] = i;
 });
 
+/* ---------- 5b. hand-placed subparts (mallets, beater, slides) ---------- */
+// overlays[] = { owner, name, z, pixels:Set, extend, axis } — same treatment
+// as a bow: its own part image, erased from the body underneath.
+const overlays = [];
+MUSICIANS.forEach((m, i) => {
+  for (const sub of m.subs || []) {
+    const pixels = new Set();
+    for (const [x0, y0, x1, y1] of sub.rects) {
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          const o = y * TW + x;
+          if (lab[o] !== i) continue;
+          if (sub.nondark && L(o) < DARK) continue;   // leave the casing behind
+          pixels.add(o);
+        }
+      }
+    }
+    if (!pixels.size) throw new Error(m.name + ' subpart "' + sub.name + '" selects nothing');
+    overlays.push({ owner: i, name: m.name + '_' + sub.name, pixels, extend: sub.extend, axis: sub.axis });
+  }
+});
+
 /* ---------- 6. emit ---------- */
 mkdirSync(OUT, { recursive: true });
 const partsDir = join(OUT, 'parts');
@@ -267,10 +304,27 @@ MUSICIANS.forEach((m, i) => {
   let count = 0;
   for (let o = 0; o < N; o++) if (lab[o] === i) { own[o] = 1; count++; }
   if (!count) throw new Error('musician ' + m.name + ' selected nothing');
-  // body image with the bow erased (filled from its own neighbours)
+  const mine = overlays.filter((ov) => ov.owner === i);
+  if (mine.length && bowLab.includes(i)) {
+    throw new Error(m.name + ': a bow and a subpart would claim the same z slot');
+  }
+  // body image with the bow / subparts erased from underneath
   const body = Int16Array.from(base);
   const holes = new Set();
   for (let o = 0; o < N; o++) if (own[o] && bowLab[o] === i) holes.add(o);
+  // an `extend` subpart (a trombone slide) is backed by more tube, copied
+  // inward along its axis, so pulling it out reveals a longer tube
+  for (const ov of mine) {
+    if (!ov.extend) { for (const o of ov.pixels) holes.add(o); continue; }
+    const [ax, ay] = ov.axis;
+    const key = (o) => { const x = o % TW; return x * ax + ((o - x) / TW) * ay; };
+    for (const o of [...ov.pixels].sort((a, b) => key(a) - key(b))) {
+      const x = o % TW, y = (o - x) / TW;
+      const sx = x - ax, sy = y - ay;
+      const so = sy * TW + sx;
+      body[o] = (sx >= 0 && sx < TW && sy >= 0 && sy < TH && own[so]) ? body[so] : body[o];
+    }
+  }
   const remaining = new Set(holes);
   while (remaining.size) {
     const upd = [];
@@ -302,7 +356,12 @@ MUSICIANS.forEach((m, i) => {
     writeIdxPNG(join(partsDir, String(z + 1).padStart(2, '0') + '-' + m.name + '_bow.png'),
       (o) => (bowLab[o] === i ? base[o] : -1));
   }
-  report.push(m.name + ' px=' + count + (bowN ? ' bow=' + bowN : ''));
+  for (const ov of mine) {
+    writeIdxPNG(join(partsDir, String(z + 1).padStart(2, '0') + '-' + ov.name + '.png'),
+      (o) => (ov.pixels.has(o) ? base[o] : -1));
+  }
+  report.push(m.name + ' px=' + count + (bowN ? ' bow=' + bowN : '')
+    + mine.map((ov) => ' ' + ov.name.split('_')[1] + '=' + ov.pixels.size).join(''));
 });
 
 console.log('palette', hex.join(' '));
@@ -326,6 +385,7 @@ if (VIZ) {
       r = (r + c[0] * 2) / 3; g = (g + c[1] * 2) / 3; b = (b + c[2] * 2) / 3;
     }
     if (bowLab[o] >= 0) { r = 255; g = 255; b = 255; }
+    if (overlays.some((ov) => ov.pixels.has(o))) { r = 255; g = 255; b = 255; }
     rgba[q] = r; rgba[q + 1] = g; rgba[q + 2] = b; rgba[q + 3] = 255;
   }
   writeFileSync(VIZ, encodePNG(IW, IH, rgba));

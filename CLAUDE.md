@@ -43,7 +43,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `assets/thumbs/` — Generated scene thumbnails shown on the landing page
 - `templates/scene-template.html` — Runnable boilerplate for new pixel-art scenes
 - `refs/` — Per-scene reference material (`<scene>/base.png` + `spec.md`); `refs/_template/spec.md` is the blank spec form
-- `refs/orchestra/split.mjs` — One-off refs builder for the Orchestra scene (source render → 160×144 `base.png` + `bg.png` + one part PNG per musician/bow)
+- `refs/orchestra/split.mjs` — One-off refs builder for the Orchestra scene (source render → 160×144 `base.png` + `bg.png` + one part PNG per musician, bow, and moving limb)
 - `docs/scene-workflow.md` — Image-to-scene workflow manual (Japanese, for the repo owner)
 - `.claude/skills/port-scene/` — Claude Code skill: checklist for porting a reference image into a scene
 - `vercel.json` — Vercel routing config
@@ -213,26 +213,39 @@ is the artwork restored to its native resolution (16 colours).
 
 - Background from `bg.png` — the empty stage, with the stationary props
   (harp, timpani, bass drum, music stand, organ façade) left in place
-- **28 musicians, each its own cutout sprite**, plus **11 separate bow
-  sprites** for the string players. `refs/orchestra/split.mjs` builds the
-  parts from `base.png`: faces (bright ovals) seed a geodesic split of the
-  figure mask, so each player gets a tight silhouette; bows are detected as
-  the long thin bright streak inside a player and erased from the body
-  image, so a moving bow reveals the torso underneath
-- **Only the bows move.** Translating a whole figure reads as the chair
-  sliding with it, so the musicians stay exactly where the reference put
-  them; a playing string player's bow slides up to ±2px **along its own
-  principal axis** (computed at load time from the bow sprite's pixels) at
-  a roughly constant bow speed, so a longer stroke is a slower one
+- **28 musicians, each its own cutout sprite**, plus **11 bow sprites** and
+  **5 limb sprites** (two trombone slides, the timpanist's mallets, the bass
+  drum beater, the harpist's hand) — 44 parts in all.
+  `refs/orchestra/split.mjs` builds them from `base.png`: faces (bright
+  ovals) seed a geodesic split of the figure mask, so each player gets a
+  tight silhouette; bows are detected as the long thin bright streak inside
+  a player; limbs are cut by hand-placed rects (`subs`). Everything split
+  out is erased from the body image underneath, so a moving bow reveals the
+  torso behind it. A trombone slide takes only the tube's mid-toned pixels
+  (`nondark`, leaving the dark casing with the body) and its backing is
+  filled by copying the tube along its own axis (`extend`), so pulling the
+  slide out reveals more tube instead of a hole
+- **The figures themselves never move.** Translating a whole figure reads as
+  the chair sliding with it, so the musicians stay exactly where the
+  reference put them and only the split-out parts move:
+  - bow: up to ±2px **along its own principal axis** (computed at load time
+    from the bow sprite's pixels) at a roughly constant bow speed, so a
+    longer stroke is a slower one
+  - trombone slide: creeps 0–2px out and back while the note is held
+  - mallets / beater: lift, land, rebound — the drum sounds on the landing
+  - harp hand: flicks 1px off the string on each pluck
 - One state machine drives both the sprites and the audio: a player is
-  "playing" ⇔ their bow is moving ⇔ a note is sounding. String players rest
-  only briefly, so 4–8 of the 11 bows are in motion at any moment; ~6–9
-  players sound at once, swelling to ~15–20 when the reference A goes out
+  "playing" ⇔ their part is moving ⇔ a note is sounding. String players rest
+  only briefly, so 4–8 of the 11 bows are in motion at any moment; ~8–10
+  players sound at once, swelling to ~15–20 when the reference A goes out.
+  The timpanist and harpist repeat their attack every 0.5–1.5 s within one
+  turn (tapping the head, working down the strings)
 - Debug URL params: `?at=<seconds>` fast-forwards the tuning session and
-  holds that frame, `?pose=bow` freezes bows at full stroke, `?pose=lift`
-  shifts every musician up-left to expose the background behind them,
-  `?pose=home` stands everyone still, `?a=1` sounds the reference A at once
-- `prefers-reduced-motion` holds every bow at its reference position
+  holds that frame, `?pose=bow` freezes every bow, slide and mallet at full
+  travel, `?pose=lift` shifts every musician up-left to expose the
+  background behind them, `?pose=home` holds the reference pose, `?a=1`
+  sounds the reference A at once
+- `prefers-reduced-motion` holds every moving part at its reference position
 
 #### Audio System
 
@@ -247,8 +260,9 @@ is the artwork restored to its native resolution (16 colours).
   **A weighted heaviest**, and occasional open-fifth double stops
 - The oboe's reference A4 (bandpassed reed timbre, longer and louder) every
   ~40–75 s, answered by the rest of the stage
-- Harp plucks, soft timpani taps, and room sounds (chair creaks, page
-  turns, a distant cough) over a quiet hall-air bed
+- Harp plucks, soft tuned timpani taps and the odd bass drum thud — each
+  struck note delayed 0.2 s so it lands with the mallet — plus room sounds
+  (chair creaks, page turns, a distant cough) over a quiet hall-air bed
 
 ## Creating New Scenes (image-to-scene pipeline)
 
