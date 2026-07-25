@@ -85,6 +85,9 @@
   text-align: center;
 }
 
+/* Fullscreen button icon (SVG drawn via JS) */
+.ab svg { display: block; }
+
 /* Back button */
 .back {
   position: fixed;

@@ -8,15 +8,16 @@
 <link rel="stylesheet" href="/shared/scene-ui.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a12;min-height:100vh;overflow:hidden}
-.scene-container{width:100vw;height:100vh;height:100svh;min-height:100vh;overflow:hidden}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a12}
+body{display:flex;align-items:center;justify-content:center}
+.scene-container{width:100vw;height:62.5vw;max-height:100vh;max-width:160vh;overflow:hidden}
 svg{width:100%;height:100%;display:block;image-rendering:pixelated}
 </style>
 </head>
 <body>
 <a class="back" href="/">&#8592; Top</a>
 <div class="scene-container">
-<svg id="S" viewBox="0 0 320 200" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<svg id="S" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
 <defs>
   <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" id="sk0"/><stop offset="12%" id="sk1"/><stop offset="28%" id="sk2"/>
@@ -238,6 +239,7 @@ svg{width:100%;height:100%;display:block;image-rendering:pixelated}
   <button class="ab" id="aBtn"><span style="position:relative">🔇<span class="wi"><span></span><span></span><span></span></span></span></button>
   <input type="range" class="vs" id="vSl" min="0" max="100" value="50"/>
   <span class="vl" id="vLb">50%</span>
+  <button class="ab" id="fsBtn"></button>
 </div>
 
 <script src="/shared/scene-ui.js"></script>
@@ -247,34 +249,6 @@ const BASE_W=320,BASE_H=200;
 let g_wxLevel=0; // 0=晴れ…1=大雨（オーディオIIFEから参照）
 let g_thunder=0; // 雷トリガーカウンター（増加でオーディオIIFEが雷音再生）
 
-function initResponsive(){
-  const svg=document.getElementById('S');
-  function adjustViewBox(){
-    const w=window.innerWidth,h=window.innerHeight;
-    const isPortrait=h>=w;
-    if(isPortrait){
-      const portraitW=280;
-      const extraSky=30;
-      const extraGround=10;
-      const vbX=(BASE_W-portraitW)/2;
-      const vbY=-extraSky;
-      const vbH=BASE_H+extraSky+extraGround;
-      svg.setAttribute('viewBox',`${vbX} ${vbY} ${portraitW} ${vbH}`);
-      svg.setAttribute('preserveAspectRatio','xMidYMax slice');
-    }else{
-      const desktopExtraSky=16;
-      const desktopGroundTrim=2;
-      const vbY=-desktopExtraSky+desktopGroundTrim;
-      const vbH=BASE_H+desktopExtraSky;
-      svg.setAttribute('viewBox',`0 ${vbY} ${BASE_W} ${vbH}`);
-      svg.setAttribute('preserveAspectRatio','xMidYMax slice');
-    }
-  }
-  adjustViewBox();
-  window.addEventListener('resize',adjustViewBox,{passive:true});
-  window.addEventListener('orientationchange',adjustViewBox,{passive:true});
-}
-initResponsive();
 const T0=performance.now();
 function phase(){return((performance.now()-T0)/1000%CYCLE)/CYCLE;}
 
