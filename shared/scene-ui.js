@@ -19,9 +19,12 @@ if (new URLSearchParams(location.search).get('ui') === '0') {
   });
 }
 
+// Fullscreen button
 (function () {
-  const EXPAND = '<svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="rgba(255,180,80,.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><polyline points="3,0 0,0 0,3"/><polyline points="9,0 12,0 12,3"/><polyline points="12,9 12,12 9,12"/><polyline points="3,12 0,12 0,9"/></svg>';
-  const CONTRACT = '<svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="rgba(255,180,80,.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><polyline points="0,3 3,3 3,0"/><polyline points="9,0 9,3 12,3"/><polyline points="12,9 9,9 9,12"/><polyline points="0,9 3,9 3,12"/></svg>';
+  // Inline style ensures these SVGs stay 14×14 even when scene CSS has a global svg{width:100%;height:100%} rule
+  const SVG_OPEN = '<svg style="display:block;width:14px;height:14px;min-width:14px;flex-shrink:0" viewBox="0 0 12 12" fill="none" stroke="rgba(255,180,80,.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">';
+  const EXPAND   = SVG_OPEN + '<polyline points="3,0 0,0 0,3"/><polyline points="9,0 12,0 12,3"/><polyline points="12,9 12,12 9,12"/><polyline points="3,12 0,12 0,9"/></svg>';
+  const CONTRACT = SVG_OPEN + '<polyline points="0,3 3,3 3,0"/><polyline points="9,0 9,3 12,3"/><polyline points="12,9 9,9 9,12"/><polyline points="0,9 3,9 3,12"/></svg>';
 
   document.addEventListener('DOMContentLoaded', () => {
     const fsBtn = document.getElementById('fsBtn');
@@ -46,6 +49,43 @@ if (new URLSearchParams(location.search).get('ui') === '0') {
     document.addEventListener('fullscreenchange', updateIcon);
   });
 }());
+
+// Auto-hide UI after 3 s of inactivity in fullscreen; any touch/move restores it
+(function () {
+  document.addEventListener('DOMContentLoaded', () => {
+    const ui = () => document.querySelectorAll('.ap, .back');
+    let timer;
+
+    function show() {
+      clearTimeout(timer);
+      ui().forEach(el => el.classList.remove('ui-hidden'));
+    }
+    function scheduleHide() {
+      clearTimeout(timer);
+      timer = setTimeout(() => ui().forEach(el => el.classList.add('ui-hidden')), 3000);
+    }
+    function onActivity() {
+      if (!document.fullscreenElement) return;
+      show();
+      scheduleHide();
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) {
+        show();
+        scheduleHide();
+      } else {
+        clearTimeout(timer);
+        show();
+      }
+    });
+
+    ['mousemove', 'touchstart', 'touchend'].forEach(ev =>
+      document.addEventListener(ev, onActivity, { passive: true })
+    );
+  });
+}());
+
 function initSceneAudio({ onStart, onStop, onVolumeChange }) {
   const btn = document.getElementById('aBtn');
   const slider = document.getElementById('vSl');
