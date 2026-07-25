@@ -15,10 +15,16 @@
 <meta property="og:site_name" content="Chill Scenes">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a0a12;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#e8d0b0}
-h1{font-size:2.4rem;font-weight:300;letter-spacing:.15em;margin-bottom:.3em;color:#ffcc88}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:.6em}
+.brand-icon{width:56px;height:56px;image-rendering:pixelated;filter:drop-shadow(0 0 10px rgba(90,164,83,.35))}
+.brand-wordmark{height:34px;width:auto;image-rendering:pixelated;filter:drop-shadow(0 0 14px rgba(60,140,255,.35))}
 .subtitle{font-size:.95rem;color:rgba(255,180,120,.45);letter-spacing:.25em;margin-bottom:3rem;text-transform:uppercase}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;width:100%;max-width:720px;padding:0 24px}
 .card{display:block;text-decoration:none;color:inherit;background:rgba(255,150,50,.04);border:2px solid rgba(255,150,50,.18);border-radius:12px;overflow:hidden;transition:border-color .3s,background .3s,transform .3s}
@@ -32,7 +38,10 @@ h1{font-size:2.4rem;font-weight:300;letter-spacing:.15em;margin-bottom:.3em;colo
 </head>
 <body>
 
-<h1>Chill Scenes</h1>
+<h1 class="brand">
+  <img class="brand-icon" src="assets/logo/icon.png" alt="" width="512" height="512">
+  <img class="brand-wordmark" src="assets/logo/wordmark.png" alt="Chill Scenes" width="900" height="120">
+</h1>
 <p class="subtitle">Relaxing animated scenes</p>
 
 <div class="grid">
