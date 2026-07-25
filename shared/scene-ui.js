@@ -50,39 +50,37 @@ if (new URLSearchParams(location.search).get('ui') === '0') {
   });
 }());
 
-// Auto-hide UI after 3 s of inactivity in fullscreen; any touch/move restores it
+// UI visibility toggle: tap on scene hides/shows; auto-hides after 3 s in fullscreen
 (function () {
   document.addEventListener('DOMContentLoaded', () => {
     const ui = () => document.querySelectorAll('.ap, .back');
+    let hidden = false;
     let timer;
 
     function show() {
+      hidden = false;
       clearTimeout(timer);
       ui().forEach(el => el.classList.remove('ui-hidden'));
+      if (document.fullscreenElement) {
+        timer = setTimeout(hide, 3000);
+      }
     }
-    function scheduleHide() {
+    function hide() {
+      hidden = true;
       clearTimeout(timer);
-      timer = setTimeout(() => ui().forEach(el => el.classList.add('ui-hidden')), 3000);
-    }
-    function onActivity() {
-      if (!document.fullscreenElement) return;
-      show();
-      scheduleHide();
+      ui().forEach(el => el.classList.add('ui-hidden'));
     }
 
-    document.addEventListener('fullscreenchange', () => {
-      if (document.fullscreenElement) {
-        show();
-        scheduleHide();
-      } else {
-        clearTimeout(timer);
-        show();
-      }
+    // Tap anywhere except on UI elements toggles visibility
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.ap, .back')) return;
+      hidden ? show() : hide();
     });
 
-    ['mousemove', 'touchstart', 'touchend'].forEach(ev =>
-      document.addEventListener(ev, onActivity, { passive: true })
-    );
+    document.addEventListener('fullscreenchange', () => {
+      // Always show on transition; start auto-hide timer only inside fullscreen
+      show();
+    });
   });
 }());
 
