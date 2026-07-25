@@ -21,7 +21,6 @@
 <link rel="manifest" href="site.webmanifest">
 <link rel="stylesheet" href="/shared/scene-ui.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     background: #0a0a1a;
@@ -140,7 +139,7 @@
 </style>
 </head>
 <body>
-<a class="back" href="/">&#8592; Top</a>
+<a class="back" href="/"><svg viewBox="0 0 6 7" width="6" height="7" shape-rendering="crispEdges" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="0" width="2" height="1"/><rect x="3" y="1" width="3" height="1"/><rect x="2" y="2" width="4" height="1"/><rect x="0" y="3" width="6" height="1"/><rect x="2" y="4" width="4" height="1"/><rect x="3" y="5" width="3" height="1"/><rect x="4" y="6" width="2" height="1"/></svg>TOP</a>
 <div class="scene-container">
 <svg id="mainSvg" viewBox="0 0 426 240" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
   <defs>
@@ -364,7 +363,7 @@
 </svg>
 </div>
 <div class="ap">
-  <button class="ab" id="aBtn"><span style="position:relative">🔇<span class="wi"><span></span><span></span><span></span></span></span></button>
+  <button class="ab" id="aBtn"><span class="spk" id="spkIcon"></span><span class="wi"><span></span><span></span><span></span></span></button>
   <input type="range" class="vs" id="vSl" min="0" max="100" value="40"/>
   <span class="vl" id="vLb">40%</span>
   <button class="ab" id="fsBtn"></button>

@@ -1,5 +1,23 @@
 /* Shared Scene UI — Audio Panel & Back Button */
 
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('/assets/fonts/press-start-2p-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Small cut-corner clip-path, shared by every pixel-art UI chip below */
+.pixel-corner,
+.ap,
+.ab,
+.back {
+  clip-path: polygon(0 6px, 6px 6px, 6px 0, calc(100% - 6px) 0, calc(100% - 6px) 6px, 100% 6px,
+    100% calc(100% - 6px), calc(100% - 6px) calc(100% - 6px), calc(100% - 6px) 100%,
+    6px 100%, 6px calc(100% - 6px), 0 calc(100% - 6px));
+}
+
 /* Audio panel container */
 .ap {
   position: fixed;
@@ -7,7 +25,6 @@
   right: 16px;
   background: rgba(10,10,18,.75);
   border: 2px solid rgba(57,171,152,.35);
-  border-radius: 10px;
   padding: 10px 14px;
   display: flex;
   align-items: center;
@@ -22,9 +39,9 @@
   width: 36px;
   height: 36px;
   min-width: 36px;
-  border-radius: 50%;
   border: 2px solid rgba(57,171,152,.55);
   background: rgba(22,196,237,.10);
+  color: rgba(150,220,235,.85);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -38,6 +55,7 @@
 .ab.on {
   background: rgba(22,196,237,.3);
   border-color: #2fd0f0;
+  color: #eafcff;
   box-shadow: 0 0 10px rgba(22,196,237,.45);
 }
 .ab.on .wi { display: flex; }
@@ -53,7 +71,6 @@
 .wi span {
   width: 2px;
   background: #2fd0f0;
-  border-radius: 1px;
   animation: wb .8s ease-in-out infinite;
 }
 .wi span:nth-child(1) { height: 5px; }
@@ -61,34 +78,53 @@
 .wi span:nth-child(3) { height: 4px; animation-delay: .3s; }
 @keyframes wb { 0%,100% { transform: scaleY(.4); } 50% { transform: scaleY(1); } }
 
-/* Volume slider */
+/* Volume slider — blocky, segmented track like a retro level meter */
 .vs {
   -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
   width: 65px;
-  height: 3px;
-  border-radius: 2px;
-  background: rgba(57,171,152,.3);
+  height: 6px;
+  background: repeating-linear-gradient(to right,
+    rgba(57,171,152,.55) 0, rgba(57,171,152,.55) 4px,
+    rgba(57,171,152,.15) 4px, rgba(57,171,152,.15) 6px);
   outline: none;
 }
 .vs::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+  width: 8px;
+  height: 14px;
   background: #2fd0f0;
   cursor: pointer;
-  border: 2px solid rgba(150,230,245,.5);
+  border: 2px solid rgba(150,230,245,.6);
+  box-shadow: 0 0 4px rgba(47,208,240,.5);
+}
+.vs::-moz-range-track {
+  height: 6px;
+  background: repeating-linear-gradient(to right,
+    rgba(57,171,152,.55) 0, rgba(57,171,152,.55) 4px,
+    rgba(57,171,152,.15) 4px, rgba(57,171,152,.15) 6px);
+}
+.vs::-moz-range-thumb {
+  width: 8px;
+  height: 14px;
+  border-radius: 0;
+  background: #2fd0f0;
+  cursor: pointer;
+  border: 2px solid rgba(150,230,245,.6);
+  box-shadow: 0 0 4px rgba(47,208,240,.5);
 }
 
 /* Volume label */
 .vl {
-  color: rgba(150,220,235,.65);
-  font-size: 10px;
-  min-width: 24px;
+  color: rgba(150,220,235,.7);
+  font-family: 'Press Start 2P', system-ui, sans-serif;
+  font-size: 9px;
+  min-width: 32px;
   text-align: center;
 }
 
-/* Fullscreen button icon — keep SVG exactly 14×14 regardless of scene-level svg{} rules */
+/* Audio/fullscreen icons — keep SVG exactly 14×14 regardless of scene-level svg{} rules */
 .ab svg {
   display: block;
   width: 14px;
@@ -102,18 +138,22 @@
   position: fixed;
   top: 16px;
   left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   background: rgba(10,10,18,.65);
   border: 2px solid rgba(57,171,152,.3);
-  border-radius: 8px;
-  padding: 6px 12px;
+  padding: 7px 12px;
   z-index: 100;
   backdrop-filter: blur(6px);
   text-decoration: none;
   color: rgba(150,220,235,.75);
-  font-size: 13px;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 10px;
+  font-family: 'Press Start 2P', system-ui, sans-serif;
+  letter-spacing: .05em;
   transition: border-color .3s, color .3s, opacity .4s, visibility .4s;
 }
+.back svg { display: block; width: 9px; height: 11px; min-width: 9px; flex-shrink: 0; }
 .back:hover {
   border-color: rgba(57,171,152,.6);
   color: rgba(180,235,245,.95);

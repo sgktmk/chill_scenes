@@ -21,8 +21,10 @@ if (new URLSearchParams(location.search).get('ui') === '0') {
 
 // Fullscreen button
 (function () {
-  // Inline style ensures these SVGs stay 14×14 even when scene CSS has a global svg{width:100%;height:100%} rule
-  const SVG_OPEN = '<svg style="display:block;width:14px;height:14px;min-width:14px;flex-shrink:0" viewBox="0 0 12 12" fill="none" stroke="rgba(255,180,80,.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">';
+  // Inline style ensures these SVGs stay 14×14 even when scene CSS has a global svg{width:100%;height:100%} rule.
+  // stroke="currentColor" + square caps/joins keep the icon crisp/blocky and let it
+  // follow .ab's colour (including the brighter .ab.on state) with no extra JS.
+  const SVG_OPEN = '<svg style="display:block;width:14px;height:14px;min-width:14px;flex-shrink:0" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" xmlns="http://www.w3.org/2000/svg">';
   const EXPAND   = SVG_OPEN + '<polyline points="3,0 0,0 0,3"/><polyline points="9,0 12,0 12,3"/><polyline points="12,9 12,12 9,12"/><polyline points="3,12 0,12 0,9"/></svg>';
   const CONTRACT = SVG_OPEN + '<polyline points="0,3 3,3 3,0"/><polyline points="9,0 9,3 12,3"/><polyline points="12,9 9,9 9,12"/><polyline points="0,9 3,9 3,12"/></svg>';
 
@@ -84,22 +86,36 @@ if (new URLSearchParams(location.search).get('ui') === '0') {
   });
 }());
 
+// Pixel speaker icon: a stepped cone (crispEdges rects, fill="currentColor") plus
+// either a small diagonal mute-X or two ascending sound-wave bars.
+const SPK_OPEN = '<svg style="display:block;width:14px;height:14px;min-width:14px;flex-shrink:0" viewBox="0 0 12 12" shape-rendering="crispEdges" fill="currentColor" xmlns="http://www.w3.org/2000/svg">';
+const SPK_CONE = '<rect x="1" y="4" width="2" height="4"/><rect x="3" y="3" width="2" height="6"/><rect x="5" y="1" width="2" height="10"/>';
+const SPEAKER_OFF = SPK_OPEN + SPK_CONE
+  + '<rect x="8" y="2" width="1" height="1"/><rect x="9" y="3" width="1" height="1"/><rect x="10" y="4" width="1" height="1"/><rect x="11" y="5" width="1" height="1"/>'
+  + '<rect x="11" y="2" width="1" height="1"/><rect x="10" y="3" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/>'
+  + '</svg>';
+const SPEAKER_ON = SPK_OPEN + SPK_CONE
+  + '<rect x="8" y="4" width="1" height="4"/><rect x="10" y="2" width="1" height="8"/>'
+  + '</svg>';
+
 function initSceneAudio({ onStart, onStop, onVolumeChange }) {
   const btn = document.getElementById('aBtn');
+  const icon = document.getElementById('spkIcon');
   const slider = document.getElementById('vSl');
   const label = document.getElementById('vLb');
   let isPlaying = false;
+  icon.innerHTML = SPEAKER_OFF;
 
   btn.addEventListener('click', () => {
     if (isPlaying) {
       isPlaying = false;
       btn.classList.remove('on');
-      btn.querySelector('span').firstChild.textContent = '\u{1F507}';
+      icon.innerHTML = SPEAKER_OFF;
       onStop();
     } else {
       isPlaying = true;
       btn.classList.add('on');
-      btn.querySelector('span').firstChild.textContent = '\u{1F50A}';
+      icon.innerHTML = SPEAKER_ON;
       onStart(Number(slider.value));
     }
   });

@@ -72,18 +72,27 @@ source art; there's no standing script for it since it's a one-off.
 ## Site Theme
 
 The landing page (`index.html`) and the shared scene chrome
-(`shared/scene-ui.css` — audio panel, back button, on every scene page)
-use a teal/cyan accent palette pulled from the logo artwork (`#39ab98`
-borders, `#2fd0f0`/`#16c4ed` active states, `#7fe0f2` heading text),
-replacing an earlier unrelated amber theme. This chrome layer is
+(`shared/scene-ui.css`/`.js` — audio panel, back button, on every scene
+page) use a teal/cyan accent palette pulled from the logo artwork
+(`#39ab98` borders, `#2fd0f0`/`#16c4ed` active states, `#7fe0f2` heading
+text), replacing an earlier unrelated amber theme. This chrome layer is
 intentionally scene-agnostic — individual scenes keep their own painted
 colours (sunset, fire, snow, etc.); only the UI on top of them was
-recoloured to match the brand. Landing-page headings (`.subtitle`,
-`.card-title`) use the self-hosted Press Start 2P pixel font to echo the
-wordmark's letterforms; body copy (`.card-desc`, the back button, volume
-label) stays in the system sans-serif stack for readability at small
-sizes. Landing-page cards use a `clip-path` cut-corner silhouette instead
-of rounded corners, matching the blocky/pixel aesthetic.
+recoloured to match the brand. Brand-facing text (landing-page
+`.subtitle`/`.card-title`, the back button, the volume `%` label) uses
+the self-hosted Press Start 2P pixel font to echo the wordmark's
+letterforms; longer body copy (`.card-desc`) stays in the system
+sans-serif stack for readability at small sizes. Every clickable chip —
+landing-page cards, the back button, the audio-panel buttons — shares one
+small `clip-path` cut-corner silhouette instead of rounded corners. The
+back button's arrow, the mute/unmute speaker, and the fullscreen
+expand/contract icon are all hand-drawn crispEdges/square-cap SVGs
+(`shared/scene-ui.js`, `fill`/`stroke="currentColor"` so they follow the
+button's colour state) instead of emoji or rounded glyphs, and the volume
+slider track/thumb are styled square with a `repeating-linear-gradient`
+segmented look — no smooth circles or rounded corners anywhere in the UI
+layer. `templates/scene-template.html` already wires up this markup for
+new scenes.
 
 ## Architecture
 
