@@ -43,14 +43,17 @@ const L = (o) => lumOf[base[o]];
  *   rects    x0,y0,x1,y1 boxes; `nondark` narrows them to the non-outline
  *            (mid/bright) pixels inside
  *   pixels   an explicit [x, y] list, for a part too tangled with the
- *            figure to box off — the trombone slides sit right against the
- *            player's chin and hands
+ *            figure to box off — a trombone slide is a two-pixel-wide
+ *            dotted diagonal running past the player's hand. Listed pixels
+ *            are claimed for this figure even if the flood gave them to a
+ *            neighbour or left them in the background
  *   extend   refill the vacated pixels by copying along -axis rather than
  *            from the surrounding body (only worth it where the tube really
  *            does continue straight behind the part) */
 const M = (name, sx, sy, x0, y0, x1, y1, o = {}) => ({ name, sx, sy, box: [x0, y0, x1, y1], ...o });
-// The slide is the U-bend nearest the audience (the bell tube runs up-right
-// behind it and stays put); pulling it out means moving it down-left.
+// The bell faces the audience, so it draws as a ring on the player's chest
+// and never moves; the slide is the dotted tube running down-left out of it
+// to the knob at its end, and it pulls further down-left.
 const SLIDE = (pixels) => [{ name: 'slide', pixels, axis: [-1, 1] }];
 const MUSICIANS = [
   // back row --------------------------------------------------------
@@ -66,15 +69,16 @@ const MUSICIANS = [
   M('wind2',      55, 55,  49, 45,  65,  70),
   M('wind3',      71, 56,  65, 46,  79,  70),
   M('wind4',      86, 56,  79, 46,  95,  70),
-  // wind5 / wind6 are trombones. The slide is the U-bend on the near side,
-  // between the player and the audience; the bell tube runs up-right behind
-  // it and stays put. Pushing the slide out moves it down-left.
+  // wind5 / wind6 are trombones, seen bell-on: the ring on the chest is the
+  // bell mouth and the tube up-right of it is fixed. The slide is the dotted
+  // diagonal running down-left out of the bell to the knob at its end —
+  // first the near tube, then the far one, then the knob.
   M('wind5',     103, 55,  95, 44, 112,  70, { subs: SLIDE([
-    [106, 58], [107, 59], [108, 59], [106, 60], [106, 61],
-    [103, 61], [103, 62], [104, 62], [105, 62]]) }),
+    [100, 62], [99, 63], [98, 64],
+    [100, 65], [99, 65], [99, 66], [97, 66], [98, 67], [97, 67]]) }),
   M('wind6',     118, 55, 112, 44, 130,  70, { subs: SLIDE([
-    [124, 58], [122, 59], [123, 59], [124, 60], [124, 61],
-    [120, 60], [120, 61], [121, 61], [120, 62], [121, 62], [122, 62], [123, 62]]) }),
+    [116, 63], [115, 64], [114, 65],
+    [119, 63], [117, 65], [116, 66], [115, 67], [114, 66], [114, 67], [116, 67]]) }),
   // middle row ------------------------------------------------------
   M('mid1',       36, 76,  27, 66,  45,  90),
   M('mid2',       52, 76,  45, 66,  61,  90),
@@ -238,7 +242,7 @@ MUSICIANS.forEach((m, i) => {
 /* ---------- 5b. hand-placed subparts (mallets, beater, slides) ---------- */
 // overlays[] = { owner, name, z, pixels:Set, extend, axis } — same treatment
 // as a bow: its own part image, erased from the body underneath.
-const overlays = [];
+const overlays = [], claimed = [];
 MUSICIANS.forEach((m, i) => {
   for (const sub of m.subs || []) {
     const pixels = new Set();
@@ -254,9 +258,16 @@ MUSICIANS.forEach((m, i) => {
     }
     for (const [x, y] of sub.pixels || []) {
       const o = y * TW + x;
-      if (lab[o] !== i) {
+      if (L(o) < DARK) {
         throw new Error(m.name + ' subpart "' + sub.name + '": pixel ' + x + ',' + y
-          + ' is not part of that figure');
+          + ' is background/outline, not part of the instrument');
+      }
+      if (lab[o] !== i) {
+        // the flood gave it to a neighbour (or nobody) — claim it, so the
+        // previous owner stops drawing it and the background fills it in
+        claimed.push(m.name + '_' + sub.name + ' claims ' + x + ',' + y + ' from '
+          + (lab[o] < 0 ? 'background' : MUSICIANS[lab[o]].name));
+        lab[o] = i;
       }
       pixels.add(o);
     }
@@ -386,6 +397,7 @@ console.log(report.join('\n'));
 let cov = 0;
 for (let o = 0; o < N; o++) if (lab[o] >= 0) cov++;
 console.log('figure coverage', (cov * 100 / N).toFixed(1) + '%');
+for (const c of claimed) console.log('note: ' + c);
 
 /* ---------- 7. visualization ---------- */
 if (VIZ) {
