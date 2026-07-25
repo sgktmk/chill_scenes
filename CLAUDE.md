@@ -45,6 +45,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `assets/icons/` — `icon-192.png` / `icon-512.png` referenced by `site.webmanifest`
 - `favicon.svg` / `favicon-16.png` / `favicon-32.png` / `apple-touch-icon.png` — Favicon set generated from the same icon artwork as `assets/logo/icon.png` (see "Logo & Favicon" below); linked from every page's `<head>`
 - `site.webmanifest` — PWA manifest referencing `assets/icons/`
+- `assets/fonts/press-start-2p-latin.woff2` — Self-hosted "Press Start 2P" (OFL, `assets/fonts/OFL.txt`), latin subset only; used for brand-facing headings (see "Site Theme" below)
 - `templates/scene-template.html` — Runnable boilerplate for new pixel-art scenes
 - `refs/` — Per-scene reference material (`<scene>/base.png` + `spec.md`); `refs/_template/spec.md` is the blank spec form
 - `refs/orchestra/split.mjs` — One-off refs builder for the Orchestra scene (source render → 160×144 `base.png` + `bg.png` + one part PNG per musician, bow, and moving limb)
@@ -67,6 +68,22 @@ page's `<head>` links `favicon.svg` (primary), `favicon-32.png` /
 `#0a0a12` background — iOS ignores transparency), and `site.webmanifest`.
 Regenerate by re-running the same quantize → downscale pipeline against new
 source art; there's no standing script for it since it's a one-off.
+
+## Site Theme
+
+The landing page (`index.html`) and the shared scene chrome
+(`shared/scene-ui.css` — audio panel, back button, on every scene page)
+use a teal/cyan accent palette pulled from the logo artwork (`#39ab98`
+borders, `#2fd0f0`/`#16c4ed` active states, `#7fe0f2` heading text),
+replacing an earlier unrelated amber theme. This chrome layer is
+intentionally scene-agnostic — individual scenes keep their own painted
+colours (sunset, fire, snow, etc.); only the UI on top of them was
+recoloured to match the brand. Landing-page headings (`.subtitle`,
+`.card-title`) use the self-hosted Press Start 2P pixel font to echo the
+wordmark's letterforms; body copy (`.card-desc`, the back button, volume
+label) stays in the system sans-serif stack for readability at small
+sizes. Landing-page cards use a `clip-path` cut-corner silhouette instead
+of rounded corners, matching the blocky/pixel aesthetic.
 
 ## Architecture
 
