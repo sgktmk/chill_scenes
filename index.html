@@ -15,24 +15,35 @@
 <meta property="og:site_name" content="Chill Scenes">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <style>
+@font-face{font-family:'Press Start 2P';src:url('assets/fonts/press-start-2p-latin.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a12;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#e8d0b0}
-h1{font-size:2.4rem;font-weight:300;letter-spacing:.15em;margin-bottom:.3em;color:#ffcc88}
-.subtitle{font-size:.95rem;color:rgba(255,180,120,.45);letter-spacing:.25em;margin-bottom:3rem;text-transform:uppercase}
+html,body{overflow-x:hidden}
+body{background:#0a0a12;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#cfe3e6}
+.brand{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:1.4rem;max-width:100%;padding:clamp(16px,6vw,40px) clamp(20px,10vw,64px);background:radial-gradient(ellipse at center,rgba(224,242,240,.8) 0%,rgba(180,225,222,.4) 38%,rgba(120,195,195,.12) 62%,transparent 78%)}
+.brand-icon{width:min(56px,11vw);height:auto;image-rendering:pixelated}
+.brand-wordmark{width:min(255px,42vw);height:auto;image-rendering:pixelated}
+.subtitle{font-family:'Press Start 2P',system-ui,sans-serif;font-size:.6rem;color:rgba(150,215,225,.5);letter-spacing:.2em;line-height:1.8;margin-bottom:3rem;text-transform:uppercase}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;width:100%;max-width:720px;padding:0 24px}
-.card{display:block;text-decoration:none;color:inherit;background:rgba(255,150,50,.04);border:2px solid rgba(255,150,50,.18);border-radius:12px;overflow:hidden;transition:border-color .3s,background .3s,transform .3s}
-.card:hover{border-color:rgba(255,150,50,.45);background:rgba(255,150,50,.08);transform:translateY(-2px)}
+.card{display:block;text-decoration:none;color:inherit;background:rgba(57,171,152,.05);border:2px solid rgba(57,171,152,.22);clip-path:polygon(0 10px,10px 10px,10px 0,calc(100% - 10px) 0,calc(100% - 10px) 10px,100% 10px,100% calc(100% - 10px),calc(100% - 10px) calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,10px calc(100% - 10px),0 calc(100% - 10px));overflow:hidden;transition:border-color .3s,background .3s,transform .3s}
+.card:hover{border-color:rgba(57,171,152,.55);background:rgba(57,171,152,.1);transform:translateY(-2px)}
 .card-visual{height:140px;display:flex;align-items:center;justify-content:center;background:rgba(10,10,18,.5);overflow:hidden}
 .card-visual img{width:100%;height:100%;display:block;object-fit:cover;image-rendering:pixelated}
 .card-body{padding:16px 20px}
-.card-title{font-size:1.15rem;font-weight:500;color:#ffcc88;margin-bottom:4px}
-.card-desc{font-size:.82rem;color:rgba(255,180,120,.5);line-height:1.4}
+.card-title{font-family:'Press Start 2P',system-ui,sans-serif;font-size:.8rem;font-weight:400;color:#7fe0f2;margin-bottom:10px;line-height:1.4}
+.card-desc{font-size:.82rem;color:rgba(180,220,225,.55);line-height:1.5}
 </style>
 </head>
 <body>
 
-<h1>Chill Scenes</h1>
+<h1 class="brand">
+  <img class="brand-icon" src="assets/logo/icon.png" alt="" width="512" height="512">
+  <img class="brand-wordmark" src="assets/logo/wordmark.png" alt="Chill Scenes" width="900" height="120">
+</h1>
 <p class="subtitle">Relaxing animated scenes</p>
 
 <div class="grid">

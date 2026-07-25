@@ -41,12 +41,58 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `tools/screenshot.sh` — Headless Chromium scene capture for visual verification
 - `tools/thumbs.sh` — Regenerates landing-page thumbnails from real scene captures
 - `assets/thumbs/` — Generated scene thumbnails shown on the landing page
+- `assets/logo/` — Site logo art: `icon.png` (tree/hammock mark, 512×512, transparent) and `wordmark.png` (900×120, transparent), both quantized from source artwork; shown together in the `index.html` header
+- `assets/icons/` — `icon-192.png` / `icon-512.png` referenced by `site.webmanifest`
+- `favicon.svg` / `favicon-16.png` / `favicon-32.png` / `apple-touch-icon.png` — Favicon set generated from the same icon artwork as `assets/logo/icon.png` (see "Logo & Favicon" below); linked from every page's `<head>`
+- `site.webmanifest` — PWA manifest referencing `assets/icons/`
+- `assets/fonts/press-start-2p-latin.woff2` — Self-hosted "Press Start 2P" (OFL, `assets/fonts/OFL.txt`), latin subset only; used for brand-facing headings (see "Site Theme" below)
 - `templates/scene-template.html` — Runnable boilerplate for new pixel-art scenes
 - `refs/` — Per-scene reference material (`<scene>/base.png` + `spec.md`); `refs/_template/spec.md` is the blank spec form
 - `refs/orchestra/split.mjs` — One-off refs builder for the Orchestra scene (source render → 160×144 `base.png` + `bg.png` + one part PNG per musician, bow, and moving limb)
 - `docs/scene-workflow.md` — Image-to-scene workflow manual (Japanese, for the repo owner)
 - `.claude/skills/port-scene/` — Claude Code skill: checklist for porting a reference image into a scene
 - `vercel.json` — Vercel routing config
+
+## Logo & Favicon
+
+The icon (tree + reclining figure) and wordmark ("chill-scenes") artwork were
+supplied as high-res transparent PNGs, quantized down (`medianCut` +
+alpha-threshold cluster merge, `tools/lib/png.mjs`) to a clean flat palette,
+then downscaled per-target-size with `downscaleIndices` (dominant palette
+index per cell — same crisp, no-blur approach `png2pixel.mjs` uses) to
+produce every favicon size plus `favicon.svg` (vector `<rect>` grid, same
+technique as `PixelBuffer.toSVG`). `assets/logo/icon.png` and
+`wordmark.png` are the same quantized art at header-display size. Every
+page's `<head>` links `favicon.svg` (primary), `favicon-32.png` /
+`favicon-16.png` (fallback), `apple-touch-icon.png` (180×180, opaque
+`#0a0a12` background — iOS ignores transparency), and `site.webmanifest`.
+Regenerate by re-running the same quantize → downscale pipeline against new
+source art; there's no standing script for it since it's a one-off.
+
+## Site Theme
+
+The landing page (`index.html`) and the shared scene chrome
+(`shared/scene-ui.css`/`.js` — audio panel, back button, on every scene
+page) use a teal/cyan accent palette pulled from the logo artwork
+(`#39ab98` borders, `#2fd0f0`/`#16c4ed` active states, `#7fe0f2` heading
+text), replacing an earlier unrelated amber theme. This chrome layer is
+intentionally scene-agnostic — individual scenes keep their own painted
+colours (sunset, fire, snow, etc.); only the UI on top of them was
+recoloured to match the brand. Brand-facing text (landing-page
+`.subtitle`/`.card-title`, the back button, the volume `%` label) uses
+the self-hosted Press Start 2P pixel font to echo the wordmark's
+letterforms; longer body copy (`.card-desc`) stays in the system
+sans-serif stack for readability at small sizes. Every clickable chip —
+landing-page cards, the back button, the audio-panel buttons — shares one
+small `clip-path` cut-corner silhouette instead of rounded corners. The
+back button's arrow, the mute/unmute speaker, and the fullscreen
+expand/contract icon are all hand-drawn crispEdges/square-cap SVGs
+(`shared/scene-ui.js`, `fill`/`stroke="currentColor"` so they follow the
+button's colour state) instead of emoji or rounded glyphs, and the volume
+slider track/thumb are styled square with a `repeating-linear-gradient`
+segmented look — no smooth circles or rounded corners anywhere in the UI
+layer. `templates/scene-template.html` already wires up this markup for
+new scenes.
 
 ## Architecture
 
