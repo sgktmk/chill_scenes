@@ -29,7 +29,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 - `chill-mart.html` — "Chill Mart" scene (late-night convenience store with sliding doors and customers)
 - `orchestra.html` — "Orchestra" scene (concert hall tuning up: 28 cutout musicians, moving bows, open-string audio)
 - `shared/scene-ui.css` — Shared audio panel & back button styles
-- `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API)
+- `shared/scene-ui.js` — Shared audio control logic (`initSceneAudio()` API) and the time-of-day picker (`initTimeControl()`)
 - `shared/pixel.js` — Shared pixel buffer toolkit (`PixelBuffer` class) for pixel-art scenes
 - `shared/cycle.js` — Day-night cycle keyframe interpolation engine (`createCycle()`)
 - `shared/audio-kit.js` — Procedural Web Audio boilerplate (`createAudioEngine()`)
@@ -85,8 +85,9 @@ letterforms; longer body copy (`.card-desc`) stays in the system
 sans-serif stack for readability at small sizes. Every clickable chip —
 landing-page cards, the back button, the audio-panel buttons — shares one
 small `clip-path` cut-corner silhouette instead of rounded corners. The
-back button's arrow, the mute/unmute speaker, and the fullscreen
-expand/contract icon are all hand-drawn crispEdges/square-cap SVGs
+back button's arrow, the mute/unmute speaker, the fullscreen
+expand/contract icon, and the time-of-day icons (rising/setting half sun,
+sun, crescent moon, clock) are all hand-drawn crispEdges/square-cap SVGs
 (`shared/scene-ui.js`, `fill`/`stroke="currentColor"` so they follow the
 button's colour state) instead of emoji or rounded glyphs, and the volume
 slider track/thumb are styled square with a `repeating-linear-gradient`
@@ -108,6 +109,14 @@ Everything lives in a single HTML file (~850 lines). The `<script>` block contai
 
 - `CYCLE = 180` — seconds for one full day-night loop
 - `phase()` returns 0.0–1.0 representing position in the day (0.0 = sunrise, 0.62 = sunset, 0.78 = night, 1.0 = sunrise again)
+- `phase()` reads a steerable `clock` (not raw `performance.now()`), so every system — colours, sun/moon, ships, weather, sparkles, audio — follows the time-of-day control below. `?t=<0-1>` freezes the phase for screenshots
+
+### Time-of-Day Control
+
+- Clock button (first in the audio panel) opens a small menu above the panel: MORNING (0.08) / DAY (0.30) / SUNSET (0.61) / NIGHT (0.82) / AUTO — phases in the `TOD` table
+- Picking a preset time-lapses **forward** (eased, ~1–3 s, a whole night passes on the way to MORNING) and then holds that phase; waves, ships, clouds and audio keep moving. A target only just behind the current phase (< 0.1) eases back instead of replaying a full day
+- AUTO resumes the normal flow from wherever the scene is; the choice is remembered in `localStorage` (`chill-scenes:seascape:time`)
+- `prefers-reduced-motion` jumps straight to the preset; `updateColors()` drops its ~15 fps throttle while a time-lapse runs so the sky doesn't step
 - 11-keyframe color interpolation (`KF` array + `interpKF()`) drives sky, sea, wave, foam, and horizon colors
 - `lerp()` interpolates between hex color pairs
 
@@ -365,7 +374,7 @@ Key invariants:
 Common components are extracted into shared files loaded by each scene:
 
 - **`shared/scene-ui.css`** — Audio panel (`.ap`, `.ab`, `.vs`, `.vl`, `.wi`) and back button (`.back`) styles
-- **`shared/scene-ui.js`** — `initSceneAudio({ onStart, onStop, onVolumeChange })` callback-based API for audio toggle and volume control
+- **`shared/scene-ui.js`** — `initSceneAudio({ onStart, onStop, onVolumeChange })` callback-based API for audio toggle and volume control; `initTimeControl({ presets, value, onSelect })` adds a time-of-day picker (markup: `<button class="ab" id="todBtn">` in `.ap`; the pop-up menu is built by JS, keyboard-navigable, dismissed by Esc or an outside tap, and the trigger lights up `.on` while a fixed time is chosen). `SCENE_UI_SEL` lists every floating UI element — all of them hide together, `?ui=0` removes them, and fullscreen auto-hide waits while the menu is open
 - **`shared/pixel.js`** — `PixelBuffer` class for palette-indexed pixel-art rendering
 
 Each scene provides its own audio init/control logic via callbacks. The shared JS handles DOM element queries, button class toggles, emoji updates, and volume label updates.

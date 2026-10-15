@@ -8,7 +8,7 @@ Each scene features pixel-art visuals rendered with SVG and procedurally generat
 
 ### Seascape
 
-A full day-night cycle over the sea. Watch ships drift across three depth lanes as the sky transitions through 11 color keyframes over 180 seconds. Procedural audio layers include brown noise, wave surges, foam hiss, wind, seabird calls (daytime), and cricket chirps (nighttime).
+A full day-night cycle over the sea. Watch ships drift across three depth lanes as the sky transitions through 11 color keyframes over 180 seconds. Procedural audio layers include brown noise, wave surges, foam hiss, wind, seabird calls (daytime), and cricket chirps (nighttime). The clock button in the control panel jumps to morning, day, sunset, or night (with a short time-lapse) and holds it there, or lets the cycle run on its own (AUTO).
 
 ### Campfire
 
@@ -56,7 +56,7 @@ vercel.json         — Vercel clean URL routing
 
 ### Seascape（海景）
 
-海の上で繰り広げられる昼夜サイクル。180秒かけて空が11色のキーフレームを遷移する中、3つの奥行きレーンを船が横切ります。ブラウンノイズ、波のうねり、泡の音、風、カモメの鳴き声（昼間）、コオロギの鳴き声（夜間）など、多層のプロシージャルオーディオが楽しめます。
+海の上で繰り広げられる昼夜サイクル。180秒かけて空が11色のキーフレームを遷移する中、3つの奥行きレーンを船が横切ります。ブラウンノイズ、波のうねり、泡の音、風、カモメの鳴き声（昼間）、コオロギの鳴き声（夜間）など、多層のプロシージャルオーディオが楽しめます。操作パネルの時計ボタンから朝・昼・夕・夜を選ぶと短いタイムラプスでその時間帯へ移ってそのまま留まり、AUTO で通常の昼夜サイクルに戻ります。
 
 ### Campfire（焚き火）
 

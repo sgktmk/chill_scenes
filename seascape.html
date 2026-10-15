@@ -250,6 +250,7 @@ svg{width:100%;height:100%;display:block;image-rendering:pixelated}
 </div>
 
 <div class="ap">
+  <button class="ab" id="todBtn"></button>
   <button class="ab" id="aBtn"><span class="spk" id="spkIcon"></span><span class="wi"><span></span><span></span><span></span></span></button>
   <input type="range" class="vs" id="vSl" min="0" max="100" value="50"/>
   <span class="vl" id="vLb">50%</span>
@@ -263,8 +264,69 @@ const BASE_W=320,BASE_H=200;
 let g_wxLevel=0; // 0=晴れ…1=大雨（オーディオIIFEから参照）
 let g_thunder=0; // 雷トリガーカウンター（増加でオーディオIIFEが雷音再生）
 
-const T0=performance.now();
-function phase(){return((performance.now()-T0)/1000%CYCLE)/CYCLE;}
+// ===== TIME OF DAY =====
+// phase() reads a steerable clock. AUTO lets the day flow (one CYCLE per day,
+// starting at sunrise); picking a preset time-lapses forward to its phase and
+// holds the scene there. The choice is remembered per browser.
+// Debug: ?t=0.3 freezes the phase.
+const TOD={morning:0.08,day:0.30,sunset:0.61,night:0.82};
+const TOD_KEY='chill-scenes:seascape:time';
+const clock=(function(){
+  const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
+  const wrap=p=>(p%1+1)%1;
+  let base=0,t0=performance.now(); // flowing: p = base + elapsed/CYCLE
+  let held=null;                   // frozen phase, or null while flowing
+  let lapse=null;                  // time-lapse in flight {from,delta,start,dur}
+  function phase(){
+    const now=performance.now();
+    if(lapse){
+      const k=(now-lapse.start)/lapse.dur;
+      if(k<1)return wrap(lapse.from+lapse.delta*(0.5-0.5*Math.cos(Math.PI*k)));
+      held=wrap(lapse.from+lapse.delta);lapse=null;
+    }
+    return held!==null?held:wrap(base+(now-t0)/1000/CYCLE);
+  }
+  return{
+    phase,
+    lapsing:()=>lapse!==null,
+    freeze(p){lapse=null;held=p;},
+    // Always forward, like time passing (a whole night goes by in ~3 s);
+    // only a target just behind (sunset picked at 0.61) eases back instead
+    // of replaying a full day
+    goTo(target){
+      const from=phase();
+      let delta=wrap(target-from);
+      if(delta>0.9)delta-=1;
+      const dur=reduceMotion.matches?0:900+2400*Math.abs(delta);
+      if(dur<=0||Math.abs(delta)<1e-4){lapse=null;held=target;return;}
+      held=null;lapse={from,delta,start:performance.now(),dur};
+    },
+    // Resume the natural flow from wherever the scene is now
+    flow(){base=phase();t0=performance.now();lapse=null;held=null;},
+  };
+})();
+function phase(){return clock.phase();}
+
+(function(){
+  const qp=new URLSearchParams(location.search);
+  let initial='auto';
+  if(qp.has('t')){
+    clock.freeze(Math.min(0.999,Math.max(0,parseFloat(qp.get('t'))||0)));
+    initial=null;
+  } else {
+    let saved=null;
+    try{saved=localStorage.getItem(TOD_KEY);}catch(e){}
+    if(saved&&Object.hasOwn(TOD,saved)){clock.freeze(TOD[saved]);initial=saved;}
+  }
+  initTimeControl({
+    presets:Object.keys(TOD),
+    value:initial,
+    onSelect(id){
+      if(id==='auto')clock.flow();else clock.goTo(TOD[id]);
+      try{localStorage.setItem(TOD_KEY,id);}catch(e){}
+    }
+  });
+})();
 
 // Color utils
 function h2r(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
@@ -378,7 +440,8 @@ const mr=[0,1,2,3].map(i=>document.getElementById('mr'+i));
 
 let lastCF=0;
 function updateColors(p){
-  const now=performance.now();if(now-lastCF<66)return;lastCF=now;
+  // ~15 fps is plenty while the day flows; every frame during a time-lapse
+  const now=performance.now();if(now-lastCF<66&&!clock.lapsing())return;lastCF=now;
   const overcastSky=['#8899aa','#7a8fa0','#6e8596','#6a8090','#738a98','#7a90a0','#8899aa','#99aabb'];
   const overcastSea=['#4a6070','#3d5565','#334e60','#2e495a','#2a4355','#263e50'];
   const wxBlend=g_wxLevel*0.55;
