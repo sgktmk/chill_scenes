@@ -22,7 +22,7 @@ Hosted on Vercel as a static site. `vercel.json` enables clean URLs so `/seascap
 ## Files
 
 - `index.html` — Landing page hub linking to all scenes
-- `seascape.html` — "Seascape" scene (day-night cycle over the sea)
+- `seascape.html` — "Seascape" scene (day-night cycle over the Sea of Japan, looking west from Mikuni, Fukui)
 - `campfire.html` — "Campfire" scene (pixel-art campfire under starry sky)
 - `snowy-forest.html` — "Snowy Forest" scene (moonlit winter forest at night)
 - `rice-terrace.html` — "Rice Terraces" scene (GBA-style terraced paddies below Mt. Fuji with a day-night cycle)
@@ -103,7 +103,7 @@ A simple static hub page with card links to each scene. No JavaScript. Dark them
 
 ### Seascape Scene (`seascape.html`)
 
-Everything lives in a single HTML file (~850 lines). The `<script>` block contains several self-contained systems:
+Everything lives in a single HTML file (~900 lines). The view is the Sea of Japan seen from Mikuni, Fukui (36.2°N), looking west: the sun and moon rise behind the viewer over land and only ever set into the sea. The `<script>` block contains several self-contained systems:
 
 ### Day-Night Cycle (core timing)
 
@@ -113,11 +113,11 @@ Everything lives in a single HTML file (~850 lines). The `<script>` block contai
 
 ### Time-of-Day Control
 
-- Clock button (first in the audio panel) opens a small menu above the panel: MORNING (0.08) / DAY (0.30) / SUNSET (0.61) / NIGHT (0.82) / AUTO — phases in the `TOD` table
+- Clock button (first in the audio panel) opens a small menu above the panel: MORNING (0.08) / DAY (0.38) / SUNSET (0.61) / NIGHT (0.82) / AUTO — phases in the `TOD` table
 - Picking a preset time-lapses **forward** (eased, ~1–3 s, a whole night passes on the way to MORNING) and then holds that phase; waves, ships, clouds and audio keep moving. A target only just behind the current phase (< 0.1) eases back instead of replaying a full day
 - AUTO resumes the normal flow from wherever the scene is; the choice is remembered in `localStorage` (`chill-scenes:seascape:time`)
 - `prefers-reduced-motion` jumps straight to the preset; `updateColors()` drops its ~15 fps throttle while a time-lapse runs so the sky doesn't step
-- 11-keyframe color interpolation (`KF` array + `interpKF()`) drives sky, sea, wave, foam, and horizon colors
+- 11-keyframe color interpolation (`KF` array + `interpKF()`) drives sky, sea, wave, foam, and horizon colors. Dawn and dusk are deliberately asymmetric: sunrise is behind the viewer, so the sunrise column is a pastel pink band (Belt of Venus) over a blue-grey horizon; only sunset gets the orange glow and sun road over the sea
 - `lerp()` interpolates between hex color pairs
 
 ### SVG Visual Structure
@@ -125,7 +125,7 @@ Everything lives in a single HTML file (~850 lines). The `<script>` block contai
 - Sky: 8-stop vertical linear gradient (`#skyG`)
 - Sea: 6-stop vertical linear gradient (`#seaG`)
 - Horizon at `H = 85` in a `BASE_W=320 × BASE_H=200` viewBox
-- Sun arcs left-to-right (x 30→290); moon arcs right-to-left during night
+- Sun and moon use real altitude/azimuth for 36.2°N at the equinox (`sunHA()` → `skyPos()`), projected with a deliberately wide field of view (`SKY_KX`/`SKY_KY`, due west at `WEST_X`): the sun swings in from the upper left at p≈0.25, peaks near the top left around noon, and sinks diagonally down-right into the sea at p≈0.62–0.65 (no sunrise in view). The moon is a couple of days short of full (drawn full), 25° short of opposite the sun: in view from p≈0.74, setting into the sea just before dawn (p≈0.98), warming in colour as it gets low
 - `shape-rendering="crispEdges"` for pixel-art aesthetic
 
 ### Ship System (IIFE)

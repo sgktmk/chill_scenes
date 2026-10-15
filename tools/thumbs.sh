@@ -25,7 +25,7 @@ mkdir -p "$OUT"
 
 # name | url (relative, with params) | native WxH
 SCENES="
-seascape|seascape.html?ui=0|320x200
+seascape|seascape.html?t=0.61&ui=0|320x200
 campfire|campfire.html?ui=0|426x240
 snowy-forest|snowy-forest.html?ui=0|320x180
 rice-terrace|rice-terrace.html?t=0.3&ui=0|240x160

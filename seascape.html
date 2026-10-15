@@ -269,7 +269,7 @@ let g_thunder=0; // 雷トリガーカウンター（増加でオーディオIIF
 // starting at sunrise); picking a preset time-lapses forward to its phase and
 // holds the scene there. The choice is remembered per browser.
 // Debug: ?t=0.3 freezes the phase.
-const TOD={morning:0.08,day:0.30,sunset:0.61,night:0.82};
+const TOD={morning:0.08,day:0.38,sunset:0.61,night:0.82};
 const TOD_KEY='chill-scenes:seascape:time';
 const clock=(function(){
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -333,18 +333,20 @@ function h2r(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parse
 function r2h(r,g,b){return'#'+[r,g,b].map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');}
 function lerp(a,b,t){const A=h2r(a),B=h2r(b);return r2h(A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t);}
 
-// Phase layout (starts at sunrise):
-// 0.00 = sunrise (sun on left horizon)
-// 0.05 = sun clearing horizon, golden hour ending
+// Phase layout (starts at sunrise). The view looks west over the Sea of Japan
+// from Mikuni, Fukui, so the sun rises behind the viewer and sets into the sea:
+// 0.00 = sunrise behind the viewer; pink band over the sea (Belt of Venus)
+// 0.05 = morning light, sun still out of view
 // 0.15 = morning, sky getting blue
+// 0.25 = sun swings into view at the upper left
 // 0.30 = midday, full blue sky
-// 0.45 = afternoon
-// 0.55 = sun approaching right horizon
-// 0.62 = sunset (sun on right horizon)
+// 0.45 = afternoon, sun descending toward the sea
+// 0.55 = golden hour
+// 0.62 = sunset (sun touching the sea)
 // 0.70 = dusk, twilight
+// 0.74 = moon swings into view at the upper left
 // 0.78 = night
-// 0.92 = deep night
-// 0.95 = pre-dawn
+// 0.95 = pre-dawn, moon setting into the sea
 // 1.00 = sunrise again
 const KF=[0, 0.05, 0.15, 0.30, 0.45, 0.55, 0.62, 0.70, 0.78, 0.95, 1.0];
 function interpKF(colors,p){
@@ -356,31 +358,34 @@ function interpKF(colors,p){
 }
 
 // Sky: sunrise,goldenEnd,morning,midday,afternoon,preSunset,sunset,dusk,night,preDawn,sunrise
+// Dawn and dusk are deliberately unlike: the sun rises behind the viewer, so the
+// western sky at sunrise is pastel (pink Belt of Venus over the blue-grey
+// Earth's shadow at the horizon); only sunset gets the orange glow over the sea.
 const SKY=[
   //sunrise  goldEnd   morning   midday    afternoon preSunset sunset    dusk      night     preDawn   sunrise
-  ['#1a0830','#0c1a55','#1050aa','#1555bb','#1555bb','#1050aa','#0e0620','#040210','#010108','#010108','#1a0830'], //top
-  ['#2a1050','#152060','#2060bb','#2568cc','#2568cc','#2060bb','#1a0a30','#0a0518','#030210','#030210','#2a1050'],
-  ['#5a2060','#2a3888','#3580cc','#4088dd','#4088dd','#3580cc','#4a1545','#1a0a30','#060418','#060418','#5a2060'],
-  ['#993050','#4060aa','#5098dd','#60a5ee','#60a5ee','#5098dd','#992835','#301840','#0a0620','#0a0620','#993050'],
-  ['#cc5030','#5580cc','#70aaee','#80bbf5','#80bbf5','#70aaee','#cc4420','#553055','#0e0828','#0e0828','#cc5030'],
-  ['#e88020','#80aadd','#90c0f0','#a0d5ff','#a0d5ff','#90c0f0','#e87818','#774070','#121030','#121030','#e88020'],
-  ['#ffbb30','#a0ccee','#b0d8f8','#c0e8ff','#c0e8ff','#b0d8f8','#ffaa28','#996688','#161238','#161238','#ffbb30'],
-  ['#ffee55','#c0ddff','#d0eaff','#d8f0ff','#d8f0ff','#d0eaff','#ffdd50','#bb88aa','#1a1440','#1a1440','#ffee55'],//bottom
+  ['#232c66','#1c3070','#1050aa','#1555bb','#1555bb','#1050aa','#0e0620','#040210','#010108','#010108','#232c66'], //top
+  ['#343e7c','#26407e','#2060bb','#2568cc','#2568cc','#2060bb','#1a0a30','#0a0518','#030210','#030210','#343e7c'],
+  ['#4e5290','#3a5698','#3580cc','#4088dd','#4088dd','#3580cc','#4a1545','#1a0a30','#060418','#060418','#4e5290'],
+  ['#71649e','#5070b0','#5098dd','#60a5ee','#60a5ee','#5098dd','#992835','#301840','#0a0620','#0a0620','#71649e'],
+  ['#9a74a6','#6a8cc8','#70aaee','#80bbf5','#80bbf5','#70aaee','#cc4420','#553055','#0e0828','#0e0828','#9a74a6'],
+  ['#c486aa','#8eaedc','#90c0f0','#a0d5ff','#a0d5ff','#90c0f0','#e87818','#774070','#121030','#121030','#c486aa'],
+  ['#d89cae','#acc8ea','#b0d8f8','#c0e8ff','#c0e8ff','#b0d8f8','#ffaa28','#996688','#161238','#161238','#d89cae'],
+  ['#a294b4','#c4d8f0','#d0eaff','#d8f0ff','#d8f0ff','#d0eaff','#ffdd50','#bb88aa','#1a1440','#1a1440','#a294b4'],//bottom
 ];
 const SEA=[
-  ['#cc6622','#5588aa','#2888aa','#3090bb','#3090bb','#2888aa','#cc6622','#554055','#0a0818','#0a0818','#cc6622'],
-  ['#aa5522','#447799','#207099','#2580aa','#2580aa','#207099','#aa5522','#443044','#080615','#080615','#aa5522'],
-  ['#774422','#336688','#185888','#1c6898','#1c6898','#185888','#774422','#332233','#060410','#060410','#774422'],
-  ['#553355','#225577','#104878','#155888','#155888','#104878','#553355','#221828','#04030a','#04030a','#553355'],
-  ['#332244','#184466','#0c3868','#104878','#104878','#0c3868','#332244','#151020','#030208','#030208','#332244'],
-  ['#1a1433','#103355','#083058','#0a3868','#0a3868','#083058','#1a1433','#0a0815','#020105','#020105','#1a1433'],
+  ['#8a7a9e','#5588aa','#2888aa','#3090bb','#3090bb','#2888aa','#cc6622','#554055','#0a0818','#0a0818','#8a7a9e'],
+  ['#6e6890','#447799','#207099','#2580aa','#2580aa','#207099','#aa5522','#443044','#080615','#080615','#6e6890'],
+  ['#524e78','#336688','#185888','#1c6898','#1c6898','#185888','#774422','#332233','#060410','#060410','#524e78'],
+  ['#3a3a62','#225577','#104878','#155888','#155888','#104878','#553355','#221828','#04030a','#04030a','#3a3a62'],
+  ['#28284c','#184466','#0c3868','#104878','#104878','#0c3868','#332244','#151020','#030208','#030208','#28284c'],
+  ['#181834','#103355','#083058','#0a3868','#0a3868','#083058','#1a1433','#0a0815','#020105','#020105','#181834'],
 ];
-const WV_C=['#bb7733','#4488aa','#4499bb','#5599bb','#5599bb','#4499bb','#bb7733','#443344','#0a0a15','#0a0a15','#bb7733'];
-const FM_C=['#ccaa77','#88bbcc','#99ccdd','#aaddee','#aaddee','#99ccdd','#ccaa77','#554466','#181830','#181830','#ccaa77'];
-const CH_C=['#ffccbb','#ddeeff','#eef5ff','#ffffff','#ffffff','#eef5ff','#ffccbb','#776688','#181828','#181828','#ffccbb'];
-const CM_C=['#ffcc88','#cce0ff','#ddeeff','#ffffff','#ffffff','#ddeeff','#ffcc88','#554466','#0c0c18','#0c0c18','#ffcc88'];
-const CL_C=['#dd7755','#aaccee','#bbddee','#ccddee','#ccddee','#bbddee','#dd7755','#443355','#080810','#080810','#dd7755'];
-const HG_C=['#ffaa33','#88bbdd','#aaddff','#aaddff','#aaddff','#aaddff','#ffaa33','#884466','#0a0a20','#0a0a20','#ffaa33'];
+const WV_C=['#7c7498','#4488aa','#4499bb','#5599bb','#5599bb','#4499bb','#bb7733','#443344','#0a0a15','#0a0a15','#7c7498'];
+const FM_C=['#b8a8c4','#88bbcc','#99ccdd','#aaddee','#aaddee','#99ccdd','#ccaa77','#554466','#181830','#181830','#b8a8c4'];
+const CH_C=['#ffc8c8','#ddeeff','#eef5ff','#ffffff','#ffffff','#eef5ff','#ffccbb','#776688','#181828','#181828','#ffc8c8'];
+const CM_C=['#f6bcc0','#cce0ff','#ddeeff','#ffffff','#ffffff','#ddeeff','#ffcc88','#554466','#0c0c18','#0c0c18','#f6bcc0'];
+const CL_C=['#b88aa4','#aaccee','#bbddee','#ccddee','#ccddee','#bbddee','#dd7755','#443355','#080810','#080810','#b88aa4'];
+const HG_C=['#d8a0b8','#88bbdd','#aaddff','#aaddff','#aaddff','#aaddff','#ffaa33','#884466','#0a0a20','#0a0a20','#d8a0b8'];
 
 const skE=[...Array(8)].map((_,i)=>document.getElementById('sk'+i));
 const seE=[...Array(6)].map((_,i)=>document.getElementById('se'+i));
@@ -392,27 +397,39 @@ const cLE=document.querySelectorAll('.cL');
 const hGl=document.getElementById('hGl');
 const hLn=document.getElementById('hLn');
 
-// SUN: left→right arc. Rises from below horizon, crosses at p≈0.02, zenith at p≈0.33, sets at p≈0.64
-function sunPos(p){
-  if(p>0.70)return null;
-  const sp=(p-0.02)/0.62; // sp=0 → horizon, <0 → below
-  const x=30+Math.max(0,Math.min(sp,1))*260;
-  const y=H-65*Math.sin(sp*Math.PI); // unclamped → naturally goes below horizon
-  return{x,y,sp};
-}
+// SUN & MOON as seen from Mikuni (Fukui, 36.2°N) looking west over the Sea of
+// Japan. Both rise behind the viewer, over land, so neither ever comes up out
+// of the sea: they swing in from the upper left (the southern sky) and sink
+// diagonally down-right into the sea. Positions are real altitude/azimuth at
+// the equinox (sun sets due west), projected with a far wider field of view
+// than a real lens: at a natural angle the sun would only be on screen for the
+// last couple of hours before sunset, so this keeps it in view from late
+// morning while the path keeps its true shape.
+const LAT=36.2*Math.PI/180;
+const SKY_KX=1.45,SKY_KY=1.21,WEST_X=176; // px per degree of azimuth / altitude, x of due west
 
-// MOON: left→right arc (same direction). Rises p≈0.66, zenith p≈0.82, sets p≈0.98
-function moonPos(p){
-  if(p<0.62)return null;
-  // Handle wrap: if p<0.04, treat as p+1 for the tail end of setting
-  let pp=p;
-  if(pp<0.5)pp+=1; // wrap-safe (moon never visible at p<0.5)
-  const mp=(pp-0.66)/0.32; // mp=0 → horizon, 0.5 → zenith, 1 → horizon
-  const x=30+Math.max(0,Math.min(mp,1))*260;
-  const y=H-50*Math.sin(mp*Math.PI);
-  if(y>H+30)return null; // far below, stop
-  return{x,y,mp};
+// Sun's hour angle (degrees): -90 at sunrise (p=0.025), 0 at noon, +90 at
+// sunset (p=0.645); the night runs at its own rate from there
+function sunHA(p){
+  if(p<0.025)p+=1;
+  return p<0.645?-90+(p-0.025)/0.62*180:90+(p-0.645)/0.38*180;
 }
+function skyPos(ha,dec){
+  const h=ha*Math.PI/180,d=dec*Math.PI/180;
+  const alt=Math.asin(Math.sin(LAT)*Math.sin(d)+Math.cos(LAT)*Math.cos(d)*Math.cos(h))*180/Math.PI;
+  const az=Math.atan2(-Math.sin(h),Math.tan(d)*Math.cos(LAT)-Math.sin(LAT)*Math.cos(h))*180/Math.PI; // 0=N, -90=W
+  return{x:WEST_X+((az+360)%360-270)*SKY_KX,y:H-alt*SKY_KY,alt};
+}
+// null once fully sunk or out of view to the left (behind the viewer)
+const onScreen=o=>o.alt>-12&&o.x>-40?o:null;
+
+// In view from p≈0.25 (upper left) until it sinks into the sea at p≈0.65
+function sunPos(p){return onScreen(skyPos(sunHA(p),0));}
+
+// The moon is a couple of days short of full (drawn as a full disc): 25° short
+// of opposite the sun, so it rises behind the viewer before dark, swings into
+// view at p≈0.74 and sets into the sea just before dawn (p≈0.98)
+function moonPos(p){return onScreen(skyPos(sunHA(p)+180+25,5));}
 
 function nightLevel(p){
   if(p>=0.62&&p<0.78)return (p-0.62)/0.16;
@@ -480,15 +497,15 @@ function updatePositions(p){
   const mp=moonPos(p);
   if(mp){
     moonI.setAttribute('transform',`translate(${mp.x},${mp.y})`);
-    const moonRise=Math.max(0,Math.min(1,mp.mp*3.6));
-    const moonVisible=0.06+0.94*nL;
-    moonG.setAttribute('opacity',moonRise*moonVisible);
+    moonG.setAttribute('opacity',0.06+0.94*nL);
     moonI.setAttribute('filter',nL>0.72?'none':'url(#mF)');
-    moonCore.setAttribute('fill',lerp('#e3bfa8','#f6fbff',nL));
-    moonShade.setAttribute('fill',lerp('#a79698','#cdd8e5',nL));
-    moonCraters.setAttribute('fill',lerp('#9d8f9d','#bdcad8',nL));
+    // Warm in twilight and as it sinks toward the sea
+    const mc=Math.min(nL,Math.max(0,mp.alt)/12);
+    moonCore.setAttribute('fill',lerp('#e3bfa8','#f6fbff',mc));
+    moonShade.setAttribute('fill',lerp('#a79698','#cdd8e5',mc));
+    moonCraters.setAttribute('fill',lerp('#9d8f9d','#bdcad8',mc));
     moonHalo.setAttribute('opacity',0.95-(nL*0.5));
-    // Moon reflection: faint at rise, clearer in deeper night
+    // Moon reflection: faint in twilight, clearer in deeper night
     mrG.setAttribute('opacity',0.08+0.5*nL);
     const mx=mp.x;
     mr[0].setAttribute('x',mx-6);mr[1].setAttribute('x',mx-3);
@@ -815,9 +832,10 @@ loop();
   const ns='http://www.w3.org/2000/svg';
   const g=document.getElementById('dG');
   function getBr(p){
-    // Bright near sunrise/sunset, moderate midday, faint night
-    if(p<0.05)return 0.7;
-    if(p<0.15)return 0.7-(p-0.05)/0.1*0.3;
+    // Faint at sunrise (the sun is behind the viewer), moderate midday,
+    // bright around sunset, faint night
+    if(p<0.05)return 0.2;
+    if(p<0.15)return 0.2+(p-0.05)/0.1*0.2;
     if(p<0.45)return 0.4;
     if(p<0.55)return 0.4+(p-0.45)/0.1*0.3;
     if(p<0.65)return 0.7;
@@ -835,7 +853,7 @@ loop();
     el.setAttribute('x',x);el.setAttribute('y',y);
     el.setAttribute('width',Math.random()>.6?2:1);el.setAttribute('height',1);
     const warm=['#ffee88','#ffffcc','#ffdd66'],cool=['#aabbdd','#bbccee'],day=['#ffffee','#eef8ff','#ddeeff'];
-    const cols=(p>=0.78||p<0.02)?cool:(p>=0.15&&p<0.55)?day:warm;
+    const cols=(p>=0.78||p<0.02)?cool:p<0.55?day:warm;
     el.setAttribute('fill',cols[Math.floor(Math.random()*cols.length)]);
     el.setAttribute('opacity','0');g.appendChild(el);
     const dur=300+Math.random()*600,st=performance.now(),maxOp=br*(.3+Math.random()*.7);
