@@ -86,8 +86,9 @@ sans-serif stack for readability at small sizes. Every clickable chip —
 landing-page cards, the back button, the audio-panel buttons — shares one
 small `clip-path` cut-corner silhouette instead of rounded corners. The
 back button's arrow, the mute/unmute speaker, the fullscreen
-expand/contract icon, and the time-of-day icons (rising/setting half sun,
-sun, crescent moon, clock) are all hand-drawn crispEdges/square-cap SVGs
+expand/contract icon, and the time-of-day icons (sun peeking over the
+horizon with rays, rising/setting half sun, sun, crescent moon, clock) are
+all hand-drawn crispEdges/square-cap SVGs
 (`shared/scene-ui.js`, `fill`/`stroke="currentColor"` so they follow the
 button's colour state) instead of emoji or rounded glyphs, and the volume
 slider track/thumb are styled square with a `repeating-linear-gradient`
@@ -113,7 +114,7 @@ Everything lives in a single HTML file (~900 lines). The view is the Sea of Japa
 
 ### Time-of-Day Control
 
-- Clock button (first in the audio panel) opens a small menu above the panel: MORNING (0.08) / DAY (0.38) / SUNSET (0.61) / NIGHT (0.82) / AUTO — phases in the `TOD` table
+- Clock button (first in the audio panel) opens a small menu above the panel: DAWN (0.975, the moon setting into the sea under the pink Belt of Venus) / MORNING (0.08) / DAY (0.38) / SUNSET (0.61) / NIGHT (0.82) / AUTO — phases in the `TOD` table
 - Picking a preset time-lapses **forward** (eased, ~1–3 s, a whole night passes on the way to MORNING) and then holds that phase; waves, ships, clouds and audio keep moving. A target only just behind the current phase (< 0.1) eases back instead of replaying a full day
 - AUTO resumes the normal flow from wherever the scene is; the choice is remembered in `localStorage` (`chill-scenes:seascape:time`)
 - `prefers-reduced-motion` jumps straight to the preset; `updateColors()` drops its ~15 fps throttle while a time-lapse runs so the sky doesn't step

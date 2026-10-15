@@ -8,7 +8,7 @@ Each scene features pixel-art visuals rendered with SVG and procedurally generat
 
 ### Seascape
 
-A full day-night cycle over the sea. Watch ships drift across three depth lanes as the sky transitions through 11 color keyframes over 180 seconds. Procedural audio layers include brown noise, wave surges, foam hiss, wind, seabird calls (daytime), and cricket chirps (nighttime). The clock button in the control panel jumps to morning, day, sunset, or night (with a short time-lapse) and holds it there, or lets the cycle run on its own (AUTO).
+A full day-night cycle over the sea. Watch ships drift across three depth lanes as the sky transitions through 11 color keyframes over 180 seconds. Procedural audio layers include brown noise, wave surges, foam hiss, wind, seabird calls (daytime), and cricket chirps (nighttime). The clock button in the control panel jumps to dawn, morning, day, sunset, or night (with a short time-lapse) and holds it there, or lets the cycle run on its own (AUTO).
 
 ### Campfire
 

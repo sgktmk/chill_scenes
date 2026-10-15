@@ -156,7 +156,7 @@ function initSceneAudio({ onStart, onStop, onVolumeChange }) {
  * control costs one panel button while closed.
  *
  *   const tod = initTimeControl({
- *     presets: ['morning', 'day', 'sunset', 'night'],  // ids from TOD_ITEMS
+ *     presets: ['morning', 'day', 'sunset', 'night'],  // ids from TOD_ITEMS (also 'dawn')
  *     value: 'auto',          // initial selection ('auto', a preset, or null)
  *     onSelect(id) { ... },   // user picked a different entry
  *   });
@@ -171,6 +171,10 @@ const TOD_SVG = '<svg style="display:block;width:14px;height:14px;min-width:14px
 const TOD_HALF_SUN = '<rect x="4" y="5" width="4" height="1"/><rect x="3" y="6" width="6" height="1"/><rect x="2" y="7" width="8" height="2"/>'
   + '<rect x="0" y="8" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="0" y="10" width="12" height="1"/>';
 const TOD_ITEMS = {
+  // Just the top of the sun on the horizon, with rays fanning out above it
+  dawn: { label: 'DAWN', icon: '<rect x="0" y="10" width="12" height="1"/><rect x="3" y="9" width="6" height="1"/><rect x="4" y="8" width="4" height="1"/>'
+    + '<rect x="5" y="2" width="2" height="4"/><rect x="2" y="4" width="1" height="1"/><rect x="3" y="5" width="1" height="1"/>'
+    + '<rect x="9" y="4" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="0" y="7" width="2" height="1"/><rect x="10" y="7" width="2" height="1"/>' },
   morning: { label: 'MORNING', icon: TOD_HALF_SUN
     + '<rect x="5" y="0" width="2" height="1"/><rect x="4" y="1" width="4" height="1"/><rect x="3" y="2" width="2" height="1"/><rect x="7" y="2" width="2" height="1"/>' },
   day: { label: 'DAY', icon: '<rect x="4" y="3" width="4" height="1"/><rect x="3" y="4" width="6" height="4"/><rect x="4" y="8" width="4" height="1"/>'

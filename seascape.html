@@ -269,7 +269,7 @@ let g_thunder=0; // 雷トリガーカウンター（増加でオーディオIIF
 // starting at sunrise); picking a preset time-lapses forward to its phase and
 // holds the scene there. The choice is remembered per browser.
 // Debug: ?t=0.3 freezes the phase.
-const TOD={morning:0.08,day:0.38,sunset:0.61,night:0.82};
+const TOD={dawn:0.975,morning:0.08,day:0.38,sunset:0.61,night:0.82};
 const TOD_KEY='chill-scenes:seascape:time';
 const clock=(function(){
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -497,7 +497,8 @@ function updatePositions(p){
   const mp=moonPos(p);
   if(mp){
     moonI.setAttribute('transform',`translate(${mp.x},${mp.y})`);
-    moonG.setAttribute('opacity',0.06+0.94*nL);
+    // A near-full moon stays bright well into twilight (it sets at dawn)
+    moonG.setAttribute('opacity',0.06+0.94*Math.min(1,nL*1.5));
     moonI.setAttribute('filter',nL>0.72?'none':'url(#mF)');
     // Warm in twilight and as it sinks toward the sea
     const mc=Math.min(nL,Math.max(0,mp.alt)/12);
