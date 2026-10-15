@@ -10,12 +10,20 @@
  *     onVolumeChange(v)  — called with slider value 0-100
  *   });
  *
+ * Scenes with a day-night cycle can also add a time-of-day picker to the
+ * panel with initTimeControl() (see below).
+ *
  * URL param ?ui=0 hides the back button and audio panel — used for
  * clean captures (thumbnails via tools/thumbs.sh, screenshots).
  */
+
+// Every floating UI element over the scene: hidden together, and taps on
+// them never count as "tap the scene"
+const SCENE_UI_SEL = '.ap, .back, .tod';
+
 if (new URLSearchParams(location.search).get('ui') === '0') {
   document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.back, .ap').forEach((el) => { el.style.display = 'none'; });
+    document.querySelectorAll(SCENE_UI_SEL).forEach((el) => { el.style.display = 'none'; });
   });
 }
 
@@ -55,19 +63,24 @@ if (new URLSearchParams(location.search).get('ui') === '0') {
 // UI visibility toggle: tap on scene hides/shows; auto-hides after 3 s in fullscreen
 (function () {
   document.addEventListener('DOMContentLoaded', () => {
-    const ui = () => document.querySelectorAll('.ap, .back');
+    const ui = () => document.querySelectorAll(SCENE_UI_SEL);
     let hidden = false;
     let timer;
 
-    function show() {
-      hidden = false;
+    function armAutoHide() {
       clearTimeout(timer);
-      ui().forEach(el => el.classList.remove('ui-hidden'));
       if (document.fullscreenElement) {
         timer = setTimeout(hide, 3000);
       }
     }
+    function show() {
+      hidden = false;
+      ui().forEach(el => el.classList.remove('ui-hidden'));
+      armAutoHide();
+    }
     function hide() {
+      // Never pull the UI away while a menu is open — wait until it closes
+      if (document.querySelector('.tod:not([hidden])')) { armAutoHide(); return; }
       hidden = true;
       clearTimeout(timer);
       ui().forEach(el => el.classList.add('ui-hidden'));
@@ -75,8 +88,13 @@ if (new URLSearchParams(location.search).get('ui') === '0') {
 
     // Tap anywhere except on UI elements toggles visibility
     document.addEventListener('click', (e) => {
-      if (e.target.closest('.ap, .back')) return;
+      if (e.target.closest(SCENE_UI_SEL)) return;
       hidden ? show() : hide();
+    });
+
+    // Using the controls in fullscreen restarts the 3 s countdown
+    document.addEventListener('pointerdown', (e) => {
+      if (!hidden && e.target.closest(SCENE_UI_SEL)) armAutoHide();
     });
 
     document.addEventListener('fullscreenchange', () => {
@@ -127,4 +145,152 @@ function initSceneAudio({ onStart, onStop, onVolumeChange }) {
       onVolumeChange(v);
     }
   });
+}
+
+/**
+ * Time-of-day picker for scenes with a day-night cycle.
+ *
+ * Markup: a trigger inside the panel, e.g. first in .ap:
+ *   <button class="ab" id="todBtn"></button>
+ * The menu itself is built here and pops up above the panel, so the
+ * control costs one panel button while closed.
+ *
+ *   const tod = initTimeControl({
+ *     presets: ['morning', 'day', 'sunset', 'night'],  // ids from TOD_ITEMS
+ *     value: 'auto',          // initial selection ('auto', a preset, or null)
+ *     onSelect(id) { ... },   // user picked a different entry
+ *   });
+ *   tod.set(id);              // reflect a change made elsewhere
+ *
+ * 'auto' (let the cycle run) is always offered, below the presets. The
+ * trigger shows the selected entry's icon and lights up (.on) while a
+ * fixed time is selected.
+ */
+const TOD_SVG = '<svg style="display:block;width:14px;height:14px;min-width:14px;flex-shrink:0" viewBox="0 0 12 12" shape-rendering="crispEdges" fill="currentColor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">';
+// Half sun on the horizon; the chevron above says rising or setting
+const TOD_HALF_SUN = '<rect x="4" y="5" width="4" height="1"/><rect x="3" y="6" width="6" height="1"/><rect x="2" y="7" width="8" height="2"/>'
+  + '<rect x="0" y="8" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="0" y="10" width="12" height="1"/>';
+const TOD_ITEMS = {
+  morning: { label: 'MORNING', icon: TOD_HALF_SUN
+    + '<rect x="5" y="0" width="2" height="1"/><rect x="4" y="1" width="4" height="1"/><rect x="3" y="2" width="2" height="1"/><rect x="7" y="2" width="2" height="1"/>' },
+  day: { label: 'DAY', icon: '<rect x="4" y="3" width="4" height="1"/><rect x="3" y="4" width="6" height="4"/><rect x="4" y="8" width="4" height="1"/>'
+    + '<rect x="5" y="0" width="2" height="2"/><rect x="5" y="10" width="2" height="2"/><rect x="0" y="5" width="2" height="2"/><rect x="10" y="5" width="2" height="2"/>'
+    + '<rect x="1" y="1" width="1" height="1"/><rect x="10" y="1" width="1" height="1"/><rect x="1" y="10" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/>' },
+  sunset: { label: 'SUNSET', icon: TOD_HALF_SUN
+    + '<rect x="3" y="0" width="2" height="1"/><rect x="7" y="0" width="2" height="1"/><rect x="4" y="1" width="4" height="1"/><rect x="5" y="2" width="2" height="1"/>' },
+  night: { label: 'NIGHT', icon: '<rect x="3" y="1" width="3" height="1"/><rect x="2" y="2" width="3" height="1"/><rect x="1" y="3" width="3" height="4"/>'
+    + '<rect x="1" y="7" width="4" height="1"/><rect x="2" y="8" width="4" height="1"/><rect x="3" y="9" width="5" height="1"/><rect x="5" y="10" width="4" height="1"/>'
+    + '<rect x="8" y="2" width="1" height="3"/><rect x="7" y="3" width="3" height="1"/><rect x="10" y="6" width="1" height="1"/>' },
+  auto: { label: 'AUTO', icon: '<rect x="4" y="0" width="4" height="1"/><rect x="2" y="1" width="2" height="1"/><rect x="8" y="1" width="2" height="1"/>'
+    + '<rect x="1" y="2" width="1" height="2"/><rect x="10" y="2" width="1" height="2"/><rect x="0" y="4" width="1" height="4"/><rect x="11" y="4" width="1" height="4"/>'
+    + '<rect x="1" y="8" width="1" height="2"/><rect x="10" y="8" width="1" height="2"/><rect x="2" y="10" width="2" height="1"/><rect x="8" y="10" width="2" height="1"/>'
+    + '<rect x="4" y="11" width="4" height="1"/><rect x="5" y="3" width="1" height="4"/><rect x="6" y="6" width="3" height="1"/>' },
+};
+
+function initTimeControl({ presets, value, onSelect }) {
+  const btn = document.getElementById('todBtn');
+  const icon = (id) => TOD_SVG + TOD_ITEMS[id].icon + '</svg>';
+
+  const menu = document.createElement('div');
+  menu.className = 'tod';
+  menu.id = 'todMenu';
+  menu.hidden = true;
+  menu.setAttribute('role', 'menu');
+  menu.setAttribute('aria-label', 'Time of day');
+  const items = presets.concat('auto').map((id) => {
+    if (id === 'auto') {
+      const sep = document.createElement('div');
+      sep.className = 'tod-sep';
+      sep.setAttribute('role', 'separator');
+      menu.appendChild(sep);
+    }
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'tod-item';
+    item.dataset.id = id;
+    item.setAttribute('role', 'menuitemradio');
+    item.innerHTML = icon(id) + '<span>' + TOD_ITEMS[id].label + '</span>';
+    item.addEventListener('click', () => pick(id));
+    menu.appendChild(item);
+    return item;
+  });
+  document.body.appendChild(menu);
+
+  btn.title = 'Time of day';
+  btn.setAttribute('aria-haspopup', 'menu');
+  btn.setAttribute('aria-controls', menu.id);
+  btn.setAttribute('aria-expanded', 'false');
+
+  let current;
+  function set(id) {
+    current = id;
+    const shown = id || 'auto';
+    btn.innerHTML = icon(shown);
+    btn.classList.toggle('on', !!id && id !== 'auto');
+    btn.setAttribute('aria-label', 'Time of day: ' + (id ? TOD_ITEMS[id].label.toLowerCase() : 'custom'));
+    items.forEach((item) => item.setAttribute('aria-checked', String(item.dataset.id === id)));
+  }
+
+  // Sit just above the panel, with the menu icons in the same column as
+  // the trigger's icon; kept inside the viewport on narrow screens
+  function place() {
+    const panel = btn.closest('.ap') || btn;
+    menu.style.bottom = (window.innerHeight - panel.getBoundingClientRect().top + 6) + 'px';
+    menu.style.left = '0px';
+    const dx = btn.querySelector('svg').getBoundingClientRect().left
+      - items[0].querySelector('svg').getBoundingClientRect().left;
+    const maxLeft = window.innerWidth - menu.offsetWidth - 8;
+    menu.style.left = Math.max(8, Math.min(dx, maxLeft)) + 'px';
+  }
+  function open() {
+    menu.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    place();
+    (items.find((item) => item.dataset.id === current) || items[0]).focus();
+  }
+  function close(refocus) {
+    if (menu.hidden) return;
+    menu.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+    if (refocus) btn.focus();
+  }
+  function pick(id) {
+    close(true);
+    if (id === current) return;
+    set(id);
+    onSelect(id);
+  }
+
+  btn.addEventListener('click', () => (menu.hidden ? open() : close(false)));
+  btn.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); open(); }
+  });
+  menu.addEventListener('keydown', (e) => {
+    const i = items.indexOf(document.activeElement);
+    const n = items.length;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[(i + (e.key === 'ArrowDown' ? 1 : n - 1)) % n].focus();
+    } else if (e.key === 'Home' || e.key === 'End') {
+      e.preventDefault();
+      items[e.key === 'Home' ? 0 : n - 1].focus();
+    } else if (e.key === 'Escape' || e.key === 'Tab') {
+      e.preventDefault();
+      close(true);
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !menu.hidden) close(true);
+  });
+  // A tap outside closes the menu. On the bare scene that tap is used up
+  // here, so it doesn't also hide the whole UI (see the visibility toggle).
+  document.addEventListener('click', (e) => {
+    if (menu.hidden || e.target.closest('#todBtn, .tod')) return;
+    close(false);
+    if (!e.target.closest(SCENE_UI_SEL)) e.stopPropagation();
+  }, true);
+  window.addEventListener('resize', () => { if (!menu.hidden) place(); });
+
+  set(value);
+  return { set };
 }

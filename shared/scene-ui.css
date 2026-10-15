@@ -12,7 +12,9 @@
 .pixel-corner,
 .ap,
 .ab,
-.back {
+.back,
+.tod,
+.tod-item {
   clip-path: polygon(0 6px, 6px 6px, 6px 0, calc(100% - 6px) 0, calc(100% - 6px) 6px, 100% 6px,
     100% calc(100% - 6px), calc(100% - 6px) calc(100% - 6px), calc(100% - 6px) 100%,
     6px 100%, 6px calc(100% - 6px), 0 calc(100% - 6px));
@@ -157,6 +159,64 @@
 .back:hover {
   border-color: rgba(57,171,152,.6);
   color: rgba(180,235,245,.95);
+}
+
+/* Time-of-day picker — menu that pops up above the panel's #todBtn */
+.ab[aria-expanded="true"] { border-color: #2fd0f0; color: #eafcff; }
+.tod {
+  position: fixed;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: rgba(10,10,18,.82);
+  border: 2px solid rgba(57,171,152,.35);
+  backdrop-filter: blur(6px);
+  transition: opacity .4s, visibility .4s;
+}
+.tod[hidden] { display: none; }
+.tod:not([hidden]) { animation: tod-in .16s steps(3) both; }
+@keyframes tod-in { from { opacity: 0; transform: translateY(6px); } }
+.tod-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 136px;
+  height: 34px;
+  padding: 0 9px;
+  border: 2px solid transparent;
+  background: transparent;
+  color: rgba(150,220,235,.75);
+  font-family: 'Press Start 2P', system-ui, sans-serif;
+  font-size: 9px;
+  letter-spacing: .05em;
+  text-align: left;
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s;
+}
+.tod-item svg { display: block; width: 14px; height: 14px; min-width: 14px; flex-shrink: 0; }
+.tod-item:hover,
+.tod-item:focus-visible {
+  outline: none;
+  background: rgba(22,196,237,.14);
+  border-color: rgba(57,171,152,.55);
+  color: rgba(200,240,248,.95);
+}
+.tod-item[aria-checked="true"] {
+  background: rgba(22,196,237,.3);
+  border-color: #2fd0f0;
+  color: #eafcff;
+}
+.tod-sep {
+  height: 2px;
+  margin: 3px 4px;
+  background: repeating-linear-gradient(to right,
+    rgba(57,171,152,.45) 0, rgba(57,171,152,.45) 4px,
+    transparent 4px, transparent 6px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tod:not([hidden]) { animation: none; }
 }
 
 /* UI auto-hide in fullscreen */
